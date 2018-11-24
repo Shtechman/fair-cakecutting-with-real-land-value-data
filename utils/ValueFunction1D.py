@@ -3,6 +3,7 @@
 import numpy as np
 from functools import lru_cache
 import json
+import random
 
 class ValueFunction1D:
 	"""/**
@@ -114,7 +115,7 @@ class ValueFunction1D:
 			sum -= value;
 
 		# default: returns the largest possible "iTo":
-		return values.length
+		return self.values.length
 
 	@lru_cache()
 	def getCut(self, iFrom, value):
@@ -157,7 +158,7 @@ class ValueFunction1D:
 		aggregated_sum = 0
 		values = [0] * self.length
 		for i in range(self.length):
-			noise = (2*np.random.rand()-1)*noise_proportion
+			noise = (2*random.uniform(0, 1)-1)*noise_proportion
 			newVal = self.values[i]*(1+noise)
 			newVal = max(0, newVal)
 			aggregated_sum += newVal

@@ -10,8 +10,10 @@
 """
 
 from functools import lru_cache
-import numpy as np
-import operator
+from utils.ValueFunction1D import ValueFunction1D
+from utils.Agent import Agent
+from utils.AllocatedPiece1D import AllocatedPiece1D
+from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
 
 class AlgorithmAssessor1D:
 
@@ -41,14 +43,17 @@ class AlgorithmAssessor1D:
 		>>> alg.run([Alice,Bob,Carl])
 		[Alice receives [0.00,2.33], Bob receives [2.33,3.33], Carl receives [3.33,4.00]]
 		"""
-
 		identicalPartitionWithIdenticalAgents = self._runAssessorAlgorithm(len(agents))
 		# Create virtual agents with the assessor's value function
-		identicalPartitionWithDifferentAgents = map(
+		identicalPartitionWithDifferentAgents = list(map(
 			lambda pair: AllocatedPiece1D(pair[0], pair[1].iFrom, pair[1].iTo),
 			zip(agents, identicalPartitionWithIdenticalAgents)
-			)
-		return list(identicalPartitionWithDifferentAgents)
+			))
+		return identicalPartitionWithDifferentAgents
+
+	@staticmethod
+	def getAlgorithmType():
+		return "Assessor"
 
 	@lru_cache()
 	def _runAssessorAlgorithm(self, numOfAgents):
@@ -57,10 +62,7 @@ class AlgorithmAssessor1D:
 		return self.assessorAlgorithm.run(agentsWithAssessorValueFunction)
 
 if __name__ == '__main__':
-	from ValueFunction1D import ValueFunction1D
-	from Agent import Agent
-	from AllocatedPiece1D import AllocatedPiece1D
-	from AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
+
 
 	import doctest
 	doctest.testmod()

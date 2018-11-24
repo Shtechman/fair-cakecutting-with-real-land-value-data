@@ -37,7 +37,11 @@ class AllocatedPiece1D:
 		"""
 		The current agent evaluates his own piece relative to the entire cake.
 		"""
-		return self.agent.evaluationOfPiece(self) / self.agent.evaluationOfCake()
+		a = self.agent.evaluationOfPiece(self)
+		b = self.agent.evaluationOfCake()
+		c = a/b
+
+		return c
 
 	def getEnvy(self, otherPiece):
 		"""
@@ -48,7 +52,7 @@ class AllocatedPiece1D:
 		if enviousValue>=enviedValue:
 			return 0
 		else:
-			return (enviedValue-enviousValue)/enviousValue
+			return (enviedValue/enviousValue)-1
 
 	def getLargestEnvy(self, otherPieces):
 		"""
@@ -56,5 +60,4 @@ class AllocatedPiece1D:
 		"""
 		def getEnvy(piece):
 			return self.getEnvy(piece)
-		maxEnviedPiece = max(otherPieces, getEnvy)
-		return self.getEnvy(maxEnviedPiece)
+		return max(list(map(lambda otherPiece: getEnvy(otherPiece), otherPieces)))
