@@ -9,7 +9,7 @@ from utils.Types import CutDirection
 from utils.ValueFunction1D import ValueFunction1D
 
 
-class CakeData2D:
+class ValueFunction2D:
     """/**
 	* A class that represents a 2-dimensional piecewise-constant cake.
 	*
@@ -30,7 +30,7 @@ class CakeData2D:
 
     def __repr__(self):
         """
-        >>> a = CakeData2D([[1,2,3,4],[1,2,3,4]],2,4)
+        >>> a = ValueFunction2D([[1,2,3,4],[1,2,3,4]],2,4)
 		>>> a
 		[[1 2 3 4],[1 2 3 4]]
 		>>> str(a)
@@ -38,9 +38,15 @@ class CakeData2D:
 		"""
         return str(self.values)
 
+    def getHorizontalDim(self):
+        return self.rows
+
+    def getVerticalDim(self):
+        return self.cols
+
     def calculateAccuSums(self):
         """
-        >>> a = CakeData2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
+        >>> a = ValueFunction2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
         >>> b = a.calculateAccuSums()
         >>> b
         [[1 2 3 4],[2 4 6 8],[3 6 8 12]]
@@ -72,7 +78,7 @@ class CakeData2D:
     def fromJson(filename):
         with open(filename) as data_file:
             values = json.load(data_file)
-        return CakeData2D(values,len(values),len(values[0]))
+        return ValueFunction2D(values, len(values), len(values[0]))
 
     def getAs1DHorizontal(self):
         return ValueFunction1D(np.array(self.values).sum(axis=0).tolist())
@@ -82,14 +88,14 @@ class CakeData2D:
 
     def getAs1D(self, direction):
         switcher = {
-            CutDirection.Horizontal.value: self.getAs1DHorizontal,
-            CutDirection.Vertical.value: self.getAs1DVertical,
+            CutDirection.Horizontal: self.getAs1DHorizontal,
+            CutDirection.Vertical: self.getAs1DVertical,
         }
 
         def errorFunc():
             raise ValueError("invalid direction: "+str(direction))
 
-        getter = switcher.get(direction.value, errorFunc)
+        getter = switcher.get(direction, errorFunc)
 
         return getter()
 
@@ -101,7 +107,7 @@ class CakeData2D:
 		* @param iTo a float index.
 		* @return the sum of the columns between the indices (as float).
 		*
-		>>> a = CakeData2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
+		>>> a = ValueFunction2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
 		>>> a.sumv(1,3)
 		6.0
 		>>> a.sumv(1.5,3)
@@ -114,7 +120,7 @@ class CakeData2D:
         if iTo <= iFrom:
             return 0.0  # special case not covered by loop below
 
-        return self.sum(0,iFrom,self.rows,iTo)
+        return self.sum([0,iFrom,self.rows,iTo])
 
     def sumh(self, iFrom, iTo):
         """ /**
@@ -124,7 +130,7 @@ class CakeData2D:
 		* @param iTo a float index.
 		* @return the sum of the rows between the indices (as float).
 		*
-		>>> a = CakeData2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
+		>>> a = ValueFunction2D([[1,1,1,1],[1,1,1,1],[1,1,1,1]],3,4)
 		>>> a.sumh(1,1)
 		0.0
 		>>> a.sumh(1.5,3)
@@ -137,7 +143,7 @@ class CakeData2D:
         if iTo <= iFrom:
             return 0.0  # special case not covered by loop below
 
-        return self.sum(iFrom, 0, iTo, self.cols)
+        return self.sum([iFrom, 0, iTo, self.cols])
 
     def sumRowRange(self, iRow, iFromCol, iToCol):
         """ /**
@@ -148,7 +154,7 @@ class CakeData2D:
         * @param iTo a integer index.
         * @return the sum of the values in row iRow between the indices.
         *
-        >>> a = CakeData2D([[1,2,3,4],[1,1,1,1],[0,0,0,1]],3,4)
+        >>> a = ValueFunction2D([[1,2,3,4],[1,1,1,1],[0,0,0,1]],3,4)
         >>> a.sumRowRange(0,0,1)
         1.0
         >>> a.sumRowRange(1,1,3)
@@ -186,7 +192,7 @@ class CakeData2D:
         * @param iTo a integer index.
         * @return the sum of the values in column iCol between the indices.
         *
-        >>> a = CakeData2D([[1,2,3,4],[1,1,1,1],[0,0,0,1]],3,4)
+        >>> a = ValueFunction2D([[1,2,3,4],[1,1,1,1],[0,0,0,1]],3,4)
         >>> a.sumColRange(0,0,3)
         2.0
         >>> a.sumColRange(1,0,2)
@@ -215,29 +221,18 @@ class CakeData2D:
 
         return sum
 
-    def sum(self, iFromRow, iFromCol, iToRow, iToCol):
+    def sum(self, cutsLocations):
         """ /**
-        * Given iFromRow, iFromCol, iToRow, iToCol, calculate sum
-        * @param iFromRow a float index.
-        * @param iFromCol a float index.
-        * @param iToRow a float index.
-        * @param iToCol a float index.
+        * Given cuts locations, calculate sum
+        * @param cutsLocations a four float index list.
         * @return the sum of the array between the indices (as float).
         *
-        >>> a = ValueFunction1D([1,2,3,4])
-        >>> a.sum(1,3)
-        5.0
-        >>> a.sum(1.5,3)
-        4.0
-        >>> a.sum(1,3.25)
-        6.0
-        >>> a.sum(1.5,3.25)
-        5.0
-        >>> a.sum(3,3)
-        0.01
-        >>>
-        *
         */ """
+        iFromRow = cutsLocations[0]
+        iFromCol = cutsLocations[1]
+        iToRow = cutsLocations[2]
+        iToCol = cutsLocations[3]
+
         if iFromRow < 0 or iFromRow > self.rows:
             raise ValueError("iFromRow out of range: " + str(iFromRow))
         if iFromCol < 0 or iFromCol > self.cols:
@@ -271,6 +266,19 @@ class CakeData2D:
         sum += (self.values[toRowCeiling-1][toRowCeiling-1] * toColCeilingRemovedFraction * toRowCeilingRemovedFraction)
 
         return sum
+
+    def invSum(self, iFrom, sum, direction):
+        switcher = {
+            CutDirection.Horizontal: self.invSumh,
+            CutDirection.Vertical: self.invSumv,
+        }
+
+        def errorFunc():
+            raise ValueError("invalid direction: "+str(direction))
+
+        sumFunc = switcher.get(direction, errorFunc)
+
+        return sumFunc(iFrom, sum)
 
     def invSumh(self, iFrom, sum):
         return self.invDirectionalSum(iFrom,sum,self.rows,self.sumh)
@@ -375,7 +383,7 @@ class CakeData2D:
 		>>> a.getValueOfEntireCake()
 		10.0
 		"""
-        return self.sum(0, 0, self.rows, self.cols)
+        return self.sum([0, 0, self.rows, self.cols])
 
     def getRelativeValueh(self, iFrom, iTo):
         return self.valueh(iFrom, iTo) / self.getValueOfEntireCake()
@@ -420,7 +428,7 @@ print("class CakeData2D defined.")  # for debug in sage notebook
 if __name__ == '__main__':
     import doctest
 
-    cake = CakeData2D([[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]],5,7)
+    cake = ValueFunction2D([[1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1]], 5, 7)
     print(cake)
     print(cake.accuSums)
     print(cake.sumRowRange(2,0,7))
@@ -428,10 +436,10 @@ if __name__ == '__main__':
     print(cake.sumColRange(2,1,5))
     print(cake.sumColRange(2,1,2))
     print(cake.sumColRange(2,0,5))
-    print("cake.sum(2.5,1,4.5,4)",cake.sum(2.5,1,4.5,4))
+    print("cake.sum(2.5,1,4.5,4)",cake.sum([2.5,1,4.5,4]))
     print(cake.sumh(2,4))
     print(cake.sumv(2,5))
-    print("cake.sum(0,0,5,7)",cake.sum(0,0,5,7))
+    print("cake.sum(0,0,5,7)",cake.sum([0,0,5,7]))
     print(cake.invSumh(2,cake.sumh(2,4)))
     print(cake.invSumh(0,cake.sumh(0,3)))
     print(cake.invSumh(1,cake.sumh(1,5)))
@@ -439,7 +447,7 @@ if __name__ == '__main__':
     print(cake.invSumv(0,cake.sumv(0,4)))
     print(cake.invSumv(1,cake.sumv(1,7)))
 
-    a = CakeData2D([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 3, 4)
+    a = ValueFunction2D([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 3, 4)
     print(a.sumv(1, 3))
     print(a.sumv(1.5,3))
     print(a.sumv(0, 2.5))
@@ -447,7 +455,7 @@ if __name__ == '__main__':
     print(a.sumh(1.5, 3))
     print(a.sumh(0, 2.5))
 
-    a = CakeData2D([[1, 2, 3, 4], [1, 1, 1, 1], [0, 0, 0, 1]], 3, 4)
+    a = ValueFunction2D([[1, 2, 3, 4], [1, 1, 1, 1], [0, 0, 0, 1]], 3, 4)
     print(a.sumRowRange(0, 0, 1))
     print(a.sumRowRange(1, 1, 3))
     print(a.sumRowRange(2, 0, 4))

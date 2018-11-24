@@ -37,27 +37,29 @@ class ValueFunction1D:
 			values = json.load(data_file)
 		return ValueFunction1D(values)
 
-	def sum(self, iFrom, iTo):
+	def sum(self, cutsLocations):
 		""" /**
-		* Given iFrom and iTo, calculate sum
-		* @param iFrom a float index.
-		* @param iTo a float index.
+		* Given cuts locations, calculate sum
+		* @param cutsLocations a list of two float indices.
 		* @return the sum of the array between the indices (as float).
 		*
 		>>> a = ValueFunction1D([1,2,3,4])
-		>>> a.sum(1,3)
+		>>> a.sum([1,3])
 		5.0
-		>>> a.sum(1.5,3)
+		>>> a.sum([1.5,3])
 		4.0
-		>>> a.sum(1,3.25)
+		>>> a.sum([1,3.25])
 		6.0
-		>>> a.sum(1.5,3.25)
+		>>> a.sum([1.5,3.25])
 		5.0
-		>>> a.sum(3,3)
+		>>> a.sum([3,3])
 		0.0
 		>>>
 		*
 		*/ """
+		iFrom = cutsLocations[0]
+		iTo = cutsLocations[1]
+
 		if iFrom<0 or iFrom>self.length:
 			raise ValueError("iFrom out of range: "+str(iFrom))
 		if iTo<0 or iTo>self.length:
@@ -135,7 +137,7 @@ class ValueFunction1D:
 		 * @param to where the piece ends.
 		 * @return the piece value.
 		*/"""
-		return self.sum(iFrom, iTo)
+		return self.sum([iFrom, iTo])
 
 	@lru_cache()
 	def getValueOfEntireCake(self):
@@ -144,7 +146,7 @@ class ValueFunction1D:
 		>>> a.getValueOfEntireCake()
 		10.0
 		"""
-		return self.sum(0, self.length)
+		return self.sum([0, self.length])
 
 	def getRelativeValue(self, iFrom, iTo):
 		return self.value(iFrom,iTo) / self.getValueOfEntireCake()

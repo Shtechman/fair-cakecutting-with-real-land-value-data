@@ -12,7 +12,7 @@
 from functools import lru_cache
 from utils.ValueFunction1D import ValueFunction1D
 from utils.Agent import Agent
-from utils.AllocatedPiece1D import AllocatedPiece1D
+from utils.AllocatedPiece import AllocatedPiece1D
 from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
 
 class AlgorithmAssessor1D:

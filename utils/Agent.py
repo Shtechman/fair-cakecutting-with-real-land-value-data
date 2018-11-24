@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+
 class Agent:
 	"""
 	an agent has a name and a value-function.
@@ -11,16 +12,18 @@ class Agent:
 		self.valueFunction = valueFunction
 
 	@lru_cache()
-	def evalQuery(self, iFrom, iTo):
-		return self.valueFunction.sum(iFrom, iTo)
+	def evalQuery(self, cutsLocations):
+		return self.valueFunction.sum(cutsLocations)
 
 	@lru_cache()
-	def markQuery(self, iFrom, value):
-		return self.valueFunction.invSum(iFrom, value)
+	def markQuery(self, iFrom, value, direction=None):
+		if direction is None:
+			return self.valueFunction.invSum(iFrom, value)
+		return self.valueFunction.invSum(iFrom, value, direction)
 
 	@lru_cache()
 	def evaluationOfPiece(self, piece):
-		return self.evalQuery(piece.iFrom, piece.iTo)
+		return self.evalQuery(piece.getCuts())
 
 	@lru_cache()
 	def evaluationOfCake(self):

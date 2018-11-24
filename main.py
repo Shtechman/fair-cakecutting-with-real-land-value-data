@@ -7,7 +7,7 @@
 
 import numpy as np
 
-from utils.cakeData2D import CakeData2D
+from utils.ValueFunction2D import ValueFunction2D
 from utils.Plotter import Plotter
 from utils.ValueFunction1D import ValueFunction1D
 from utils.Types import AggregationType, AlgType, CutDirection
@@ -24,7 +24,7 @@ VER_1D_DATA_FILE_NAME = 'data/‏‏newzealand_forests_1DVer.txt'
 VER_1D_DATA_FILE_NAME_ORIG = 'data/newzealand_forests_npv_4q.1d.json'
 MAP_2D_DATA_FILE_NAME = 'data/‏‏newzealand_forests_2D.txt'
 
-newZealand2D = CakeData2D.fromJson(MAP_2D_DATA_FILE_NAME)
+newZealand2D = ValueFunction2D.fromJson(MAP_2D_DATA_FILE_NAME)
 mapValues = newZealand2D
 plotter = Plotter()
 
