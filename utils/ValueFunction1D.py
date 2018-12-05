@@ -4,6 +4,7 @@ import numpy as np
 from functools import lru_cache
 import json
 import random
+import pickle
 
 class ValueFunction1D:
 	"""/**
@@ -39,27 +40,27 @@ class ValueFunction1D:
 
 	def sum(self, cutsLocations):
 		""" /**
-		* Given cuts locations, calculate sum
-		* @param cutsLocations a list of two float indices.
+		* Given iFrom and iTo, calculate sum
+		* @param iFrom a float index.
+		* @param iTo a float index.
 		* @return the sum of the array between the indices (as float).
 		*
 		>>> a = ValueFunction1D([1,2,3,4])
-		>>> a.sum([1,3])
+		>>> a.sum(1,3)
 		5.0
-		>>> a.sum([1.5,3])
+		>>> a.sum(1.5,3)
 		4.0
-		>>> a.sum([1,3.25])
+		>>> a.sum(1,3.25)
 		6.0
-		>>> a.sum([1.5,3.25])
+		>>> a.sum(1.5,3.25)
 		5.0
-		>>> a.sum([3,3])
+		>>> a.sum(3,3)
 		0.0
 		>>>
 		*
 		*/ """
 		iFrom = cutsLocations[0]
 		iTo = cutsLocations[1]
-
 		if iFrom<0 or iFrom>self.length:
 			raise ValueError("iFrom out of range: "+str(iFrom))
 		if iTo<0 or iTo>self.length:
@@ -137,7 +138,7 @@ class ValueFunction1D:
 		 * @param to where the piece ends.
 		 * @return the piece value.
 		*/"""
-		return self.sum([iFrom, iTo])
+		return self.sum(iFrom, iTo)
 
 	@lru_cache()
 	def getValueOfEntireCake(self):
@@ -146,7 +147,7 @@ class ValueFunction1D:
 		>>> a.getValueOfEntireCake()
 		10.0
 		"""
-		return self.sum([0, self.length])
+		return self.sum(0, self.length)
 
 	def getRelativeValue(self, iFrom, iTo):
 		return self.value(iFrom,iTo) / self.getValueOfEntireCake()
@@ -157,18 +158,16 @@ class ValueFunction1D:
 		 * @return a ValueFunction1D of the same size as self; to each value, the function adds a random noise, drawn uniformly from [-noiseRatio,noiseRatio]*value
 		 * @author Erel Segal-Halevi, Gabi Burabia
 		 */"""
-		aggregated_sum = 0
-		values = [0] * self.length
-		for i in range(self.length):
-			noise = (2*random.uniform(0, 1)-1)*noise_proportion
-			newVal = self.values[i]*(1+noise)
-			newVal = max(0, newVal)
-			aggregated_sum += newVal
-			values[i] = newVal
-		if aggregated_sum > 0 and normalized_sum is not None and normalized_sum > 0:
-			normalization_factor = normalized_sum / aggregated_sum
-			for i in range(len(values)):
-				values[i] *= normalization_factor
+
+		neg_noise_proportion = max(-1, -noise_proportion)  # done to ensure noisy outcome value is not negative
+		values = [self.values[i]*(1+random.uniform(neg_noise_proportion, noise_proportion)) for i in range(self.length)]
+
+		if normalized_sum is not None and normalized_sum > 0:
+			aggregated_sum = sum(values)
+			if aggregated_sum > 0:
+				normalization_factor = normalized_sum / aggregated_sum
+				for i in range(len(values)):
+					values[i] *= normalization_factor
 		return ValueFunction1D(values)
 
 	def noisyValuesArray(self, noise_proportion, normalized_sum, num_of_agents):

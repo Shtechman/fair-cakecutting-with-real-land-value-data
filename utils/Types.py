@@ -16,3 +16,9 @@ class AlgType(Enum):
 class CutDirection(Enum):
     Horizontal = 1,
     Vertical = 2
+
+class CutPattern(Enum):
+    Hor = 1,
+    Ver = 2,
+    HorVer = 3,
+    VerHor = 4

@@ -2,71 +2,10 @@
 
 from functools import lru_cache
 
-class AllocatedPiece1D:
-	"""
-	A class representing a piece allocated to an agent on a 1-dimensional cake.
-
-	@author Erel Segal-Halevi
-	@since 2016-11
-	"""
-
-	def __init__(self, agent, iFrom=None, iTo=None):
-		""" /**
-		 *  Initialize a 1-dimensional allocated piece based on a value function.
-		 *  @param agent an Agent.
-		 *  @param iFrom (float) start of allocation.
-		 *  @param iTo (float) end of allocation.
-		 */ """
-		if iFrom is None: iFrom = 0
-		if iTo is None:   iTo = agent.valueFunction.length
-
-		self.agent = agent
-		self.iFrom = iFrom
-		self.iTo = iTo
-
-	def __repr__(self):
-		return "%s receives [%0.2f,%0.2f]" % (self.agent.name, self.iFrom, self.iTo)
-
-	def getCuts(self):
-		return self.iFrom, self.iTo
-
-	def getValue(self):
-		"""
-		The current agent evaluates his own piece.
-		"""
-		return self.agent.evaluationOfPiece(self)
-
-	def getRelativeValue(self):
-		"""
-		The current agent evaluates his own piece relative to the entire cake.
-		"""
-		a = self.agent.evaluationOfPiece(self)
-		b = self.agent.evaluationOfCake()
-		c = a/b
-
-		return c
-
-	def getEnvy(self, otherPiece):
-		"""
-		The current agent reports his relative envy of the other agent's piece.
-		"""
-		enviousValue = self.agent.evaluationOfPiece(self)
-		enviedValue  = self.agent.evaluationOfPiece(otherPiece);
-		if enviousValue>=enviedValue:
-			return 0
-		else:
-			return (enviedValue/enviousValue)-1
-
-	def getLargestEnvy(self, otherPieces):
-		"""
-		The current agent reports his largest relative envy of another agent's piece.
-		"""
-		def getEnvy(piece):
-			return self.getEnvy(piece)
-		return max(list(map(lambda otherPiece: getEnvy(otherPiece), otherPieces)))
+from utils.Types import CutDirection
 
 
-class AllocatedPiece2D:
+class AllocatedPiece:
 	"""
 	A class representing a piece allocated to an agent on a 2-dimensional cake.
 
@@ -74,31 +13,81 @@ class AllocatedPiece2D:
 	@since 2018-11
 	"""
 
-	def __init__(self, agent, iHorFrom=None, iVerFrom=None, iHorTo=None, iVerTo=None):
+	def __init__(self, agent, iFromRow=None, iFromCol=None, iToRow=None, iToCol=None):
 		""" /**
-		 *  Initialize a 1-dimensional allocated piece based on a value function.
+		 *  Initialize a 2-dimensional allocated piece based on a value function.
 		 *  @param agent an Agent.
-		 *  @param iHorFrom (float) start of Horizontal allocation.
-		 *  @param iVerFrom (float) start of Vertical allocation.
-		 *  @param iHorTo (float) end of Horizontal allocation.
-		 *  @param iVerTo (float) end of Vertical allocation.
+		 *  @param iFromRow float location of the start vertical cut
+		 *  @param iFromCol float location of the start horizontal cut
+		 *  @param iToRow float location of the end vertical cut
+		 *  @param iToCol float location of the end horizontal cut
 		 */ """
-		if iHorFrom is None: iHorFrom = 0
-		if iHorTo is None:   iHorTo = agent.valueFunction.getHorizontalDim()
-		if iVerFrom is None: iVerFrom = 0
-		if iVerTo is None:   iVerTo = agent.valueFunction.getVerticalDim()
+		if iFromRow is None: iFromRow = 0
+		if iFromCol is None: iFromCol = 0
+		if iToRow is None:   iToRow = agent.valueMapRows
+		if iToCol is None:   iToCol = agent.valueMapCols
 
 		self.agent = agent
-		self.iHorFrom = iHorFrom
-		self.iHorTo = iHorTo
-		self.iVerFrom = iVerFrom
-		self.iVerTo = iVerTo
+		self.iFromRow = iFromRow
+		self.iFromCol = iFromCol
+		self.iToRow = iToRow
+		self.iToCol = iToCol
 
 	def __repr__(self):
-		return "%s receives [%0.2f,%0.2f,%0.2f,%0.2f]" % (self.agent.name, self.iHorFrom, self.iVerFrom, self.iHorTo, self.iVerTo)
+		return "%s receives [%0.2f,%0.2f,%0.2f,%0.2f]" % (self.agent.name, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol)
+
+	def subCut(self, iDirFrom, iDirTo, direction):
+		switcher = {
+			CutDirection.Horizontal: (iDirFrom, self.iFromCol, iDirTo, self.iToCol),
+			CutDirection.Vertical: (self.iFromRow, iDirFrom, self.iToRow, iDirTo)
+		}
+
+		ihf, ivf, iht, ivt = switcher.get(direction, None)
+
+		return AllocatedPiece(self.agent, ihf, ivf, iht, ivt)
+
+	def getAgent(self):
+		return self.agent
+
+	def getOppositeDirectionalRange(self, direction):
+		switcher = {
+			CutDirection.Horizontal: (self.iFromCol, self.iToCol),
+			CutDirection.Vertical: (self.iFromRow, self.iToRow)
+		}
+
+		return switcher.get(direction, None)
+
+	def getDirectionaliFrom(self, direction):
+		switcher = {
+			CutDirection.Horizontal: self.iFromRow,
+			CutDirection.Vertical: self.iFromCol,
+		}
+
+		return switcher.get(direction, None)
+
+	def getDirectionaliTo(self, direction):
+		switcher = {
+			CutDirection.Horizontal: self.iToRow,
+			CutDirection.Vertical: self.iToCol,
+		}
+
+		return switcher.get(direction, None)
+
+
+	def getIFromCol(self):
+		return self.iFromCol
+
+	def getIToCol(self):
+		return self.iToCol
+
+	def getIFromRow(self):
+		return self.iFromRow
+
+	def getIToRow(self):
+		return self.iToRow
 
 	def getCuts(self):
-		return self.iHorFrom, self.iVerFrom, self.iHorTo, self.iVerTo
+		return self.iFromRow, self.iFromCol, self.iToRow, self.iToCol
 
 	def getValue(self):
 		"""
@@ -110,22 +99,18 @@ class AllocatedPiece2D:
 		"""
 		The current agent evaluates his own piece relative to the entire cake.
 		"""
-		a = self.agent.evaluationOfPiece(self)
-		b = self.agent.evaluationOfCake()
-		c = a/b
-
-		return c
+		return self.agent.evaluationOfPiece(self) / self.agent.evaluationOfCake()
 
 	def getEnvy(self, otherPiece):
 		"""
 		The current agent reports his relative envy of the other agent's piece.
 		"""
 		enviousValue = self.agent.evaluationOfPiece(self)
-		enviedValue  = self.agent.evaluationOfPiece(otherPiece);
-		if enviousValue>=enviedValue:
+		enviedValue  = self.agent.evaluationOfPiece(otherPiece)
+		if enviousValue >= enviedValue:
 			return 0
 		else:
-			return (enviedValue/enviousValue)-1
+			return (enviedValue / enviousValue)-1
 
 	def getLargestEnvy(self, otherPieces):
 		"""
@@ -134,3 +119,89 @@ class AllocatedPiece2D:
 		def getEnvy(piece):
 			return self.getEnvy(piece)
 		return max(list(map(lambda otherPiece: getEnvy(otherPiece), otherPieces)))
+
+	@lru_cache()
+	def markQuery(self, value, cutDirection):
+		switcher = {
+			CutDirection.Horizontal: self.markQueryHorizontal,
+			CutDirection.Vertical: self.markQueryVertical,
+		}
+
+		def errorFunc():
+			raise ValueError("invalid direction: " + str(cutDirection))
+
+		markQueryFunc = switcher.get(cutDirection, errorFunc)
+		return markQueryFunc(value)
+
+	@lru_cache()
+	def markQueryHorizontal(self, value):
+		return self.agent.markQuery(self.iFromRow, self.iFromCol, self.iToCol, value, CutDirection.Horizontal)
+
+	@lru_cache()
+	def markQueryVertical(self, value):
+		return self.agent.markQuery(self.iFromCol, self.iFromRow, self.iToRow, value, CutDirection.Vertical)
+
+class AllocatedPiece1D:
+	"""
+	A class representing a piece allocated to an agent on a 1-dimensional cake.
+
+	@author Itay Shtechman
+	@since 2018-11
+	"""
+
+	def __init__(self, agent, iFromCol=None, iToCol=None):
+		""" /**
+		 *  Initialize a 1-dimensional allocated piece based on a value function.
+		 *  @param agent an Agent.
+		 *  @param iFromCol float location of the start horizontal cut
+		 *  @param iToCol float location of the end horizontal cut
+		 */ """
+		if iFromCol is None:
+			iFromCol = 0
+		if iToCol is None:
+			iToCol = agent.valueMapCols
+
+		self.piece2d = AllocatedPiece(agent,0,iFromCol,agent.valueMapRows,iToCol)
+
+	def __repr__(self):
+		return "%s receives [%0.2f,%0.2f]" % (self.agent.name, self.piece2d.iFromCol, self.piece2d.iToCol)
+
+	def getAgent(self):
+		return self.piece2d.getAgent()
+
+	def getIFrom(self):
+		return self.piece2d.getDirectionaliFrom(CutDirection.Vertical)
+
+	def getITo(self):
+		return self.piece2d.getDirectionaliTo(CutDirection.Vertical)
+
+	def getCuts(self):
+		return self.piece2d.getCuts()
+
+	def getValue(self):
+		"""
+		The current agent evaluates his own piece.
+		"""
+		return self.piece2d.getValue()
+
+	def getRelativeValue(self):
+		"""
+		The current agent evaluates his own piece relative to the entire cake.
+		"""
+		return self.piece2d.getRelativeValue()
+
+	def getEnvy(self, otherPiece):
+		"""
+		The current agent reports his relative envy of the other agent's piece.
+		"""
+		return self.piece2d.getEnvy(otherPiece)
+
+	def getLargestEnvy(self, otherPieces):
+		"""
+		The current agent reports his largest relative envy of another agent's piece.
+		"""
+		return self.piece2d.getLargestEnvy(otherPieces)
+
+	@lru_cache()
+	def markQuery(self, value, cutDirection):
+		return self.piece2d.markQuery(value, cutDirection)
