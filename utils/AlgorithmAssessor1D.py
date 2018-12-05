@@ -12,7 +12,7 @@
 from functools import lru_cache
 from utils.ValueFunction1D import ValueFunction1D
 from utils.Agent import Agent
-from utils.AllocatedPiece1D import AllocatedPiece1D
+from utils.AllocatedPiece import AllocatedPiece1D
 from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
 
 class AlgorithmAssessor1D:
@@ -24,7 +24,7 @@ class AlgorithmAssessor1D:
 		self.assessorValuationFunction = assessorValuationFunction
 		self.assessorAlgorithm = assessorAlgorithm
 
-	def run(self, agents):
+	def run(self, agents, cutDirection):
 		"""
 		Calculate a proportional cake-division based on assessorValuationFunction.
 		@param agents - a list of n Agents, each with a value-function on the same cake.
@@ -43,10 +43,10 @@ class AlgorithmAssessor1D:
 		>>> alg.run([Alice,Bob,Carl])
 		[Alice receives [0.00,2.33], Bob receives [2.33,3.33], Carl receives [3.33,4.00]]
 		"""
-		identicalPartitionWithIdenticalAgents = self._runAssessorAlgorithm(len(agents))
+		identicalPartitionWithIdenticalAgents = self._runAssessorAlgorithm(len(agents), cutDirection)
 		# Create virtual agents with the assessor's value function
 		identicalPartitionWithDifferentAgents = list(map(
-			lambda pair: AllocatedPiece1D(pair[0], pair[1].iFrom, pair[1].iTo),
+			lambda pair: AllocatedPiece1D(pair[0], pair[1].getIFrom(), pair[1].getITo()),
 			zip(agents, identicalPartitionWithIdenticalAgents)
 			))
 		return identicalPartitionWithDifferentAgents
@@ -56,10 +56,10 @@ class AlgorithmAssessor1D:
 		return "Assessor"
 
 	@lru_cache()
-	def _runAssessorAlgorithm(self, numOfAgents):
+	def _runAssessorAlgorithm(self, numOfAgents, cutDirection):
 		agentsWithAssessorValueFunction = map(Agent, self.assessorValuationFunction.noisyValuesArray(0, None, numOfAgents));
 		# Run the assessor's division algorithm on the virtual agents:
-		return self.assessorAlgorithm.run(agentsWithAssessorValueFunction)
+		return self.assessorAlgorithm.run(agentsWithAssessorValueFunction, cutDirection)
 
 if __name__ == '__main__':
 

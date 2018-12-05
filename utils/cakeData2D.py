@@ -55,7 +55,7 @@ class CakeData2D:
             if col == 0:
                 accuSums[0][0] = self.values[0][0]
             else:
-                accuSums[0][col] = self.values[0][col] + accuSums[0][col-1]
+                accuSums[0][col] = self.values[0][col] + accuSums[0][col - 1]
 
         for row in range(self.rows):
             if row == 0:
@@ -72,7 +72,7 @@ class CakeData2D:
     def fromJson(filename):
         with open(filename) as data_file:
             values = json.load(data_file)
-        return CakeData2D(values,len(values),len(values[0]))
+        return CakeData2D(values, len(values), len(values[0]))
 
     def getAs1DHorizontal(self):
         return ValueFunction1D(np.array(self.values).sum(axis=0).tolist())
@@ -87,7 +87,7 @@ class CakeData2D:
         }
 
         def errorFunc():
-            raise ValueError("invalid direction: "+str(direction))
+            raise ValueError("invalid direction: " + str(direction))
 
         getter = switcher.get(direction.value, errorFunc)
 
@@ -114,7 +114,7 @@ class CakeData2D:
         if iTo <= iFrom:
             return 0.0  # special case not covered by loop below
 
-        return self.sum(0,iFrom,self.rows,iTo)
+        return self.sum(0, iFrom, self.rows, iTo)
 
     def sumh(self, iFrom, iTo):
         """ /**
@@ -167,13 +167,13 @@ class CakeData2D:
             return 0.0  # special case not covered by loop below
 
         sum = 0.0;
-        sum += self.accuSums[iRow][iToCol-1]
+        sum += self.accuSums[iRow][iToCol - 1]
         if iRow > 0:
-            sum -= self.accuSums[iRow-1][iToCol-1]
+            sum -= self.accuSums[iRow - 1][iToCol - 1]
         if iFromCol > 0:
             sum -= self.accuSums[iRow][iFromCol - 1]
         if iFromCol > 0 and iRow > 0:
-            sum += self.accuSums[iRow-1][iFromCol - 1]
+            sum += self.accuSums[iRow - 1][iFromCol - 1]
 
         return sum
 
@@ -205,9 +205,9 @@ class CakeData2D:
             return 0.0  # special case not covered by loop below
 
         sum = 0.0;
-        sum += self.accuSums[iToRow-1][iCol]
+        sum += self.accuSums[iToRow - 1][iCol]
         if iCol > 0:
-            sum -= self.accuSums[iToRow-1][iCol - 1]
+            sum -= self.accuSums[iToRow - 1][iCol - 1]
         if iFromRow > 0:
             sum -= self.accuSums[iFromRow - 1][iCol]
         if iCol > 0 and iFromRow > 0:
@@ -215,7 +215,7 @@ class CakeData2D:
 
         return sum
 
-    def sum(self, iFromRow, iFromCol, iToRow, iToCol):
+    def sum(self, cutsLocations):
         """ /**
         * Given iFromRow, iFromCol, iToRow, iToCol, calculate sum
         * @param iFromRow a float index.
@@ -238,6 +238,10 @@ class CakeData2D:
         >>>
         *
         */ """
+        iFromRow = cutsLocations[0]
+        iFromCol = cutsLocations[1]
+        iToRow = cutsLocations[2]
+        iToCol = cutsLocations[3]
         if iFromRow < 0 or iFromRow > self.rows:
             raise ValueError("iFromRow out of range: " + str(iFromRow))
         if iFromCol < 0 or iFromCol > self.cols:
@@ -259,24 +263,25 @@ class CakeData2D:
         toColCeilingRemovedFraction = (toColCeiling - iToCol)
 
         sum = 0.0;
-        sum += self.accuSums[toRowCeiling-1][toColCeiling-1]-self.accuSums[toRowCeiling-1][fromColFloor] - \
-               self.accuSums[fromRowFloor][toColCeiling-1]+self.accuSums[fromRowFloor][fromColFloor]
-        sum += (self.sumRowRange(fromRowFloor, fromColFloor+1, toColCeiling) * fromRowFraction)
-        sum += (self.sumColRange(fromColFloor, fromRowFloor+1, toRowCeiling) * fromColFraction)
+        sum += self.accuSums[toRowCeiling - 1][toColCeiling - 1] - self.accuSums[toRowCeiling - 1][fromColFloor] - \
+               self.accuSums[fromRowFloor][toColCeiling - 1] + self.accuSums[fromRowFloor][fromColFloor]
+        sum += (self.sumRowRange(fromRowFloor, fromColFloor + 1, toColCeiling) * fromRowFraction)
+        sum += (self.sumColRange(fromColFloor, fromRowFloor + 1, toRowCeiling) * fromColFraction)
         sum += (self.values[fromRowFloor][fromColFloor] * fromColFraction * fromRowFraction)
-        sum -= (self.sumRowRange(toRowCeiling-1, fromColFloor, toColCeiling-1) * toRowCeilingRemovedFraction)
-        sum -= (self.sumColRange(toColCeiling-1, fromRowFloor, toRowCeiling-1) * toColCeilingRemovedFraction)
-        sum -= (self.values[toRowCeiling-1][toRowCeiling-1] * toRowCeilingRemovedFraction)
-        sum -= (self.values[toRowCeiling-1][toRowCeiling-1] * toColCeilingRemovedFraction)
-        sum += (self.values[toRowCeiling-1][toRowCeiling-1] * toColCeilingRemovedFraction * toRowCeilingRemovedFraction)
+        sum -= (self.sumRowRange(toRowCeiling - 1, fromColFloor, toColCeiling - 1) * toRowCeilingRemovedFraction)
+        sum -= (self.sumColRange(toColCeiling - 1, fromRowFloor, toRowCeiling - 1) * toColCeilingRemovedFraction)
+        sum -= (self.values[toRowCeiling - 1][toRowCeiling - 1] * toRowCeilingRemovedFraction)
+        sum -= (self.values[toRowCeiling - 1][toRowCeiling - 1] * toColCeilingRemovedFraction)
+        sum += (self.values[toRowCeiling - 1][
+                    toRowCeiling - 1] * toColCeilingRemovedFraction * toRowCeilingRemovedFraction)
 
         return sum
 
     def invSumh(self, iFrom, sum):
-        return self.invDirectionalSum(iFrom,sum,self.rows,self.sumh)
+        return self.invDirectionalSum(iFrom, sum, self.rows, self.sumh)
 
     def invSumv(self, iFrom, sum):
-        return self.invDirectionalSum(iFrom,sum,self.cols,self.sumv)
+        return self.invDirectionalSum(iFrom, sum, self.cols, self.sumv)
 
     def invDirectionalSum(self, iFrom, sum, idxRange, sumFunc):
         """ /**
@@ -390,21 +395,17 @@ class CakeData2D:
         """/**
 		 * @param noise_proportion a number in [0,1]
 		 * @return a ValueFunction1D of the same size as self; to each value, the function adds a random noise, drawn uniformly from [-noiseRatio,noiseRatio]*value
-		 * @author Erel Segal-Halevi, Gabi Burabia
+		 * @author Erel Segal-Halevi, Gabi Burabia, Itay Shtechman
 		 */"""
-        aggregated_sum = 0
-        values = [[0] * self.cols for _ in range(self.rows)]
-        for row in range(self.rows):
-            for col in range(self.cols):
-                noise = (2 * random.uniform(0,1) - 1) * noise_proportion
-                newVal = self.values[row][col] * (1 + noise)
-                newVal = max(0, newVal)
-                aggregated_sum += newVal
-                values[row][col] = newVal
-        if aggregated_sum > 0 and normalized_sum is not None and normalized_sum > 0:
-            normalization_factor = normalized_sum / aggregated_sum
-            values = [values[r][c]*normalization_factor for r in self.rows for c in self.cols]
-        return cake(values,self.rows,self.cols)
+        neg_noise_proportion = max(-1, -noise_proportion)  # done to ensure noisy outcome value is not negative
+        values = [[self.values[r][c]*(1+random.uniform(neg_noise_proportion, noise_proportion)) for c in range(self.cols)]
+                  for r in range(self.rows)]
+        if normalized_sum is not None and normalized_sum > 0:
+            aggregated_sum = sum([sum(values[r]) for r in range(self.rows)])
+            if aggregated_sum > 0:
+                normalization_factor = normalized_sum / aggregated_sum
+                values = [values[r][c] * normalization_factor for r in self.rows for c in self.cols]
+        return CakeData2D(values, self.rows, self.cols)
 
     def noisyValuesArray(self, noise_proportion, normalized_sum, num_of_agents):
         """
@@ -415,33 +416,35 @@ class CakeData2D:
             valueFunctions.append(self.noisyValues(noise_proportion, normalized_sum))
         return valueFunctions
 
+
 print("class CakeData2D defined.")  # for debug in sage notebook
 
 if __name__ == '__main__':
     import doctest
 
-    cake = CakeData2D([[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]],5,7)
+    cake = CakeData2D([[1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1, 1, 1]], 5, 7)
     print(cake)
     print(cake.accuSums)
-    print(cake.sumRowRange(2,0,7))
-    print(cake.sumRowRange(2,1,6))
-    print(cake.sumColRange(2,1,5))
-    print(cake.sumColRange(2,1,2))
-    print(cake.sumColRange(2,0,5))
-    print("cake.sum(2.5,1,4.5,4)",cake.sum(2.5,1,4.5,4))
-    print(cake.sumh(2,4))
-    print(cake.sumv(2,5))
-    print("cake.sum(0,0,5,7)",cake.sum(0,0,5,7))
-    print(cake.invSumh(2,cake.sumh(2,4)))
-    print(cake.invSumh(0,cake.sumh(0,3)))
-    print(cake.invSumh(1,cake.sumh(1,5)))
-    print(cake.invSumv(4,cake.sumv(4,6)))
-    print(cake.invSumv(0,cake.sumv(0,4)))
-    print(cake.invSumv(1,cake.sumv(1,7)))
+    print(cake.sumRowRange(2, 0, 7))
+    print(cake.sumRowRange(2, 1, 6))
+    print(cake.sumColRange(2, 1, 5))
+    print(cake.sumColRange(2, 1, 2))
+    print(cake.sumColRange(2, 0, 5))
+    print("cake.sum(2.5,1,4.5,4)", cake.sum(2.5, 1, 4.5, 4))
+    print(cake.sumh(2, 4))
+    print(cake.sumv(2, 5))
+    print("cake.sum(0,0,5,7)", cake.sum(0, 0, 5, 7))
+    print(cake.invSumh(2, cake.sumh(2, 4)))
+    print(cake.invSumh(0, cake.sumh(0, 3)))
+    print(cake.invSumh(1, cake.sumh(1, 5)))
+    print(cake.invSumv(4, cake.sumv(4, 6)))
+    print(cake.invSumv(0, cake.sumv(0, 4)))
+    print(cake.invSumv(1, cake.sumv(1, 7)))
 
     a = CakeData2D([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 3, 4)
     print(a.sumv(1, 3))
-    print(a.sumv(1.5,3))
+    print(a.sumv(1.5, 3))
     print(a.sumv(0, 2.5))
     print(a.sumh(1, 1))
     print(a.sumh(1.5, 3))
@@ -455,4 +458,5 @@ if __name__ == '__main__':
     print(a.sumColRange(0, 0, 3))
     print(a.sumColRange(1, 0, 2))
     print(a.sumColRange(2, 0, 3))
+
 # ValueFunction1D.fromJson("abc.json")

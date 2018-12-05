@@ -7,7 +7,7 @@ from utils.Types import AggregationType
 
 class Plotter:
 
-    def plotResults(self, results, algorithms, xAxisDataType, yAxisData, title, experiments):
+    def plotResults(self, results, methods, xAxisDataType, yAxisData, title, experiments):
         if xAxisDataType == AggregationType.NumberOfAgents:
             xValues = list(map(lambda result: math.log(result[xAxisDataType.name], 2), results))
             xLabel = "log of number of agents"
@@ -28,13 +28,14 @@ class Plotter:
         dataPointsShape = ['*', '*', '*', '*', '*', '*', 'o', 'o', 'o', 'o', 'o', 'o', 'x', 'x', 'x', 'x', 'x', 'x',
                            'v', 'v', 'v', 'v', 'v', 'v', '^', '^', '^', '^', '^', '^', 'D', 'D', 'D', 'D', 'D', 'D']
         idx = 0
-        for algorithm in algorithms:
-            algResults = [result for result in results if result["Algorithm"] == algorithm]
-            for dataset in yAxisData:
-                yValues = list(map(lambda result: result[dataset], algResults))
-                self.plotDataset(algorithm + "-" + dataset, fignum, dataPointsShape[idx], dataPointsColor[idx], xValues,
-                            yValues)
-                idx += 1
+        for method in methods:
+            algResults = [result for result in results if result["Method"] == method]
+            if len(algResults)>0:
+                for dataset in yAxisData:
+                    yValues = list(map(lambda result: result[dataset], algResults))
+                    self.plotDataset(method + "-" + dataset, fignum, dataPointsShape[idx], dataPointsColor[idx], xValues,
+                                yValues)
+                    idx += 1
 
         pyplot.figure(fignum)
         pyplot.ylabel("gain (or loss)")
