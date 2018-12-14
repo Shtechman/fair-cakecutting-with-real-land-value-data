@@ -73,6 +73,9 @@ class AllocatedPiece:
 
 		return switcher.get(direction, None)
 
+	def getDimensions(self):
+		return {CutDirection.Horizontal: self.iToRow - self.iFromRow,
+				CutDirection.Vertical: self.iToCol - self.iFromCol}
 
 	def getIFromCol(self):
 		return self.iFromCol

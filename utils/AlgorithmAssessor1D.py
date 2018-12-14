@@ -24,7 +24,7 @@ class AlgorithmAssessor1D:
 		self.assessorValuationFunction = assessorValuationFunction
 		self.assessorAlgorithm = assessorAlgorithm
 
-	def run(self, agents, cutDirection):
+	def run(self, agents, cut_pattern):
 		"""
 		Calculate a proportional cake-division based on assessorValuationFunction.
 		@param agents - a list of n Agents, each with a value-function on the same cake.
@@ -43,7 +43,7 @@ class AlgorithmAssessor1D:
 		>>> alg.run([Alice,Bob,Carl])
 		[Alice receives [0.00,2.33], Bob receives [2.33,3.33], Carl receives [3.33,4.00]]
 		"""
-		identicalPartitionWithIdenticalAgents = self._runAssessorAlgorithm(len(agents), cutDirection)
+		identicalPartitionWithIdenticalAgents = self._runAssessorAlgorithm(len(agents), cut_pattern)
 		# Create virtual agents with the assessor's value function
 		identicalPartitionWithDifferentAgents = list(map(
 			lambda pair: AllocatedPiece1D(pair[0], pair[1].getIFrom(), pair[1].getITo()),
@@ -56,10 +56,10 @@ class AlgorithmAssessor1D:
 		return "Assessor"
 
 	@lru_cache()
-	def _runAssessorAlgorithm(self, numOfAgents, cutDirection):
+	def _runAssessorAlgorithm(self, numOfAgents, cut_pattern):
 		agentsWithAssessorValueFunction = map(Agent, self.assessorValuationFunction.noisyValuesArray(0, None, numOfAgents));
 		# Run the assessor's division algorithm on the virtual agents:
-		return self.assessorAlgorithm.run(agentsWithAssessorValueFunction, cutDirection)
+		return self.assessorAlgorithm.run(agentsWithAssessorValueFunction, cut_pattern)
 
 if __name__ == '__main__':
 

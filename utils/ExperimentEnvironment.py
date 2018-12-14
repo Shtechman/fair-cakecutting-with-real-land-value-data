@@ -3,7 +3,7 @@ import pickle
 from utils.Agent import Agent
 from utils.AlgorithmAssessor1D import AlgorithmAssessor1D
 from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
-from utils.Types import AlgType, CutDirection, CutPattern
+from utils.Types import AlgType, CutDirection
 from utils.ValueFunction2D import CakeData2D
 
 
@@ -41,16 +41,6 @@ class ExperimentEnvironment:
 
     def getAgents(self):
         return self.agents
-
-    def getCutDirections(self):
-        switcher = {
-            CutPattern.Hor: [CutDirection.Horizontal],
-            CutPattern.Ver: [CutDirection.Vertical],
-            CutPattern.HorVer: [CutDirection.Horizontal, CutDirection.Vertical],
-            CutPattern.VerHor: [CutDirection.Vertical, CutDirection.Horizontal],
-        }
-
-        return switcher.get(self.cutPattern, None)
 
 
 if __name__ == '__main__':

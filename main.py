@@ -42,9 +42,9 @@ plotter = Plotter()
 def makeSingleExperiment(env, algType, runAssessor, iExperiment):
     print("running for %s agents, algorithm %s, using cut pattern %s" % (env.numberOfAgents, algType.name, env.cutPattern.name))
     if runAssessor:
-        partition = env.getAssessor(algType).run(env.getAgents(), env.getCutDirections())  # returns a list of AllocatedPiece
+        partition = env.getAssessor(algType).run(env.getAgents(), env.cutPattern)  # returns a list of AllocatedPiece
     else:
-        partition = env.getAlgorithm(algType).run(env.getAgents(), env.getCutDirections())  # returns a list of AllocatedPiece
+        partition = env.getAlgorithm(algType).run(env.getAgents(), env.cutPattern)  # returns a list of AllocatedPiece
 
     # print(partition)
 
@@ -72,7 +72,8 @@ def makeSingleExperiment(env, algType, runAssessor, iExperiment):
 def calculateSingleDatapoint(algType, numOfAgents, noiseProportion):
     results = []
 
-    for iExperiment in range(EXPERIMENTS_PER_CELL):
+    for iExperiment in range(1,EXPERIMENTS_PER_CELL+1):
+        print("======================= %s Agents - Experiment %s =======================" % (numOfAgents, iExperiment))
         print("Fetching %s agents from files" % numOfAgents)
         agents = list(map(Agent, get_valueMaps_from_index("data/newZealandLowResAgents02/index.txt", numOfAgents)))
         # for each experimaent run the Algorithm for numOfAgents using noiseProportion
@@ -83,6 +84,14 @@ def calculateSingleDatapoint(algType, numOfAgents, noiseProportion):
         env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.VerHor)
         results.append(makeSingleExperiment(env, algType, False, iExperiment))
         env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.HorVer)
+        results.append(makeSingleExperiment(env, algType, False, iExperiment))
+        env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.SmallestHalfCut)
+        results.append(makeSingleExperiment(env, algType, False, iExperiment))
+        env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.SmallestPiece)
+        results.append(makeSingleExperiment(env, algType, False, iExperiment))
+        env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.LongestDim)
+        results.append(makeSingleExperiment(env, algType, False, iExperiment))
+        env = ExpEnv(noiseProportion, agents, mapValues, CutPattern.ShortestDim)
         results.append(makeSingleExperiment(env, algType, False, iExperiment))
 
 
@@ -158,13 +167,13 @@ if __name__ == '__main__':
         # print("agents creation was %s seconds" % (t3 - t2))
 
     print("Start experiment")
-    EXPERIMENTS_PER_CELL = 1
+    EXPERIMENTS_PER_CELL = 50
 
     # NOISE_PROPORTION = [0.2, 0.4, 0.6, 0.8]
     # NUMBER_OF_AGENTS = [8, 16]
-    # calculate_results(AggregationType.NumberOfAgents, AlgType.EvanPaz),16,32,64,128
+    # calculate_results(AggregationType.NumberOfAgents, AlgType.EvanPaz)[4,8,16,32,64,128]
 
     NOISE_PROPORTION = [0.2]
-    NUMBER_OF_AGENTS = [4,8]
+    NUMBER_OF_AGENTS = [4,8,16,32,64,128]
     calculate_results(AggregationType.NoiseProportion)
     print('End experiment')

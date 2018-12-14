@@ -10,16 +10,18 @@
 """
 import numpy as np
 import operator
-import copy
+from copy import copy
 from utils.AllocatedPiece import AllocatedPiece1D, AllocatedPiece
 
 
 ### with line - does not work from main
 ### without line - does not work from AlgorithmAssessor1D
+from utils.Cutter import Cutter
+
 
 class AlgorithmEvenPaz1D:
 
-    def run(self, agents, cutDirections):
+    def run(self, agents, cut_pattern):
         """
         Calculate a proportional cake-division using the algorithm of Even and Paz (1984).
         @param agents - a list of n Agents, each with a value-function on the same cake.
@@ -38,56 +40,24 @@ class AlgorithmEvenPaz1D:
         >>> alg.run([Alice,Bob,Carl])
         [Bob receives [0.00,1.30], Carl receives [1.30,2.92], Alice receives [2.92,4.00]]
         """
-        self.num_of_directions = len(cutDirections)
-        self.cut_directions = cutDirections
-        current_cut_index = 0
         # initially, allocate the entire cake to all agents:
-        initialAllocations = list(map(AllocatedPiece, agents))
+        initial_allocations = list(map(AllocatedPiece, agents))
         # now, recursively divide the cake among the agents:
-        return self._runRecursive(initialAllocations, current_cut_index)
+        return self._runRecursive(initial_allocations, Cutter(cut_pattern))
 
     @staticmethod
     def getAlgorithmType():
         return "EvenPaz"
 
-    def _nextCutDirectionIndex(self, current_cut_index):
-        return (current_cut_index+1) % self.num_of_directions
-
-    def _runRecursive(self, allocations, current_cut_index):
-        cutDirection = self.cut_directions[current_cut_index]
-        numOfAgents = len(allocations)
-        if numOfAgents==1:
+    def _runRecursive(self, allocations, cutter):
+        num_of_agents = len(allocations)
+        if num_of_agents == 1:
             return allocations  # allocate the entire cake to the single agent.
-        numOfAgentsInFirstPartition = int(np.ceil(numOfAgents/2))
-        proportionOfFirstPartition = numOfAgentsInFirstPartition / float(numOfAgents)
 
-        # Ask all agents a "cut" query - cut the cake in proportionOfFirstPartition (half or near-half):
-        for allocation in allocations:
-            allocation.halfCut = allocation.markQuery(proportionOfFirstPartition*allocation.getValue(), cutDirection)
+        first_part_allocations, second_part_allocations = cutter.allocate_cuts(allocations, num_of_agents)
 
-        # Calculate the median of the agents' half-cuts: this will be our cut location.
-        allocations.sort(key=operator.attrgetter('halfCut'))
-        endOfFirstPart = allocations[numOfAgentsInFirstPartition-1].halfCut
-        startOfSecondPart = allocations[numOfAgentsInFirstPartition].halfCut
-        cutLocation = (endOfFirstPart+startOfSecondPart)/2
-
-        # Divide the agents to two groups of nearly the same size, based on their half-cut locations:
-        firstPartAllocations = []
-        secondPartAllocations = []
-
-        for i in range(0, numOfAgentsInFirstPartition):
-            iFrom = allocations[i].getDirectionaliFrom(cutDirection)
-            iTo = cutLocation
-            firstPartAllocations.append(allocations[i].subCut(iFrom, iTo, cutDirection))
-
-        for i in range(numOfAgentsInFirstPartition,  numOfAgents):
-            iFrom = cutLocation
-            iTo = allocations[i].getDirectionaliTo(cutDirection)
-            secondPartAllocations.append(allocations[i].subCut(iFrom, iTo, cutDirection))
-
-        next_cut_index = self._nextCutDirectionIndex(current_cut_index)
-        return self._runRecursive(firstPartAllocations, next_cut_index) +\
-               self._runRecursive(secondPartAllocations, next_cut_index)
+        return self._runRecursive(first_part_allocations, copy(cutter)) +\
+               self._runRecursive(second_part_allocations, copy(cutter))
 
 
 if __name__ == '__main__':
