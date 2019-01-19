@@ -1,8 +1,10 @@
+import itertools
+import json
 import math
 import numpy as np
 import matplotlib.pyplot as pyplot
 
-from utils.Types import AggregationType
+from utils.Types import AggregationType, AlgType, CutPattern
 
 
 class Plotter:
@@ -59,10 +61,11 @@ class Plotter:
         # """ End Plot All Points """
 
         """ Start Plot Avg Points """
-        points = [(x, y) for x in xValues for y in yValues]
+        points = list(zip(xValues, yValues))
         uniqueXValues = list(set(xValues))
         yValuesByX = [np.average([y for (x, y) in points if x == currX]) for currX in uniqueXValues]
         pyplot.plot(uniqueXValues, yValuesByX, color + shape, label=label)
+
         """ End Plot Avg Points """
 
         # print("xv")
@@ -74,7 +77,7 @@ class Plotter:
         tlYValues = [a * x + b for x in [0] + xValues]
 
         pyplot.plot([0] + xValues, tlYValues, color + ':')
-        print("%s line = %sx + %s" % (label, a, b))
+        print("%s | line = %s + %s |" % (label.ljust(45), (str(a)+'x').ljust(20), str(b).ljust(20)), list(zip(uniqueXValues, yValuesByX)))
 
     def setupPlotFigure(self, xLabel, maxXValues, title):
         fig, ax = pyplot.subplots()
@@ -87,3 +90,36 @@ class Plotter:
         pyplot.axis(xmin=0, xmax=maxXValues + 0.5)
         pyplot.title(title)
         return fignum
+
+
+if __name__ == '__main__':
+
+    """ plot experiment results from json file """
+
+    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-23T16-09-46_NoiseProportion_random_30_exp.json'
+    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-24T03-45-40_NoiseProportion_0.2_30_exp.json'
+    jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-01-07T08-20-31_NoiseProportion_0.2_30_exp.json'
+    filepath_elements = jsonfilename.split('_')
+    aggText = filepath_elements[1]
+    aggParam = filepath_elements[2]
+    experiments_per_cell = int(filepath_elements[3])
+    dataParamType = AggregationType.NumberOfAgents
+    with open(jsonfilename) as json_file:
+        results = json.load(json_file)
+
+    plotter = Plotter()
+    # plotting
+    plotter.plotResults(results, list(map(lambda pair: pair[0].name+pair[1].name, list(
+        itertools.product(AlgType, CutPattern)))), xAxisDataType=dataParamType,
+                        yAxisData=["largestEnvy"],
+                        title="largestEnvy for "+aggText+" "+str(aggParam), experiments=experiments_per_cell)
+    plotter.plotResults(results, list(
+        map(lambda pair: pair[0].name + pair[1].name, list(itertools.product(AlgType, CutPattern)))),
+                        xAxisDataType=dataParamType,
+                        yAxisData=["utilitarianGain"],
+                        title="utilitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
+    plotter.plotResults(results, list(
+        map(lambda pair: pair[0].name + pair[1].name, list(itertools.product(AlgType, CutPattern)))),
+                        xAxisDataType=dataParamType,
+                        yAxisData=["egalitarianGain"],
+                        title="egalitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)

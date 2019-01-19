@@ -1,6 +1,4 @@
-import json
-import pickle
-from utils.Agent import Agent
+
 from utils.AlgorithmAssessor1D import AlgorithmAssessor1D
 from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
 from utils.Types import AlgType, CutDirection
@@ -15,12 +13,11 @@ class ExperimentEnvironment:
 	* @since 2018-10
 	*/"""
 
-    def __init__(self, noiseProportion, agents, mapValues, cutPattern):
+    def __init__(self, noiseProportion, agents, mapValues):
         self.noiseProportion = noiseProportion
         self.agents = agents
         self.numberOfAgents = len(agents)
         self.mapValues = mapValues
-        self.cutPattern = cutPattern
 
     def getMeanValues(self):
         return self.mapValues.getAs1D(self.cutDirection)
@@ -44,6 +41,7 @@ class ExperimentEnvironment:
 
 
 if __name__ == '__main__':
+
     # demo test
     env = ExperimentEnvironment(0.02,8,CakeData2D([[1,1,1],[1,1,1],[1,1,1],[1,1,1]],4,3),CutDirection.Vertical)
 
@@ -66,25 +64,3 @@ if __name__ == '__main__':
     print("***")
     [print(agent.valueFunction) for agent in env.getAgents()]
 
-    # test_path = "./test_agent_as_json.txt"
-    # with open(test_path, "wb") as object_file:
-    #     a = env.agents
-    #     pickle.dump(a, object_file)
-    #
-    # def _json_angent_hook(d): return Agent(d['valueFunction'], d['name'])
-    #
-    # with open(test_path, "rb") as object_file:
-    #     a = pickle.load(object_file)
-    #
-    # print(a)
-    # print('**')
-    # [print(a[i]) for i in range(len(a))]
-    # print('**')
-    # [print(ag.__dict__) for ag in a]
-
-    #
-    # print(a)
-    # print('**')
-    # [print(a[i]) for i in range(len(a))]
-    # print('**')
-    # [print(ag.__dict__) for ag in a]

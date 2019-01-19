@@ -32,6 +32,7 @@ class AllocatedPiece:
 		self.iFromCol = iFromCol
 		self.iToRow = iToRow
 		self.iToCol = iToCol
+		self.halfcuts = {}
 
 	def __repr__(self):
 		return "%s receives [%0.2f,%0.2f,%0.2f,%0.2f]" % (self.agent.name, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol)
@@ -72,6 +73,15 @@ class AllocatedPiece:
 		}
 
 		return switcher.get(direction, None)
+
+	def getDirectionalValue(self, cut_location, direction):
+		if self.halfcuts[direction] < cut_location:
+			subcut_iFrom = self.getDirectionaliFrom(direction)
+			subcut_iTo = cut_location
+		else:
+			subcut_iFrom = cut_location
+			subcut_iTo = self.getDirectionaliTo(direction)
+		return self.subCut(subcut_iFrom, subcut_iTo, direction).getValue()
 
 	def getDimensions(self):
 		return {CutDirection.Horizontal: self.iToRow - self.iFromRow,

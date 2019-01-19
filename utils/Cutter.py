@@ -23,7 +23,7 @@ class Cutter:
             value = proportion_of_first_partition*allocation.getValue()
             self._set_relevant_halfcuts(value, allocation)
 
-        self._set_next_cutting_direction(allocations)
+        self._set_next_cutting_direction(allocations, number_of_agents)
 
         # Calculate the median of the agents' half-cuts: this will be our cut location.
         allocations.sort(key=lambda alloc: alloc.halfcuts[self.cut_direction])
@@ -95,12 +95,15 @@ class Cutter:
             dir_iter_func = self._get_query_direction_iterator_func()
             self.cut_query = dir_iter_func()
 
-    def _set_next_cutting_direction(self, allocations):
+    def _set_next_cutting_direction(self, allocations, number_of_agents):
+        _get_horizontal_halfcut = lambda alloc: alloc.halfcuts[CutDirection.Horizontal]
+        _get_vertical_halfcut = lambda alloc: alloc.halfcuts[CutDirection.Vertical]
+
         if self.cut_pattern is CutPattern.SmallestHalfCut:
-            first_hor_cut = min(allocations, key=lambda alloc: alloc.halfcuts[CutDirection.Horizontal])
-            first_ver_cut = min(allocations, key=lambda alloc: alloc.halfcuts[CutDirection.Vertical])
-            first_hor_cut_halfcut = first_hor_cut.halfcuts[CutDirection.Horizontal]
-            first_ver_cut_halfcut = first_ver_cut.halfcuts[CutDirection.Vertical]
+            first_hor_cut = min(allocations, key=_get_horizontal_halfcut)
+            first_ver_cut = min(allocations, key=_get_vertical_halfcut)
+            first_hor_cut_halfcut = _get_horizontal_halfcut(first_hor_cut)
+            first_ver_cut_halfcut = _get_vertical_halfcut(first_ver_cut)
             if first_hor_cut_halfcut < first_ver_cut_halfcut:
                 self.cut_direction = CutDirection.Horizontal
                 #print("%s because - %s < %s" % (self.cut_direction, first_hor_cut_halfcut, first_ver_cut_halfcut))
@@ -109,10 +112,10 @@ class Cutter:
                 #print("%s because - %s < %s" % (self.cut_direction, first_ver_cut_halfcut, first_hor_cut_halfcut))
             return
         if self.cut_pattern is CutPattern.SmallestPiece:
-            first_hor_cut = min(allocations, key=lambda alloc: alloc.halfcuts[CutDirection.Horizontal])
-            first_ver_cut = min(allocations, key=lambda alloc: alloc.halfcuts[CutDirection.Vertical])
-            first_hor_cut_halfcut = first_hor_cut.halfcuts[CutDirection.Horizontal]
-            first_ver_cut_halfcut = first_ver_cut.halfcuts[CutDirection.Vertical]
+            first_hor_cut = min(allocations, key=_get_horizontal_halfcut)
+            first_ver_cut = min(allocations, key=_get_vertical_halfcut)
+            first_hor_cut_halfcut = _get_horizontal_halfcut(first_hor_cut)
+            first_ver_cut_halfcut = _get_vertical_halfcut(first_ver_cut)
             start_index_hor = first_hor_cut.getDirectionaliFrom(CutDirection.Horizontal)
             start_index_ver = first_ver_cut.getDirectionaliFrom(CutDirection.Vertical)
 
@@ -151,6 +154,123 @@ class Cutter:
                 self.cut_direction = CutDirection.Vertical
                 #print("%s because - %s < %s" % (self.cut_direction, allocation_dimensions[CutDirection.Vertical],
                 #                            allocation_dimensions[CutDirection.Horizontal]))
+            return
+        if self.cut_pattern is CutPattern.LargestRemainRange:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            horizontal_remain = sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]
+            vertical_remain = sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]
+
+            if vertical_remain < horizontal_remain:
+                self.cut_direction = CutDirection.Horizontal
+                # print("%s because - %s < %s" % (self.cut_direction, vertical_remain, horizontal_remain))
+            else:
+                self.cut_direction = CutDirection.Vertical
+                # print("%s because - %s < %s" % (self.cut_direction, horizontal_remain, vertical_remain))
+            return
+        if self.cut_pattern is CutPattern.LargestAvgRemainRange:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            horizontal_remain = sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]
+            hor_avg_remain = np.mean([np.abs(halfcut-horizontal_remain) for halfcut in sorted_horizontal_cuts])
+            vertical_remain = sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]
+            ver_avg_remain = np.mean([np.abs(halfcut-vertical_remain) for halfcut in sorted_vertical_cuts])
+
+            if ver_avg_remain < hor_avg_remain:
+                self.cut_direction = CutDirection.Horizontal
+                # print("%s because - %s < %s" % (self.cut_direction, vertical_remain, horizontal_remain))
+            else:
+                self.cut_direction = CutDirection.Vertical
+                # print("%s because - %s < %s" % (self.cut_direction, horizontal_remain, vertical_remain))
+            return
+        if self.cut_pattern is CutPattern.LargestRemainArea:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            allocation_dimensions = allocations[0].getDimensions()
+            horizontal_remain = (sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]) * \
+                                allocation_dimensions[CutDirection.Vertical]
+            vertical_remain = (sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]) * \
+                              allocation_dimensions[CutDirection.Horizontal]
+
+            if vertical_remain < horizontal_remain:
+                self.cut_direction = CutDirection.Horizontal
+                # print("%s because - %s < %s" % (self.cut_direction, vertical_remain, horizontal_remain))
+            else:
+                self.cut_direction = CutDirection.Vertical
+                # print("%s because - %s < %s" % (self.cut_direction, horizontal_remain, vertical_remain))
+            return
+        if self.cut_pattern is CutPattern.MostValuableRemain:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            hor_remain_iFrom = sorted_horizontal_cuts[middle_index - 1]
+            hor_remain_iTo = sorted_horizontal_cuts[middle_index]
+            hor_cut_option = (hor_remain_iFrom + hor_remain_iTo) / 2.0
+            hor_remain_avg_value = np.mean(list(map(lambda alloc:
+                                                    alloc.getDirectionalValue(hor_cut_option, CutDirection.Horizontal),
+                                                    allocations)))
+            ver_remain_iFrom = sorted_vertical_cuts[middle_index - 1]
+            ver_remain_iTo = sorted_vertical_cuts[middle_index]
+            ver_cut_option = (ver_remain_iFrom + ver_remain_iTo) / 2.0
+            ver_remain_avg_value = np.mean(list(map(lambda alloc:
+                                                    alloc.getDirectionalValue(ver_cut_option, CutDirection.Vertical),
+                                                    allocations)))
+
+            if ver_remain_avg_value < hor_remain_avg_value:
+                self.cut_direction = CutDirection.Horizontal
+                # print("%s because - %s < %s" % (self.cut_direction, ver_remain_avg_value, hor_remain_avg_value))
+            else:
+                self.cut_direction = CutDirection.Vertical
+                # print("%s because - %s < %s" % (self.cut_direction, hor_remain_avg_value, ver_remain_avg_value))
+            return
+        if self.cut_pattern is CutPattern.MixedValuableRemain:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            hor_remain_iFrom = sorted_horizontal_cuts[middle_index - 1]
+            hor_remain_iTo = sorted_horizontal_cuts[middle_index]
+            hor_remain_avg_value = np.mean(list(map(lambda alloc:
+                                                    alloc.getDirectionalValue(hor_remain_iFrom, hor_remain_iTo,
+                                                                                       CutDirection.Horizontal),
+                                                    allocations)))
+
+            ver_remain_iFrom = sorted_vertical_cuts[middle_index - 1]
+            ver_remain_iTo = sorted_vertical_cuts[middle_index]
+            ver_remain_avg_value = np.mean(list(map(lambda alloc:
+                                                    alloc.getDirectionalValue(ver_remain_iFrom, ver_remain_iTo,
+                                                                                       CutDirection.Vertical),
+                                                    allocations)))
+
+            if (ver_remain_avg_value < hor_remain_avg_value):
+                if len(allocations) > 2:
+                    self.cut_direction = CutDirection.Horizontal
+                else:
+                    self.cut_direction = CutDirection.Vertical
+                # print("%s because - %s < %s" % (self.cut_direction, ver_remain_avg_value, hor_remain_avg_value))
+            else:
+                if len(allocations) > 2:
+                    self.cut_direction = CutDirection.Vertical
+                else:
+                    self.cut_direction = CutDirection.Horizontal
+                # print("%s because - %s < %s" % (self.cut_direction, hor_remain_avg_value, ver_remain_avg_value))
+            return
+        if self.cut_pattern is CutPattern.HighestScatter:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            neighbor_horizontal_cuts = list(zip(sorted_horizontal_cuts, np.roll(sorted_horizontal_cuts, -1)))[:-1]
+            neighbor_vertical_cuts = list(zip(sorted_vertical_cuts, np.roll(sorted_vertical_cuts, -1)))[:-1]
+            # print(neighbor_horizontal_cuts,"---",neighbor_vertical_cuts)
+            hor_scatter_avg_value = np.mean([b - a for (a, b) in neighbor_horizontal_cuts])
+            ver_scatter_avg_value = np.mean([b - a for (a, b) in neighbor_vertical_cuts])
+            # print("\t",hor_scatter_avg_value, "---", ver_scatter_avg_value)
+
+            if ver_scatter_avg_value < hor_scatter_avg_value:
+                self.cut_direction = CutDirection.Horizontal
+            else:
+                self.cut_direction = CutDirection.Vertical
             return
         else:
             self.cut_direction = self.cut_query

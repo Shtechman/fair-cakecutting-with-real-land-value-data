@@ -25,6 +25,12 @@ class CutPattern(Enum):
     VerHor = 4,
     SmallestHalfCut = 5,
     SmallestPiece = 6,
-    LongestDim = 7,     #todo
-    ShortestDim = 8,    #todo
+    LongestDim = 7,
+    ShortestDim = 8,
+    LargestRemainRange = 9,
+    LargestAvgRemainRange = 10,
+    LargestRemainArea = 11,
+    MostValuableRemain = 12,
+    MixedValuableRemain = 13,
+    HighestScatter = 14,
 
