@@ -1,9 +1,19 @@
-
+import numpy as np
 class Measurements:
+    @staticmethod
+    def calculateAverageFaceRatio(partition):
+        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
+        return max(0, np.average(faceRatioList))
+
+    @staticmethod
+    def calculateLargestFaceRatio(partition):
+        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
+        return max(0, max(faceRatioList))
+
     @staticmethod
     def calculateLargestEnvy(partition):
         largestEnvyList = list(map(lambda piece: piece.getLargestEnvy(partition), partition))
-        return max(largestEnvyList)
+        return max(0, max(largestEnvyList))
 
     @staticmethod
     def calculateUtilitarianGain(relativeValues):
@@ -11,7 +21,7 @@ class Measurements:
         utilitarianGain = utilitarianValue - 1
         # if (utilitarianGain < -0.001): raise ValueError(
         #     "In proportional division, utilitarian gain must be at least 0; got " + str(utilitarianGain))
-        return utilitarianGain
+        return max(0, utilitarianGain)
 
     @staticmethod
     def calculateEgalitarianGain(numOfAgents, relativeValues):
@@ -19,9 +29,9 @@ class Measurements:
         egalitarianGain = egalitarianValue * numOfAgents - 1
         # if (egalitarianGain < -0.001): raise ValueError(
         #     "In proportional division, normalized egalitarian gain must be at least 0; got " + str(egalitarianGain));
-        return egalitarianGain
+        return max(0, egalitarianGain)
 
     @staticmethod
     def calculateRelativeValues(partition):
-        relativeValues = list(map(lambda piece: piece.getRelativeValue(), partition))
+        relativeValues = list(map(lambda piece: max(0, piece.getRelativeValue()), partition))
         return relativeValues

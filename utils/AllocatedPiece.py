@@ -83,6 +83,15 @@ class AllocatedPiece:
 			subcut_iTo = self.getDirectionaliTo(direction)
 		return self.subCut(subcut_iFrom, subcut_iTo, direction).getValue()
 
+	def getDirectionalFaceRatio(self, cut_location, direction):
+		if self.halfcuts[direction] < cut_location:
+			subcut_iFrom = self.getDirectionaliFrom(direction)
+			subcut_iTo = cut_location
+		else:
+			subcut_iFrom = cut_location
+			subcut_iTo = self.getDirectionaliTo(direction)
+		return self.subCut(subcut_iFrom, subcut_iTo, direction).getFaceRatio()
+
 	def getDimensions(self):
 		return {CutDirection.Horizontal: self.iToRow - self.iFromRow,
 				CutDirection.Vertical: self.iToCol - self.iFromCol}
@@ -101,6 +110,11 @@ class AllocatedPiece:
 
 	def getCuts(self):
 		return self.iFromRow, self.iFromCol, self.iToRow, self.iToCol
+
+	def getFaceRatio(self):
+		width = self.iToCol - self.iFromCol
+		height = self.iToRow - self.iFromRow
+		return min(width, height) / max(width, height)
 
 	def getValue(self):
 		"""

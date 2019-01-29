@@ -33,4 +33,5 @@ class CutPattern(Enum):
     MostValuableRemain = 12,
     MixedValuableRemain = 13,
     HighestScatter = 14,
+    SquarePiece = 15,
 

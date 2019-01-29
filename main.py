@@ -27,10 +27,17 @@ plotter = Plotter()
 
 
 def makeSingleExperiment(env, algType, runAssessor, iExperiment, cutPattern):
-    print("running for %s agents, algorithm %s, using cut pattern %s" % (env.numberOfAgents, algType.name, cutPattern.name))
+
+
     if runAssessor:
+        algName = "Assessor"
+        print("running for %s agents, %s algorithm, using cut pattern %s" % (
+        env.numberOfAgents, algName, cutPattern.name))
         partition = env.getAssessor(algType).run(env.getAgents(), cutPattern)  # returns a list of AllocatedPiece
     else:
+        algName = algType.name
+        print("running for %s agents, %s algorithm, using cut pattern %s" % (
+        env.numberOfAgents, algName, cutPattern.name))
         partition = env.getAlgorithm(algType).run(env.getAgents(), cutPattern)  # returns a list of AllocatedPiece
 
     # print(partition)
@@ -44,34 +51,40 @@ def makeSingleExperiment(env, algType, runAssessor, iExperiment, cutPattern):
 
     largestEnvy = Measure.calculateLargestEnvy(partition)
 
+    largestFaceRatio = Measure.calculateLargestFaceRatio(partition)
+
+    averageFaceRatio = Measure.calculateAverageFaceRatio(partition)
+
     return {
         AggregationType.NumberOfAgents.name: env.numberOfAgents,
         AggregationType.NoiseProportion.name: env.noiseProportion,
-        "Algorithm": algType.name,
-        "Method": algType.name+cutPattern.name,
+        "Algorithm": algName,
+        "Method": algName+cutPattern.name,
         "egalitarianGain": egalitarianGain,
         "utilitarianGain": utilitarianGain,
+        "averageFaceRatio": averageFaceRatio,
+        "largestFaceRatio": largestFaceRatio,
         "largestEnvy": largestEnvy,
         "experiment": iExperiment,
     }
 
 
-def calculateSingleDatapoint(index_file, algType, numOfAgents, noiseProportion, experiments_per_cell):
+def calculateSingleDatapoint(index_file, algType, numOfAgents, noiseProportion, experiments_per_cell, assessorAgentPool):
     results = []
 
     for iExperiment in range(1, experiments_per_cell+1):
         print("======================= %s Agents - Experiment %s =======================" % (numOfAgents, iExperiment))
         print("Fetching %s agents from files" % numOfAgents)
-        mapValues = read_valueMaps_from_file(get_originalMap_from_index(index_file)) #todo CakeData? fix OG file use.
         agents = list(map(Agent, get_valueMaps_from_index(index_file, numOfAgents)))
 
         # for each experimaent run the Algorithm for numOfAgents using noiseProportion
-        env = ExpEnv(noiseProportion, agents, mapValues)
+        env = ExpEnv(noiseProportion, agents, assessorAgentPool)
         cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableRemain,
                             CutPattern.LargestRemainRange, CutPattern.LargestAvgRemainRange, CutPattern.VerHor,
-                            CutPattern.HorVer, CutPattern.SmallestHalfCut, CutPattern.SmallestPiece]
+                            CutPattern.HorVer, CutPattern.SmallestPiece, CutPattern.SquarePiece] # , CutPattern.SmallestHalfCut
         for cut_pattern in cut_patterns_to_test:
             results.append(makeSingleExperiment(env, algType, False, iExperiment, cut_pattern))
+            results.append(makeSingleExperiment(env, algType, True, iExperiment, cut_pattern))
 
 
     return results
@@ -79,9 +92,10 @@ def calculateSingleDatapoint(index_file, algType, numOfAgents, noiseProportion, 
 
 def aggregate(index_file, aggregationParams, dataParams, aggText, dataText, dataParamType, experiments_per_cell):
     # create a result graph for each aggregationParam
+    assessorAgentPool = list(map(Agent, [get_originalMap_from_index(index_file)] * MAX_NUM_OF_AGENTS))
     for aggParam in aggregationParams:
         print("\n" + aggText + " " + str(aggParam))
-        results = calculateMultipleDatapoints(index_file, aggParam, AlgType.EvenPaz, dataParamType, dataParams, dataText, experiments_per_cell)
+        results = calculateMultipleDatapoints(index_file, aggParam, AlgType.EvenPaz, dataParamType, dataParams, dataText, experiments_per_cell, assessorAgentPool)
         timestring = datetime.now().isoformat(timespec='seconds').replace(":", "-")
         file_name_string = timestring + "_" + aggText + "_" + str(aggParam) + "_" + str(experiments_per_cell) + "_exp"
         jsonfilename = "./results/" + file_name_string + ".json"
@@ -114,15 +128,15 @@ def aggregate(index_file, aggregationParams, dataParams, aggText, dataText, data
         #                     title="egalitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
 
 
-def calculateMultipleDatapoints(index_file, aggParam, algType, dataParamType, dataParams, dataText, experiments_per_cell):
+def calculateMultipleDatapoints(index_file, aggParam, algType, dataParamType, dataParams, dataText, experiments_per_cell, assessorAgentPool):
     results = []
     # create a data point for each input of dataParam
     for dataParam in dataParams:
         print("\t" + str(dataParam) + " " + dataText)
         if dataParamType == AggregationType.NumberOfAgents:
-            results += calculateSingleDatapoint(index_file, algType, dataParam, aggParam, experiments_per_cell)
+            results += calculateSingleDatapoint(index_file, algType, dataParam, aggParam, experiments_per_cell, assessorAgentPool)
         else:
-            results += calculateSingleDatapoint(index_file, algType, aggParam, dataParam, experiments_per_cell)
+            results += calculateSingleDatapoint(index_file, algType, aggParam, dataParam, experiments_per_cell, assessorAgentPool)
     return results
 
 
@@ -138,19 +152,20 @@ if __name__ == '__main__':
 
     print("Start experiment")
     number_of_agents = [4, 8, 16, 32, 64, 128]
-    experiments_per_cell = 1
+    MAX_NUM_OF_AGENTS = max(number_of_agents)
+    experiments_per_cell = 10
 
     """ Calculate experiment with Random dataset """
-    # index_file = "data/randomMaps/index.txt"
-    # noise_proportion = ['random']
-    # calculate_results(index_file, AggregationType.NoiseProportion, number_of_agents, noise_proportion,
-    #                   experiments_per_cell)
+    index_file = "data/randomMaps/index.txt"
+    noise_proportion = ['random']
+    calculate_results(index_file, AggregationType.NoiseProportion, number_of_agents, noise_proportion,
+                      experiments_per_cell)
 
     """ Calculate experiment with NewZealand 0.2 noise dataset """
-    # index_file = "data/newZealandLowResAgents02/index.txt"
-    # noise_proportion = [0.2]
-    # calculate_results(index_file, AggregationType.NoiseProportion, number_of_agents, noise_proportion,
-    #                   experiments_per_cell)
+    index_file = "data/newZealandLowResAgents02/index.txt"
+    noise_proportion = [0.2]
+    calculate_results(index_file, AggregationType.NoiseProportion, number_of_agents, noise_proportion,
+                      experiments_per_cell)
 
     """ Calculate experiment with Israel 0.2 noise dataset """
     index_file = "data/IsraelMaps02/index.txt"

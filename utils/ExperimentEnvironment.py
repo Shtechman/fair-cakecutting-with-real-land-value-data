@@ -13,14 +13,12 @@ class ExperimentEnvironment:
 	* @since 2018-10
 	*/"""
 
-    def __init__(self, noiseProportion, agents, mapValues):
+    def __init__(self, noiseProportion, agents, assessorAgentPool):
         self.noiseProportion = noiseProportion
         self.agents = agents
         self.numberOfAgents = len(agents)
-        self.mapValues = mapValues
+        self.assessorAgentPool = assessorAgentPool
 
-    def getMeanValues(self):
-        return self.mapValues.getAs1D(self.cutDirection)
 
     # def createRandomAgents(self):
     #     agents = map(Agent, self.getMeanValues().noisyValuesArray(self.noiseProportion, None, self.numberOfAgents))
@@ -34,7 +32,7 @@ class ExperimentEnvironment:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
     def getAssessor(self, algType):
-        return AlgorithmAssessor1D(self.getMeanValues(), self.getAlgorithm(algType))
+        return AlgorithmAssessor1D(self.assessorAgentPool, self.getAlgorithm(algType))
 
     def getAgents(self):
         return self.agents

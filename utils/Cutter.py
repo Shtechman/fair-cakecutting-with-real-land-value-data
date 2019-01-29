@@ -174,9 +174,9 @@ class Cutter:
             sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
             middle_index = int(np.ceil(number_of_agents/2))
             horizontal_remain = sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]
-            hor_avg_remain = np.mean([np.abs(halfcut-horizontal_remain) for halfcut in sorted_horizontal_cuts])
+            hor_avg_remain = np.average([np.abs(halfcut-horizontal_remain) for halfcut in sorted_horizontal_cuts])
             vertical_remain = sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]
-            ver_avg_remain = np.mean([np.abs(halfcut-vertical_remain) for halfcut in sorted_vertical_cuts])
+            ver_avg_remain = np.average([np.abs(halfcut-vertical_remain) for halfcut in sorted_vertical_cuts])
 
             if ver_avg_remain < hor_avg_remain:
                 self.cut_direction = CutDirection.Horizontal
@@ -209,13 +209,13 @@ class Cutter:
             hor_remain_iFrom = sorted_horizontal_cuts[middle_index - 1]
             hor_remain_iTo = sorted_horizontal_cuts[middle_index]
             hor_cut_option = (hor_remain_iFrom + hor_remain_iTo) / 2.0
-            hor_remain_avg_value = np.mean(list(map(lambda alloc:
+            hor_remain_avg_value = np.average(list(map(lambda alloc:
                                                     alloc.getDirectionalValue(hor_cut_option, CutDirection.Horizontal),
                                                     allocations)))
             ver_remain_iFrom = sorted_vertical_cuts[middle_index - 1]
             ver_remain_iTo = sorted_vertical_cuts[middle_index]
             ver_cut_option = (ver_remain_iFrom + ver_remain_iTo) / 2.0
-            ver_remain_avg_value = np.mean(list(map(lambda alloc:
+            ver_remain_avg_value = np.average(list(map(lambda alloc:
                                                     alloc.getDirectionalValue(ver_cut_option, CutDirection.Vertical),
                                                     allocations)))
 
@@ -232,14 +232,14 @@ class Cutter:
             middle_index = int(np.ceil(number_of_agents/2))
             hor_remain_iFrom = sorted_horizontal_cuts[middle_index - 1]
             hor_remain_iTo = sorted_horizontal_cuts[middle_index]
-            hor_remain_avg_value = np.mean(list(map(lambda alloc:
+            hor_remain_avg_value = np.average(list(map(lambda alloc:
                                                     alloc.getDirectionalValue(hor_remain_iFrom, hor_remain_iTo,
                                                                                        CutDirection.Horizontal),
                                                     allocations)))
 
             ver_remain_iFrom = sorted_vertical_cuts[middle_index - 1]
             ver_remain_iTo = sorted_vertical_cuts[middle_index]
-            ver_remain_avg_value = np.mean(list(map(lambda alloc:
+            ver_remain_avg_value = np.average(list(map(lambda alloc:
                                                     alloc.getDirectionalValue(ver_remain_iFrom, ver_remain_iTo,
                                                                                        CutDirection.Vertical),
                                                     allocations)))
@@ -257,14 +257,39 @@ class Cutter:
                     self.cut_direction = CutDirection.Horizontal
                 # print("%s because - %s < %s" % (self.cut_direction, hor_remain_avg_value, ver_remain_avg_value))
             return
+        if self.cut_pattern is CutPattern.SquarePiece:
+            sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
+            sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
+            middle_index = int(np.ceil(number_of_agents/2))
+            hor_remain_iFrom = sorted_horizontal_cuts[middle_index - 1]
+            hor_remain_iTo = sorted_horizontal_cuts[middle_index]
+            hor_cut_option = (hor_remain_iFrom + hor_remain_iTo) / 2.0
+            hor_face_ratio_avg_value = np.average(list(map(lambda alloc:
+                                                    alloc.getDirectionalFaceRatio(hor_cut_option,
+                                                                                       CutDirection.Horizontal),
+                                                    allocations)))
+
+            ver_remain_iFrom = sorted_vertical_cuts[middle_index - 1]
+            ver_remain_iTo = sorted_vertical_cuts[middle_index]
+            ver_cut_option = (ver_remain_iFrom + ver_remain_iTo) / 2.0
+            ver_face_ratio_value = np.average(list(map(lambda alloc:
+                                                    alloc.getDirectionalFaceRatio(ver_cut_option,
+                                                                                       CutDirection.Vertical),
+                                                    allocations)))
+
+            if ver_face_ratio_value < hor_face_ratio_avg_value:
+                self.cut_direction = CutDirection.Horizontal
+            else:
+                self.cut_direction = CutDirection.Vertical
+            return
         if self.cut_pattern is CutPattern.HighestScatter:
             sorted_horizontal_cuts = list(map(_get_horizontal_halfcut, sorted(allocations, key=_get_horizontal_halfcut)))
             sorted_vertical_cuts = list(map(_get_vertical_halfcut, sorted(allocations, key=_get_vertical_halfcut)))
             neighbor_horizontal_cuts = list(zip(sorted_horizontal_cuts, np.roll(sorted_horizontal_cuts, -1)))[:-1]
             neighbor_vertical_cuts = list(zip(sorted_vertical_cuts, np.roll(sorted_vertical_cuts, -1)))[:-1]
             # print(neighbor_horizontal_cuts,"---",neighbor_vertical_cuts)
-            hor_scatter_avg_value = np.mean([b - a for (a, b) in neighbor_horizontal_cuts])
-            ver_scatter_avg_value = np.mean([b - a for (a, b) in neighbor_vertical_cuts])
+            hor_scatter_avg_value = np.average([b - a for (a, b) in neighbor_horizontal_cuts])
+            ver_scatter_avg_value = np.average([b - a for (a, b) in neighbor_vertical_cuts])
             # print("\t",hor_scatter_avg_value, "---", ver_scatter_avg_value)
 
             if ver_scatter_avg_value < hor_scatter_avg_value:

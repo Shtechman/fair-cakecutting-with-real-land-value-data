@@ -1,6 +1,10 @@
+import csv
 import itertools
 import json
 import math
+from functools import reduce
+from statistics import mean, stdev
+
 import numpy as np
 import matplotlib.pyplot as pyplot
 
@@ -92,13 +96,53 @@ class Plotter:
         return fignum
 
 
+def calculate_avg_result(result_list):
+    keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio', 'largestEnvy']
+    if result_list:
+        result = {}
+        for key in result_list[0]:
+            if key in keys_to_average:
+                key_list_values = list(map(lambda res: res[key], result_list))
+                avg_key = key+'_Avg'
+                std_key = key + '_StDev'
+                result[avg_key] = mean(key_list_values)
+                result[std_key] = stdev(key_list_values)
+            else:
+                result[key] = result_list[-1][key]
+                if key == "Method":
+                    result[key] = result[key].replace(result_list[-1]["Algorithm"], "")
+        return result
+    else:
+        return {}
+
+
+def calculate_int_result(EvenPaz_res, Assessor_res):
+    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg', 'largestEnvy_Avg']
+    if EvenPaz_res:
+        result = {}
+        for key in EvenPaz_res:
+            if key in keys_to_integrate:
+                result[key] = EvenPaz_res[key] - Assessor_res[key]
+            else:
+                result[key] = EvenPaz_res[key]
+                if key == "Method":
+                    result[key] = result[key].replace(EvenPaz_res["Algorithm"], "")
+                if key == "Algorithm":
+                    result[key] = "Integrated"
+        return result
+    else:
+        return {}
+    pass
+
+
 if __name__ == '__main__':
 
     """ plot experiment results from json file """
 
     # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-23T16-09-46_NoiseProportion_random_30_exp.json'
     # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-24T03-45-40_NoiseProportion_0.2_30_exp.json'
-    jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-01-07T08-20-31_NoiseProportion_0.2_30_exp.json'
+    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-01-07T08-20-31_NoiseProportion_0.2_30_exp.json'
+    jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-01-28T11-26-53_NoiseProportion_0.2_2_exp.json'
     filepath_elements = jsonfilename.split('_')
     aggText = filepath_elements[1]
     aggParam = filepath_elements[2]
@@ -107,12 +151,21 @@ if __name__ == '__main__':
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
 
+
     plotter = Plotter()
     # plotting
-    plotter.plotResults(results, list(map(lambda pair: pair[0].name+pair[1].name, list(
+    plotter.plotResults(results, list(map(lambda pair: pair[0].name + pair[1].name, list(
+        itertools.product(AlgType, CutPattern)))), xAxisDataType=dataParamType,
+                        yAxisData=["largestFaceRatio"],
+                        title="largestFaceRatio for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
+    plotter.plotResults(results, list(map(lambda pair: pair[0].name + pair[1].name, list(
+        itertools.product(AlgType, CutPattern)))), xAxisDataType=dataParamType,
+                        yAxisData=["averageFaceRatio"],
+                        title="averageFaceRatio for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
+    plotter.plotResults(results, list(map(lambda pair: pair[0].name + pair[1].name, list(
         itertools.product(AlgType, CutPattern)))), xAxisDataType=dataParamType,
                         yAxisData=["largestEnvy"],
-                        title="largestEnvy for "+aggText+" "+str(aggParam), experiments=experiments_per_cell)
+                        title="largestEnvy for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
     plotter.plotResults(results, list(
         map(lambda pair: pair[0].name + pair[1].name, list(itertools.product(AlgType, CutPattern)))),
                         xAxisDataType=dataParamType,

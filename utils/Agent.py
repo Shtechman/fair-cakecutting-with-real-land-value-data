@@ -19,6 +19,8 @@ class Agent:
         self.valueMapRows = len(self.locallyLoadedValueMap)
         self.valueMapCols = len(self.locallyLoadedValueMap[0])
 
+    def getMapPath(self):
+        return self.valueMapPath
 
     def loadValueMap(self):
         self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
