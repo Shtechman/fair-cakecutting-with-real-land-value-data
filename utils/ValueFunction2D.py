@@ -417,8 +417,6 @@ class CakeData2D:
         return valueFunctions
 
 
-print("class CakeData2D defined.")  # for debug in sage notebook
-
 if __name__ == '__main__':
     import doctest
 

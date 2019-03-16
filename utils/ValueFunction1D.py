@@ -205,8 +205,6 @@ class ValueFunction1D:
 		values = self.partitionValues(cutPoints)
 		return np.argmax(values)
 
-print("class ValueFunction1D defined.") # for debug in sage notebook
-
 if __name__ == '__main__':
 	import doctest
 	doctest.testmod()

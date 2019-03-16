@@ -8,6 +8,8 @@
  * @since 2016-11
  */
 """
+import os
+
 import numpy as np
 import operator
 from copy import copy

@@ -1,3 +1,4 @@
+import csv
 import pickle
 import random
 import time
@@ -137,7 +138,8 @@ def randomValues(rows, cols, maxValue, normalized_sum):
     return new_map
 
 
-def generate_valueMaps_to_file(original_map_file, folder, noise, num_of_maps, normalized_sum, rows=1490, cols=1020):
+def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, num_of_maps, normalized_sum, rows=1490, cols=1020):
+    folder = folder+datasetName
     randomMaps = False
     if original_map_file is None:
         randomMaps = True
@@ -146,8 +148,8 @@ def generate_valueMaps_to_file(original_map_file, folder, noise, num_of_maps, no
         print("Creating %s random value maps to folder %s with max value %s" % (num_of_maps, folder, noise))
 
     else:
-        with open(original_map_file) as data_file:
-            original_map_data = json.load(data_file)
+        with open(original_map_file, "rb") as data_file:
+            original_map_data = pickle.load(data_file)
         print("Creating %s value maps to folder %s with noise proportion %s" % (num_of_maps, folder, noise))
 
     index_output_path = "%s/index.txt" % folder
@@ -170,9 +172,11 @@ def generate_valueMaps_to_file(original_map_file, folder, noise, num_of_maps, no
         end = time.time()
         print("\t\tmap %s creation time was %s seconds" % (i, end - start))
 
-    index = {"numOfMaps" : num_of_maps,
-             "folder" : folder,
-             "originalMapFile" : original_map_file,
+    paths = [p.replace('..','.') for p in paths]
+    index = {"datasetName": datasetName,
+             "numOfMaps" : num_of_maps,
+             "folder" : folder.replace('..','.'),
+             "originalMapFile" : original_map_file.replace('..','.'),
              "noise" : noise,
              "mapsPaths" : paths}
 
@@ -205,6 +209,12 @@ def read_valueMaps_from_files(index_path, num_of_maps):
     return result
 
 
+def get_datasetName_from_index(index_path):
+    with open(index_path) as index_file:
+        index = json.load(index_file)
+    return index["datasetName"]
+
+
 def get_valueMaps_from_index(index_path, num_of_maps):
     print("Reading index file %s" % index_path)
     with open(index_path) as index_file:
@@ -233,13 +243,24 @@ if __name__ == '__main__':
     numOfAgents = 512
     original_map = []
 
-    folder = "D:/MSc/Thesis/CakeCutting/data/IsraelMaps02"
-    input_file = 'D:/MSc/Thesis/CakeCutting/data/madlanDataDump/IsraelMap.json'
+    datasetName = "randomMaps02"
+    folder = "../data/"
+    input_file = '../data/originalMaps/RandomNoiseMap.txt'
     # folder = "data/test02"
     # input_file = TD2_MAP_2D_DATA_FILE_NAME
 
-    indexFile = generate_valueMaps_to_file(input_file, folder, noise, numOfAgents, None)
-
+    indexFile = generate_valueMaps_to_file(input_file, folder, datasetName, noise, numOfAgents, None)
     print(indexFile)
+
+    # for input_file in ['../data/originalMaps/RandomNoiseMap.txt','../data/originalMaps/newzealand_forests_2D_low_res.txt','../data/originalMaps/IsraelMap.txt']:
+    #     with open(input_file, "rb") as data_file:
+    #         original_map_data = pickle.load(data_file)
+    #     csvfilename = input_file+".csv"
+    #     with open(csvfilename, "w", newline='') as csv_file:
+    #         csv_file_writer = csv.writer(csv_file)
+    #         for line in original_map_data:
+    #             csv_file_writer.writerow(line)
+
+
 
 

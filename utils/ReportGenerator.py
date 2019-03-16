@@ -2,16 +2,17 @@ import csv
 import itertools
 import json
 import math
+import os
+from datetime import datetime
 from functools import reduce
 from statistics import mean, stdev
 
-import numpy as np
-import matplotlib.pyplot as pyplot
 
-from utils.Types import AggregationType, AlgType, CutPattern
+from utils.Types import AggregationType, CutPattern
 
 def calculate_avg_result(result_list):
-    keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio', 'largestEnvy']
+    keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio', 'smallestFaceRatio',
+                       'largestInheritanceGain', 'averageInheritanceGain', 'largestEnvy', 'experimentDurationSec']
     if result_list:
         result = {}
         for key in result_list[0]:
@@ -31,7 +32,9 @@ def calculate_avg_result(result_list):
 
 
 def calculate_int_result(EvenPaz_res, Assessor_res):
-    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg', 'largestEnvy_Avg']
+    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg',
+                         'smallestFaceRatio_Avg', 'largestInheritanceGain_Avg', 'averageInheritanceGain_Avg',
+                         'largestEnvy_Avg', 'experimentDurationSec_Avg']
     if EvenPaz_res:
         result = {}
         for key in EvenPaz_res:
@@ -52,7 +55,7 @@ def calculate_int_result(EvenPaz_res, Assessor_res):
     pass
 
 
-def parse_sum_data_entry(orig_data_entry,sum_data_entry):
+def parse_sum_data_entry(orig_data_entry, sum_data_entry):
 
     if not sum_data_entry:
         return []
@@ -65,23 +68,61 @@ def parse_sum_data_entry(orig_data_entry,sum_data_entry):
     dict_to_parse['utilitarianGain_Imp'] = sum_data_entry["utilitarianGain_Avg"]
     dict_to_parse['averageFaceRatio_Imp'] = sum_data_entry["averageFaceRatio_Avg"]
     dict_to_parse['largestFaceRatio_Imp'] = sum_data_entry["largestFaceRatio_Avg"]
-    dict_to_parse['largestEnvy_Imp'] = sum_data_entry ["largestEnvy_Avg"]
+    dict_to_parse['smallestFaceRatio_Imp'] = sum_data_entry["smallestFaceRatio_Avg"]
+    dict_to_parse['largestInheritanceGain_Imp'] = sum_data_entry["largestInheritanceGain_Avg"]
+    dict_to_parse['averageInheritanceGain_Imp'] = sum_data_entry["averageInheritanceGain_Avg"]
+    dict_to_parse['largestEnvy_Imp'] = sum_data_entry["largestEnvy_Avg"]
 
     key_order = ['Method',
          'egalitarianGain_Avg', 'egalitarianGain_Imp', 'egalitarianGain_StDev',
          'utilitarianGain_Avg', 'utilitarianGain_Imp', 'utilitarianGain_StDev',
          'averageFaceRatio_Avg', 'averageFaceRatio_Imp', 'averageFaceRatio_StDev',
          'largestFaceRatio_Avg', 'largestFaceRatio_Imp', 'largestFaceRatio_StDev',
-         'largestEnvy_Avg', 'largestEnvy_Imp', 'largestEnvy_StDev']
+         'smallestFaceRatio_Avg', 'smallestFaceRatio_Imp', 'smallestFaceRatio_StDev',
+         'largestInheritanceGain_Avg', 'largestInheritanceGain_StDev',
+         'averageInheritanceGain_Avg', 'averageInheritanceGain_StDev',
+         'largestEnvy_Avg', 'largestEnvy_Imp', 'largestEnvy_StDev',
+         'experimentDurationSec_Avg', 'experimentDurationSec_StDev']
 
     return [dict_to_parse[key] for key in key_order]
 
 
+def create_table_summary_line(groupsize_sum_results):
+    max_idx_dict = {'EGA': 1,
+           'EGP': 2,
+           'UGA': 4,
+           'UGP': 5,
+           'AFA': 7,
+           'AFP': 8,
+           'LFA': 10,
+           'LFP': 11,
+           'SFA': 13,
+           'SFP': 14,
+           'LIA': 16,
+           'AIA': 18}
+    min_idx_dict = {
+                'LEA': 20,
+                'LEP': 21,
+                'RDA': 23}
+    sum_result = [' ']*len(groupsize_sum_results[0])
+    if sum_result:
+        sum_result[0] = "Summary"
+
+        for idx in max_idx_dict.values():
+            sum_result[idx] = next((r[0] for r in groupsize_sum_results if
+                                    r and (r[idx] == max([r[idx] for r in groupsize_sum_results if r]))), " ")
+
+        for idx in min_idx_dict.values():
+            sum_result[idx] = next((r[0] for r in groupsize_sum_results if
+                                    r and (r[idx] == min([r[idx] for r in groupsize_sum_results if r]))), " ")
+    return sum_result
+
+
 def generate_reports(jsonfilename):
     filepath_elements = jsonfilename.split('_')
-    aggText = filepath_elements[1]
-    aggParam = filepath_elements[2]
-    experiments_per_cell = int(filepath_elements[3])
+    aggText = filepath_elements[2]
+    aggParam = filepath_elements[3]
+    experiments_per_cell = int(filepath_elements[4])
     dataParamType = AggregationType.NumberOfAgents
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
@@ -107,14 +148,22 @@ def generate_reports(jsonfilename):
             sum_results_per_groupsize[n].append(
                 parse_sum_data_entry(method_avg_results[n]["EvenPaz"], method_avg_results[n]["Integrated"]))
         avg_results_per_method[m] = method_avg_results
+
+    for groupSize in sum_results_per_groupsize:
+        if not sum_results_per_groupsize[groupSize]:
+            continue
+        sum_results_per_groupsize[groupSize].append(create_table_summary_line(sum_results_per_groupsize[groupSize]))
+
     with open(jsonfilename + '_summary.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
         first_headline = ["Cut Heuristic", "egalitarianGain", "", "", "utilitarianGain", "", "", "averageFaceRatio", "",
-                          "", "largestFaceRatio", "", "", "largestEnvy", "", ""]
+                          "", "largestFaceRatio", "", "", "smallestFaceRatio", "", "", "largestInheritanceGain", "",
+                          "averageInheritanceGain", "", "largestEnvy", "", "", "runDuration(sec)", ""]
         second_headline = ["", "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev",
                            "AverageRatio", "Improv(%)", "StDev", "AverageRatio", "Improv(%)", "StDev",
-                           "AverageGain", "Improv(%)", "StDev"]
+                           "AverageGain", "Improv(%)", "StDev", "AverageGain", "StDev",
+                           "AverageGain", "StDev", "AverageGain", "Improv(%)", "StDev", "Average Time", "StDev"]
         for groupSize in sum_results_per_groupsize:
             if not sum_results_per_groupsize[groupSize]:
                 continue
@@ -144,6 +193,52 @@ def generate_reports(jsonfilename):
                 csv_file_writer.writerow([r[key] for key in keys_list])
                 r = avg_results_per_method[m][n]["Integrated"]
                 csv_file_writer.writerow([r[key] for key in keys_list])
+
+
+def create_exp_folder(run_folder, exp_name_string):
+    result_folder = run_folder + exp_name_string + "/"
+    result_log_folder = result_folder + "logs/"
+    if not os.path.exists(result_folder):
+        os.makedirs(result_folder)
+        os.makedirs(result_log_folder)
+    return result_folder
+
+
+def create_run_folder():
+    run_folder = "./results/" + datetime.now().isoformat(timespec='seconds').replace(":", "-") + "/"
+    if not os.path.exists(run_folder):
+        os.makedirs(run_folder)
+    return run_folder
+
+
+def generate_exp_name(aggParam, aggText, experiments_per_cell):
+    timestring = datetime.now().isoformat(timespec='seconds').replace(":", "-")
+    file_name_string = timestring + "_" + aggText + "_" + str(aggParam) + "_" + str(experiments_per_cell) + "_exp"
+    return file_name_string
+
+
+def write_results_to_folder(result_folder, file_name_string, results):
+    json_file_path = write_results_to_json(result_folder, file_name_string, results)
+    generate_reports(json_file_path)
+    write_results_to_csv(result_folder, file_name_string, results)
+
+
+def write_results_to_csv(result_folder, file_name_string, results):
+    csvfilename = result_folder + file_name_string + ".csv"
+    with open(csvfilename, "w", newline='') as csv_file:
+        csv_file_writer = csv.writer(csv_file)
+        keys_list = results[0].keys()
+        data = [[result[key] for key in keys_list] for result in results]
+        csv_file_writer.writerow(keys_list)
+        for data_entry in data:
+            csv_file_writer.writerow(data_entry)
+
+
+def write_results_to_json(result_folder, file_name_string, results):
+    jsonfilename = result_folder + file_name_string + ".json"
+    with open(jsonfilename, "w") as json_file:
+        json.dump(results, json_file)
+    return jsonfilename
 
 
 if __name__ == '__main__':

@@ -35,7 +35,10 @@ class AllocatedPiece:
 		self.halfcuts = {}
 
 	def __repr__(self):
-		return "%s receives [%0.2f,%0.2f,%0.2f,%0.2f]" % (self.agent.name, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol)
+		return "%s(%s) receives [%0.2f,%0.2f,%0.2f,%0.2f] - (Ratio %0.2f)" % (self.agent.name, self.agent.file_num, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol, self.getFaceRatio())
+
+	def toString(self):
+		return self.__repr__()
 
 	def subCut(self, iDirFrom, iDirTo, direction):
 		switcher = {
@@ -135,9 +138,9 @@ class AllocatedPiece:
 		enviousValue = self.agent.evaluationOfPiece(self)
 		enviedValue  = self.agent.evaluationOfPiece(otherPiece)
 		if enviousValue >= enviedValue:
-			return 0
+			return 1
 		else:
-			return (enviedValue / enviousValue)-1
+			return (enviedValue / enviousValue)
 
 	def getLargestEnvy(self, otherPieces):
 		"""

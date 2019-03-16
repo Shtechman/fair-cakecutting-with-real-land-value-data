@@ -1,10 +1,11 @@
 #!python3
-
+import os
 from functools import lru_cache
 import numpy as np
 
 from utils.MapFileHandler import read_valueMaps_from_file
 from utils.Types import CutDirection
+
 
 
 class Agent:
@@ -14,10 +15,16 @@ class Agent:
     def __init__(self, valueMapPath, name="Anonymous"):
         self.name = name
         self.valueMapPath = valueMapPath
+        self.file_num = self.extract_file_name(valueMapPath)
         self.loadValueMap()
         self.cakeValue = np.sum(self.locallyLoadedValueMap)
         self.valueMapRows = len(self.locallyLoadedValueMap)
         self.valueMapCols = len(self.locallyLoadedValueMap[0])
+
+    def extract_file_name(self,file_path):
+        return file_path.split("/")[-1].split('_')[0]
+
+
 
     def getMapPath(self):
         return self.valueMapPath
@@ -64,6 +71,7 @@ class Agent:
         toColFraction = 1-(toColCeiling - iToCol)
 
         pieceValueMap = self.locallyLoadedValueMap[fromRowFloor:toRowCeiling, fromColFloor:toColCeiling].copy()
+
         pieceValueMap[0, :] *= fromRowFraction
         pieceValueMap[-1, :] *= toRowFraction
         pieceValueMap[:, 0] *= fromColFraction
