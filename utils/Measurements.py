@@ -18,7 +18,7 @@ class Measurements:
     @staticmethod
     def calculateLargestEnvy(partition):
         largestEnvyList = list(map(lambda piece: piece.getLargestEnvy(partition), partition))
-        return max(0, max(largestEnvyList))
+        return max(1, max(largestEnvyList))
 
     @staticmethod
     def calculateUtilitarianGain(relativeValues):

@@ -90,7 +90,7 @@ def runExperiment(exp_data):
 
     # for each experimaent run the Algorithm for numOfAgents using noiseProportion
     cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableRemain,
-                            CutPattern.LargestRemainRange, CutPattern.LargestAvgRemainRange, CutPattern.VerHor,
+                            CutPattern.LargestRemainRange, CutPattern.VerHor,
                             CutPattern.HorVer, CutPattern.SmallestPiece, CutPattern.SquarePiece,
                             CutPattern.SmallestHalfCut]
 
@@ -178,7 +178,7 @@ def calculate_results(index_file, aggregationType, number_of_agents, noise_propo
 
 
 if __name__ == '__main__':
-    # main.py num_of_experiments log_max_num_of_agents num_of_parallel_tasks
+    # main.py [<num_of_experiments> [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]
     print("Start experiment")
     argv = sys.argv
     if len(argv) > 1:
@@ -201,11 +201,14 @@ if __name__ == '__main__':
     RUN_FOLDER_PATH = create_run_folder()
 
     experiment_sets = [
-        {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents":[4, 8]},
-        {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents":[4, 8]},
-        {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents":[4, 8]},
-        {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents":[4, 8]},
-        {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents":[4, 8]},
+        {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents": [64, 128]},
+        {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents": [64, 128]},
+        {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64, 128]},
+        {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128]},
+        {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128]},
+        {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128]},
+        {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128]},
+
     ]
 
     for experiment_set in experiment_sets:

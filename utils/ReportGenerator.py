@@ -10,9 +10,8 @@ from statistics import mean, stdev
 
 from utils.Types import AggregationType, CutPattern
 
-def calculate_avg_result(result_list):
-    keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio', 'smallestFaceRatio',
-                       'largestInheritanceGain', 'averageInheritanceGain', 'largestEnvy', 'experimentDurationSec']
+def calculate_avg_result(result_list, keys_to_average):
+
     if result_list:
         result = {}
         for key in result_list[0]:
@@ -31,10 +30,7 @@ def calculate_avg_result(result_list):
         return {}
 
 
-def calculate_int_result(EvenPaz_res, Assessor_res):
-    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg',
-                         'smallestFaceRatio_Avg', 'largestInheritanceGain_Avg', 'averageInheritanceGain_Avg',
-                         'largestEnvy_Avg', 'experimentDurationSec_Avg']
+def calculate_int_result(EvenPaz_res, Assessor_res,keys_to_integrate):
     if EvenPaz_res:
         result = {}
         for key in EvenPaz_res:
@@ -119,41 +115,111 @@ def create_table_summary_line(groupsize_sum_results):
 
 
 def generate_reports(jsonfilename):
-    filepath_elements = jsonfilename.split('_')
-    aggText = filepath_elements[2]
-    aggParam = filepath_elements[3]
-    experiments_per_cell = int(filepath_elements[4])
-    dataParamType = AggregationType.NumberOfAgents
+    # filepath_elements = jsonfilename.split('_')
+    # aggText = filepath_elements[2]
+    # aggParam = filepath_elements[3]
+    # experiments_per_cell = int(filepath_elements[4])
+    # dataParamType = AggregationType.NumberOfAgents
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
-    results_per_method = {
-    method: [r for r in results if r["Method"].replace("EvenPaz", "").replace("Assessor", "") == method] for method in
-    [m.name for m in CutPattern]}
-    for m in results_per_method:
-        results_per_method[m] = {n: [r for r in results_per_method[m] if r['NumberOfAgents'] == n] for n in
-                                 [4, 8, 16, 32, 64, 128]}  # todo make dynamic to group size
-        for n in results_per_method[m]:
-            results_per_method[m][n] = {a: [r for r in results_per_method[m][n] if r['Algorithm'] == a] for a in
-                                        ["EvenPaz", "Assessor"]}
+
+    avg_results_per_method,\
+    sum_results_per_groupsize,\
+    avg_evenpaz_results_per_measurement,\
+    avg_assessor_results_per_measurement,\
+    groupsizes = preprocess_results(results)
+
+    write_graphtables_report_csv(jsonfilename, avg_evenpaz_results_per_measurement, groupsizes)
+    write_graphtables_report_csv(jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
+    write_summary_report_csv(jsonfilename, sum_results_per_groupsize)
+    write_extended_report_csv(jsonfilename, avg_results_per_method)
+
+
+def preprocess_results(results):
+    keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio',
+                       'smallestFaceRatio',
+                       'largestInheritanceGain', 'averageInheritanceGain', 'largestEnvy', 'experimentDurationSec']
+    keys_to_integrate = [key +'_Avg' for key in keys_to_average]
+    available_groupsizes = [4, 8, 16, 32, 64, 128]  # todo make dynamic to group size
+
+    res_per_m = { # m - method
+        method: [r for r in results if r["Method"].replace("EvenPaz", "").replace("Assessor", "") == method] for method
+    in
+        [m.name for m in CutPattern]}
+
+    res_per_gs_per_m = {}  # gs - groupsize, m - method
+    res_per_a_per_gs_per_m = {}  # a - algorithm, gs - groupsize, m - method
+
+    for method in res_per_m:
+        res_per_gs_per_m[method] = {n: [r for r in res_per_m[method]
+                                                        if r['NumberOfAgents'] == n] for n in available_groupsizes}
+        res_per_a_per_gs_per_m[method] = {n: [] for n in available_groupsizes}
+        for groupsize in res_per_gs_per_m[method]:
+            res_per_a_per_gs_per_m[method][groupsize] = {a: [r for r in res_per_gs_per_m[method][groupsize]
+                                                             if r['Algorithm'] == a] for a in ["EvenPaz", "Assessor"]}
     avg_results_per_method = {}
-    sum_results_per_groupsize = {4: [], 8: [], 16: [], 32: [], 64: [], 128: []}  # todo make dynamic to group size
-    for m in results_per_method:
+    sum_results_per_groupsize = {n: [] for n in available_groupsizes}
+    for method in res_per_a_per_gs_per_m:
         method_avg_results = {}
-        for n in results_per_method[m]:
-            method_avg_results[n] = {a: calculate_avg_result(results_per_method[m][n][a]) for a in
-                                     results_per_method[m][n]}
-            EvenPaz_res = method_avg_results[n]["EvenPaz"]
-            Assessor_res = method_avg_results[n]["Assessor"]
-            method_avg_results[n]["Integrated"] = calculate_int_result(EvenPaz_res, Assessor_res)
-            sum_results_per_groupsize[n].append(
-                parse_sum_data_entry(method_avg_results[n]["EvenPaz"], method_avg_results[n]["Integrated"]))
-        avg_results_per_method[m] = method_avg_results
+        for groupsize in res_per_a_per_gs_per_m[method]:
+            method_avg_results[groupsize] = {a: calculate_avg_result(res_per_a_per_gs_per_m[method][groupsize][a],
+                                                                     keys_to_average)
+                                             for a in res_per_a_per_gs_per_m[method][groupsize]}
+            EvenPaz_res = method_avg_results[groupsize]["EvenPaz"]
+            Assessor_res = method_avg_results[groupsize]["Assessor"]
+            method_avg_results[groupsize]["Integrated"] = calculate_int_result(EvenPaz_res, Assessor_res,keys_to_integrate)
+            sum_results_per_groupsize[groupsize].append(
+                parse_sum_data_entry(method_avg_results[groupsize]["EvenPaz"], method_avg_results[groupsize]["Integrated"]))
+        avg_results_per_method[method] = method_avg_results
+
+    avg_evenpaz_results_per_measurement = {measure:
+                                       {method:
+                                            [avg_results_per_method[method][groupsize]["EvenPaz"][measure]
+                                             if avg_results_per_method[method][groupsize]["EvenPaz"] else ""
+                                             for groupsize in avg_results_per_method[method]]
+                                        for method in avg_results_per_method}
+                                   for measure in keys_to_integrate}
+
+    avg_assessor_results_per_measurement = {measure:
+                                       {method:
+                                            [avg_results_per_method[method][groupsize]["Assessor"][measure]
+                                            if avg_results_per_method[method][groupsize]["Assessor"] else ""
+                                             for groupsize in avg_results_per_method[method]]
+                                        for method in avg_results_per_method}
+                                   for measure in keys_to_integrate}
 
     for groupSize in sum_results_per_groupsize:
         if not sum_results_per_groupsize[groupSize]:
             continue
         sum_results_per_groupsize[groupSize].append(create_table_summary_line(sum_results_per_groupsize[groupSize]))
+    return avg_results_per_method,\
+           sum_results_per_groupsize,\
+           avg_evenpaz_results_per_measurement,\
+           avg_assessor_results_per_measurement,\
+           available_groupsizes
 
+
+def write_extended_report_csv(jsonfilename, avg_results_per_method):
+    with open(jsonfilename + '_results.csv', "w", newline='') as csv_file:
+        csv_file_writer = csv.writer(csv_file)
+        keys_list = []
+        csv_file_writer.writerow(keys_list)
+        for m in avg_results_per_method:
+            for n in avg_results_per_method[m]:
+                r = avg_results_per_method[m][n]["EvenPaz"]
+                if not r:
+                    continue
+                if not keys_list:
+                    keys_list = list(r.keys())
+                    csv_file_writer.writerow(keys_list)
+                csv_file_writer.writerow([r[key] for key in keys_list])
+                r = avg_results_per_method[m][n]["Assessor"]
+                csv_file_writer.writerow([r[key] for key in keys_list])
+                r = avg_results_per_method[m][n]["Integrated"]
+                csv_file_writer.writerow([r[key] for key in keys_list])
+
+
+def write_summary_report_csv(jsonfilename, sum_results_per_groupsize):
     with open(jsonfilename + '_summary.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
@@ -176,23 +242,27 @@ def generate_reports(jsonfilename):
                 csv_file_writer.writerow(method_entry)
             csv_file_writer.writerow([""])
             csv_file_writer.writerow([""])
-    with open(jsonfilename + '_results.csv', "w", newline='') as csv_file:
+
+def write_graphtables_report_csv(jsonfilename, results_per_measuement, groupsizes, label="EvenPaz"):
+    with open(jsonfilename + '_' + label + '_graphtables.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
-        keys_list = []
-        csv_file_writer.writerow(keys_list)
-        for m in avg_results_per_method:
-            for n in avg_results_per_method[m]:
-                r = avg_results_per_method[m][n]["EvenPaz"]
-                if not r:
+        csv_file_writer.writerow([jsonfilename])
+        headline = [""]+groupsizes
+        for measure in results_per_measuement:
+            if not results_per_measuement[measure]:
+                continue
+            csv_file_writer.writerow([label,measure])
+            csv_file_writer.writerow(headline)
+            for method in results_per_measuement[measure]:
+                if not method:
                     continue
-                if not keys_list:
-                    keys_list = list(r.keys())
-                    csv_file_writer.writerow(keys_list)
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n]["Assessor"]
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n]["Integrated"]
-                csv_file_writer.writerow([r[key] for key in keys_list])
+                if not results_per_measuement[measure][method]:
+                    continue
+                if not [x for x in results_per_measuement[measure][method] if x]:
+                    continue
+                csv_file_writer.writerow([method]+results_per_measuement[measure][method])
+            csv_file_writer.writerow([""])
+            csv_file_writer.writerow([""])
 
 
 def create_exp_folder(run_folder, exp_name_string):
