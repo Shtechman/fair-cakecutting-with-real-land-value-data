@@ -53,3 +53,8 @@ class Measurements:
     def calculateRelativeValues(partition):
         relativeValues = list(map(lambda piece: max(0, piece.getRelativeValue()), partition))
         return relativeValues
+
+    @staticmethod
+    def calculateAbsolutValues(partition):
+        absolutValues = list(map(lambda piece: max(0, piece.getValue()), partition))
+        return absolutValues

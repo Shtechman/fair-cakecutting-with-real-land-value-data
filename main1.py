@@ -221,11 +221,21 @@ if __name__ == '__main__':
 	# plt.show()
 	#
 	#
-	# input_path = 'data/originalMaps/RandomNoiseMap.txt'
-	# with open(input_path,'rb') as mapfile:
-	# 	a = pickle.load(mapfile)
-	# plt.imshow(a, cmap='hot', interpolation='nearest')
-	# plt.show()
+	input_path = 'data/IsraelMaps02HS/0_valueMap_noise0.2.txt'
+	with open(input_path, 'rb') as mapfile:
+		a = pickle.load(mapfile)
+	plt.imshow(a, cmap='hot', interpolation='nearest')
+	plt.show()
+	input_path = 'data/IsraelMaps02HS/1_valueMap_noise0.2.txt'
+	with open(input_path, 'rb') as mapfile:
+		a = pickle.load(mapfile)
+	plt.imshow(a, cmap='hot', interpolation='nearest')
+	plt.show()
+	input_path = 'data/IsraelMaps06HS/0_valueMap_noise0.6.txt'
+	with open(input_path, 'rb') as mapfile:
+		a = pickle.load(mapfile)
+	plt.imshow(a, cmap='hot', interpolation='nearest')
+	plt.show()
 
 	NTASKS = 10
 

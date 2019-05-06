@@ -1,7 +1,9 @@
 import csv
+import os
 import pickle
 import random
 import time
+from math import exp
 
 import numpy as np
 import json
@@ -114,18 +116,45 @@ class MapFileHandler:
             return json.load(json_file)
 
 
-def noisyValues(original_map, noise_proportion, normalized_sum):
+def hotspot_noise_function(original_map, noise_proportion, normalized_sum, max_value):
+    rows = len(original_map)
+    cols = len(original_map[0])
+    hotspot_center = (random.randint(0, rows), random.randint(0, cols))
+    print(hotspot_center)
+    # noise*exp(-((xj-xc)^2+(yj-yc)^2)^0.1)
+    def hotspot_noise(xj, yj):
+        dx = pow((hotspot_center[1]-xj), 2)
+        dy = pow((hotspot_center[0]-yj), 2)
+
+        noise_addition = noise_proportion*exp(-pow(dx+dy, 0.1))
+        return noise_addition
+
+    new_map = [[original_map[r][c]*(1+hotspot_noise(c,r)) for c in range(cols)]
+              for r in range(rows)]
+
+    new_map = normalize_map(cols, new_map, normalized_sum, rows)
+    return new_map
+
+
+def uniform_noise_function(original_map, noise_proportion, normalized_sum, max_value):
     rows = len(original_map)
     cols = len(original_map[0])
     neg_noise_proportion = max(-1, -noise_proportion)  # done to ensure noisy outcome value is not negative
     new_map = [[original_map[r][c]*(1+random.uniform(neg_noise_proportion, noise_proportion)) for c in range(cols)]
               for r in range(rows)]
+    new_map = normalize_map(cols, new_map, normalized_sum, rows)
+    return new_map
+
+
+def normalize_map(cols, new_map, normalized_sum, rows):
     if normalized_sum is not None and normalized_sum > 0:
         aggregated_sum = sum([sum(new_map[r]) for r in range(rows)])
         if aggregated_sum > 0:
             normalization_factor = normalized_sum / aggregated_sum
             new_map = [new_map[r][c] * normalization_factor for r in rows for c in cols]
     return new_map
+
+
 
 
 def randomValues(rows, cols, maxValue, normalized_sum):
@@ -138,8 +167,12 @@ def randomValues(rows, cols, maxValue, normalized_sum):
     return new_map
 
 
-def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, num_of_maps, normalized_sum, rows=1490, cols=1020):
+def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, num_of_maps, normalized_sum, noise_function, rows=1490, cols=1020):
     folder = folder+datasetName
+
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
     randomMaps = False
     if original_map_file is None:
         randomMaps = True
@@ -150,6 +183,7 @@ def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, nu
     else:
         with open(original_map_file, "rb") as data_file:
             original_map_data = pickle.load(data_file)
+            max_value = max([max(row) for row in original_map_data])
         print("Creating %s value maps to folder %s with noise proportion %s" % (num_of_maps, folder, noise))
 
     index_output_path = "%s/index.txt" % folder
@@ -167,7 +201,7 @@ def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, nu
                 if i == 0:
                     original_map_file = output_path
             else:
-                new_map = noisyValues(original_map_data, noise, normalized_sum)
+                new_map = noise_function(original_map_data, noise, normalized_sum, max_value)
             pickle.dump(new_map, object_file)
         end = time.time()
         print("\t\tmap %s creation time was %s seconds" % (i, end - start))
@@ -241,16 +275,40 @@ if __name__ == '__main__':
 
     noise = 0.2
     numOfAgents = 512
-    original_map = []
 
-    datasetName = "randomMaps02"
+    og_maps = {"israel": '../data/originalMaps/IsraelMap.txt',
+               "newzealand": '../data/originalMaps/newzealand_forests_2D_low_res.txt',
+               "random":'../data/originalMaps/RandomNoiseMap.txt'}
+
+    noise_methods = {"uniform": uniform_noise_function,
+                     "hotspot": hotspot_noise_function}
+
+    datasets = [
+        {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+
+        {"datasetName": "IsraelMaps06HS", "input_file": og_maps["israel"], "noise": 0.6, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+
+        {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+
+        {"datasetName": "IsraelMaps04HS", "input_file": og_maps["israel"], "noise": 0.4, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+
+        {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+
+        {"datasetName": "IsraelMaps02HS", "input_file": og_maps["israel"], "noise": 0.2, "numOfAgents": numOfAgents,
+         "noise_method": noise_methods["hotspot"]},
+    ]
     folder = "../data/"
-    input_file = '../data/originalMaps/RandomNoiseMap.txt'
     # folder = "data/test02"
     # input_file = TD2_MAP_2D_DATA_FILE_NAME
-
-    indexFile = generate_valueMaps_to_file(input_file, folder, datasetName, noise, numOfAgents, None)
-    print(indexFile)
+    for dataset in datasets:
+        indexFile = generate_valueMaps_to_file(dataset["input_file"], folder, dataset["datasetName"],
+                                               dataset["noise"], dataset["numOfAgents"], None, dataset["noise_method"])
+        print(indexFile)
 
     # for input_file in ['../data/originalMaps/RandomNoiseMap.txt','../data/originalMaps/newzealand_forests_2D_low_res.txt','../data/originalMaps/IsraelMap.txt']:
     #     with open(input_file, "rb") as data_file:

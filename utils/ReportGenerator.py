@@ -6,9 +6,12 @@ import os
 from datetime import datetime
 from functools import reduce
 from statistics import mean, stdev
-
-
+from scipy.stats import t
 from utils.Types import AggregationType, CutPattern
+
+
+def calculate_confidence_interval(confidence, stdev, n):
+    return stdev*t.ppf((1+confidence)/2., n-1)
 
 def calculate_avg_result(result_list, keys_to_average):
 
@@ -67,7 +70,7 @@ def parse_sum_data_entry(orig_data_entry, sum_data_entry):
     dict_to_parse['smallestFaceRatio_Imp'] = sum_data_entry["smallestFaceRatio_Avg"]
     dict_to_parse['largestInheritanceGain_Imp'] = sum_data_entry["largestInheritanceGain_Avg"]
     dict_to_parse['averageInheritanceGain_Imp'] = sum_data_entry["averageInheritanceGain_Avg"]
-    dict_to_parse['largestEnvy_Imp'] = sum_data_entry["largestEnvy_Avg"]
+    dict_to_parse['largestEnvy_Imp'] = -1 * sum_data_entry["largestEnvy_Avg"]
 
     key_order = ['Method',
          'egalitarianGain_Avg', 'egalitarianGain_Imp', 'egalitarianGain_StDev',
