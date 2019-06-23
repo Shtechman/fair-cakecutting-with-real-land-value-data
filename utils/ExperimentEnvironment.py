@@ -1,9 +1,10 @@
 import csv
 import os
 
-from utils.AlgorithmAssessor1D import AlgorithmAssessor1D
-from utils.AlgorithmEvenPaz1D import AlgorithmEvenPaz1D
-from utils.Types import AlgType, CutDirection
+from utils.AlgorithmAssessor import AlgorithmAssessor
+from utils.AlgorithmDishonest import AlgorithmDishonest
+from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
+from utils.Types import AlgType, CutDirection, RunType
 from utils.ValueFunction2D import CakeData2D
 
 
@@ -31,21 +32,35 @@ class ExperimentEnvironment:
     #     agents = map(Agent, self.getMeanValues().noisyValuesArray(self.noiseProportion, None, self.numberOfAgents))
     #     return agents
 
-    @staticmethod
-    def getAlgorithm(algType):
+
+    def getAlgorithm(self, algType, runType):
+        if runType == RunType.Assessor:
+            return self._getAssessor(algType)
+        if runType == RunType.Honest:
+            return self._getAlgorithm(algType)
+        if runType == RunType.Dishonest:
+            return self._getDisAlgorithm(algType)
+        else:
+            raise ValueError("Algorithm run type '%s' is not supported" % runType)
+
+    def _getDisAlgorithm(self, algType):
+        return AlgorithmDishonest(self._getAlgorithm(algType))
+
+    def _getAlgorithm(self, algType):
         if algType == AlgType.EvenPaz:
-            return AlgorithmEvenPaz1D()
+            return AlgorithmEvenPaz()
         else:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
-    def getAssessor(self, algType):
-        return AlgorithmAssessor1D(self.assessorAgentPool, self.getAlgorithm(algType))
+    def _getAssessor(self, algType):
+        return AlgorithmAssessor(self.assessorAgentPool, self._getAlgorithm(algType))
+
 
     def getAgents(self):
         return self.agents
 
-    def log_experiment_to_file(self, method, partition, run_duration):
-        output_file_path = self.result_folder + "logs/" + self.iExperiment + "_" + method + ".csv"
+    def log_experiment_to_file(self, method, partition, run_duration,comment):
+        output_file_path = self.result_folder + "logs/" + self.iExperiment + "_" + method + comment + ".csv"
 
         partition = [p.toString() for p in partition]
         cuts_tested = [cut_pattern.name for cut_pattern in self.cut_patterns_tested]

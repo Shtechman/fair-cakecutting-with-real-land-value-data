@@ -9,8 +9,13 @@ class AggregationType(Enum):
 
 
 class AlgType(Enum):
-    EvenPaz = 1,
-    Assessor = 2
+    EvenPaz = 1
+
+
+class RunType(Enum):
+    Honest = 1,
+    Dishonest = 2,
+    Assessor = 3
 
 
 class CutDirection(Enum):

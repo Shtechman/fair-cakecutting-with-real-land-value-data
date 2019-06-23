@@ -20,6 +20,13 @@ class Agent:
         self.cakeValue = np.sum(self.locallyLoadedValueMap)
         self.valueMapRows = len(self.locallyLoadedValueMap)
         self.valueMapCols = len(self.locallyLoadedValueMap[0])
+        self.dishonesty = False
+
+    def isDishonest(self):
+        return self.dishonesty
+
+    def setDishonesty(self, dishonesty):
+        self.dishonesty = dishonesty
 
     def extract_file_name(self,file_path):
         return file_path.split("/")[-1].split('_')[0]

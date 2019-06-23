@@ -1,6 +1,9 @@
+import sys
+
 from utils.Types import CutPattern, CutDirection
 import numpy as np
 
+SMALLEST_NUMBER = 0.0000000000001
 
 class Cutter:
 
@@ -19,9 +22,18 @@ class Cutter:
         self._set_next_query_direction()
 
         # Ask all agents a "cut" query - cut the cake in proportionOfFirstPartition (half or near-half):
-        for allocation in allocations:
-            value = proportion_of_first_partition*allocation.getValue()
-            self._set_relevant_halfcuts(value, allocation)
+        dishonestIdx = -1
+        for idx, allocation in enumerate(allocations):
+            if dishonestIdx < 0 and allocation.getAgent().isDishonest():
+                dishonestIdx = idx
+            else:
+                value = proportion_of_first_partition*allocation.getValue()
+                self._set_relevant_halfcuts(value, allocation)
+
+        if dishonestIdx > -1:
+            allocation = allocations[dishonestIdx]
+            honestAllocations = allocations[:dishonestIdx]+allocations[dishonestIdx+1:]
+            self._best_halfcuts(allocation, honestAllocations)
 
         self._set_next_cutting_direction(allocations, number_of_agents)
 
@@ -58,6 +70,18 @@ class Cutter:
         if (self.cut_query is CutDirection.Vertical) or (self.cut_query is CutDirection.Both):
             allocation.halfcuts[CutDirection.Vertical] = allocation.markQuery(value, CutDirection.Vertical)
 
+    def _best_halfcuts(self, allocation, honestAllocations):
+        allocation.halfcuts = {}
+        if (self.cut_query is CutDirection.Horizontal) or (self.cut_query is CutDirection.Both):
+            horizontalHosnestHalfcuts = [allocation.halfcuts[CutDirection.Horizontal] for allocation in
+                                         honestAllocations]
+            allocation.halfcuts[CutDirection.Horizontal] = self._calculate_best_halfcut(allocation, CutDirection.Horizontal,
+                                                                                        horizontalHosnestHalfcuts)
+        if (self.cut_query is CutDirection.Vertical) or (self.cut_query is CutDirection.Both):
+            verticalHosnestHalfcuts = [allocation.halfcuts[CutDirection.Vertical] for allocation in
+                                       honestAllocations]
+            allocation.halfcuts[CutDirection.Vertical] = self._calculate_best_halfcut(allocation, CutDirection.Vertical,
+                                                                                      verticalHosnestHalfcuts)
 
     def _initial_cut_direction(self):
         switcher = {
@@ -94,6 +118,22 @@ class Cutter:
         else:
             dir_iter_func = self._get_query_direction_iterator_func()
             self.cut_query = dir_iter_func()
+
+    def _calculate_best_halfcut(self, allocation, query_direction, hosnest_halfcuts):
+        if len(hosnest_halfcuts) % 2 > 0:
+            middleIdx = int(np.floor(len(hosnest_halfcuts) / 2))
+        else:
+            raise ValueError("Odd number of agents yet to be supported") # todo: add support for odd num of agents
+
+        hosnest_halfcuts.sort()
+        query_halfcut = hosnest_halfcuts[middleIdx]
+        low_half = allocation.subCut(allocation.getDirectionaliFrom(query_direction), query_halfcut, query_direction)
+        high_half = allocation.subCut(query_halfcut, allocation.getDirectionaliTo(query_direction), query_direction)
+
+        if low_half.getValue() > high_half.getValue():
+            return query_halfcut - SMALLEST_NUMBER
+        else:
+            return query_halfcut + SMALLEST_NUMBER
 
     def _set_next_cutting_direction(self, allocations, number_of_agents):
         _get_horizontal_halfcut = lambda alloc: alloc.halfcuts[CutDirection.Horizontal]

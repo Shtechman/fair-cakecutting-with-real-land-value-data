@@ -20,6 +20,7 @@ def calculate_avg_result(result_list, keys_to_average, groupsize):
         for key in result_list[0]:
             if key in keys_to_average:
                 key_list_values = list(map(lambda res: res[key], result_list))
+                num_values = len(key_list_values)
                 avg_key = key+'_Avg'
                 std_key = key + '_StDev'
                 interval_key = key + '_interval'
@@ -29,7 +30,7 @@ def calculate_avg_result(result_list, keys_to_average, groupsize):
             else:
                 result[key] = result_list[-1][key]
                 if key == "Method":
-                    result[key] = result[key].replace(result_list[-1]["Algorithm"], "")
+                    result[key] = result[key].split("_")[-1]
         return result
     else:
         return {}
@@ -47,9 +48,9 @@ def calculate_int_result(EvenPaz_res, Assessor_res,keys_to_integrate):
             else:
                 result[key] = EvenPaz_res[key]
                 if key == "Method":
-                    result[key] = result[key].replace(EvenPaz_res["Algorithm"], "")
+                    result[key] = result[key].split("_")[-1]
                 if key == "Algorithm":
-                    result[key] = "Integrated"
+                    result[key] = "Integrated_"+EvenPaz_res[key]
         return result
     else:
         return {}
@@ -132,7 +133,7 @@ def write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results
         with open(report_file_path, "w", newline='') as csv_file:
             csv_file_writer = csv.writer(csv_file)
             csv_file_writer.writerow([jsonfilename])
-            table_header = ['NumberOfAgents', 'EvenPaz', 'Assessor',  'Selling', 'EP_Conf', 'As_Conf']
+            table_header = ['NumberOfAgents', 'Honest', 'Assessor', 'Dishonest',  'Selling', 'Hon_Conf', 'As_Conf', 'Dis_Conf']
             for method in measure_results:
                 if not measure_results[method]:
                     continue
@@ -156,25 +157,33 @@ def generate_reports(jsonfilename):
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
 
-    avg_results_per_method,\
-    sum_results_per_groupsize,\
-    avg_evenpaz_results_per_measurement,\
+    avg_results_per_method, \
+    sum_honest_results_per_groupsize, \
+    sum_dishonest_results_per_groupsize, \
+    avg_honest_results_per_measurement,\
     avg_assessor_results_per_measurement, \
+    avg_dishonest_results_per_measurement, \
     graph_method_results_per_measure, \
     groupsizes = preprocess_results(results)
 
-    write_graphtables_report_csv(jsonfilename, avg_evenpaz_results_per_measurement, groupsizes)
+    write_graphtables_report_csv(jsonfilename, avg_honest_results_per_measurement, groupsizes)
     write_graphtables_report_csv(jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
-    write_summary_report_csv(jsonfilename, sum_results_per_groupsize)
+    write_graphtables_report_csv(jsonfilename, avg_dishonest_results_per_measurement, groupsizes, "Dishonest")
+
+    write_summary_report_csv(jsonfilename, sum_honest_results_per_groupsize)
+    write_summary_report_csv(jsonfilename, sum_dishonest_results_per_groupsize, "Dishonest")
+
     write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results_per_measure)
+
     write_extended_report_csv(jsonfilename, avg_results_per_method)
 
 
-def parse_method_over_measure_data_entry(measure, method, available_groupsizes, ep_avg, ep_interval, as_avg, as_interval, selling = 1.):
-    #header = ['NumberOfAgents', 'EvenPaz', 'Assessor',  'Selling', 'EP_Conf', 'As_Conf']
+def parse_method_over_measure_data_entry(measure, method, available_groupsizes, hon_avg, hon_interval, as_avg, as_interval, dis_avg, dis_interval, selling = 1.):
+    #header = ['NumberOfAgents', 'Honest', 'Assessor', 'Dishonest',  'Selling', 'Hon_Conf', 'As_Conf', 'Dis_Conf']
     data_entry = []
     for idx,group in enumerate(available_groupsizes):
-        data_entry.append([group, ep_avg[idx],as_avg[idx],selling,ep_interval[idx],as_interval[idx]])
+        data_entry.append([group, hon_avg[idx], as_avg[idx], dis_avg[idx], selling,
+                           hon_interval[idx], as_interval[idx], dis_interval[idx]])
     return data_entry
 
 
@@ -186,8 +195,14 @@ def preprocess_results(results):
     interval_keys = [key + '_interval' for key in keys_to_average]
     available_groupsizes = [4, 8, 16, 32, 64, 128]  # todo make dynamic to group size
 
+    honest = "Honest_EvenPaz"
+    dishonest = "Dishonest_EvenPaz"
+    assessor = "Assessor_EvenPaz"
+    integratedH = "Integrated_Honest_EvenPaz"
+    integratedD = "Integrated_Dishonest_EvenPaz"
+
     res_per_m = { # m - method
-        method: [r for r in results if r["Method"].replace("EvenPaz", "").replace("Assessor", "") == method] for method
+        method: [r for r in results if r["Method"].split("_")[-1] == method] for method
     in
         [m.name for m in CutPattern]}
 
@@ -200,9 +215,10 @@ def preprocess_results(results):
         res_per_a_per_gs_per_m[method] = {n: [] for n in available_groupsizes}
         for groupsize in res_per_gs_per_m[method]:
             res_per_a_per_gs_per_m[method][groupsize] = {a: [r for r in res_per_gs_per_m[method][groupsize]
-                                                             if r['Algorithm'] == a] for a in ["EvenPaz", "Assessor"]}
+                                                             if r['Algorithm'] == a] for a in [honest, assessor, dishonest]}
     avg_results_per_method = {}
-    sum_results_per_groupsize = {n: [] for n in available_groupsizes}
+    sum_honest_results_per_groupsize = {n: [] for n in available_groupsizes}
+    sum_dishonest_results_per_groupsize = {n: [] for n in available_groupsizes}
     for method in res_per_a_per_gs_per_m:
         method_avg_results = {}
         
@@ -210,92 +226,141 @@ def preprocess_results(results):
             method_avg_results[groupsize] = {a: calculate_avg_result(res_per_a_per_gs_per_m[method][groupsize][a],
                                                                      keys_to_average, groupsize)
                                              for a in res_per_a_per_gs_per_m[method][groupsize]}
-            EvenPaz_res = method_avg_results[groupsize]["EvenPaz"]
-            Assessor_res = method_avg_results[groupsize]["Assessor"]
-            method_avg_results[groupsize]["Integrated"] = calculate_int_result(EvenPaz_res, Assessor_res,keys_to_integrate)
-            sum_results_per_groupsize[groupsize].append(
-                parse_sum_data_entry(method_avg_results[groupsize]["EvenPaz"], method_avg_results[groupsize]["Integrated"]))
-            # todo - implement parser for graph summary file
+            Honest_res = method_avg_results[groupsize][honest]
+            Assessor_res = method_avg_results[groupsize][assessor]
+            Dishonest_res = method_avg_results[groupsize][dishonest]
+            method_avg_results[groupsize][integratedH] = calculate_int_result(Honest_res, Assessor_res,
+                                                                             keys_to_integrate)
+            method_avg_results[groupsize][integratedD] = calculate_int_result(Dishonest_res, Assessor_res,
+                                                                             keys_to_integrate)
+            sum_honest_results_per_groupsize[groupsize].append(
+                parse_sum_data_entry(method_avg_results[groupsize][honest], method_avg_results[groupsize][integratedH]))
+            sum_dishonest_results_per_groupsize[groupsize].append(
+                parse_sum_data_entry(method_avg_results[groupsize][dishonest], method_avg_results[groupsize][integratedD]))
+
+        # todo - implement parser for graph summary file
         avg_results_per_method[method] = method_avg_results
 
-    avg_evenpaz_results_per_measurement = {measure:
+    avg_honest_results_per_measurement = {measure:
                                        {method:
-                                            [avg_results_per_method[method][groupsize]["EvenPaz"][measure]
-                                             if avg_results_per_method[method][groupsize]["EvenPaz"] else ""
+                                            [avg_results_per_method[method][groupsize][honest][measure]
+                                             if avg_results_per_method[method][groupsize][honest] else ""
                                              for groupsize in avg_results_per_method[method]]
                                         for method in avg_results_per_method}
                                    for measure in keys_to_integrate}
 
-    interval_evenpaz_results_per_measurement = {measure:
+    interval_honest_results_per_measurement = {measure:
                                                {method:
-                                                    [avg_results_per_method[method][groupsize]["EvenPaz"][measure]
-                                                     if avg_results_per_method[method][groupsize]["EvenPaz"] else ""
+                                                    [avg_results_per_method[method][groupsize][honest][measure]
+                                                     if avg_results_per_method[method][groupsize][honest] else ""
                                                      for groupsize in avg_results_per_method[method]]
                                                 for method in avg_results_per_method}
                                            for measure in interval_keys}
 
     avg_assessor_results_per_measurement = {measure:
                                        {method:
-                                            [avg_results_per_method[method][groupsize]["Assessor"][measure]
-                                            if avg_results_per_method[method][groupsize]["Assessor"] else ""
+                                            [avg_results_per_method[method][groupsize][assessor][measure]
+                                            if avg_results_per_method[method][groupsize][assessor] else ""
                                              for groupsize in avg_results_per_method[method]]
                                         for method in avg_results_per_method}
                                    for measure in keys_to_integrate}
 
+
     interval_assessor_results_per_measurement = {measure:
                                                 {method:
-                                                     [avg_results_per_method[method][groupsize]["Assessor"][measure]
-                                                      if avg_results_per_method[method][groupsize]["Assessor"] else ""
+                                                     [avg_results_per_method[method][groupsize][assessor][measure]
+                                                      if avg_results_per_method[method][groupsize][assessor] else ""
                                                       for groupsize in avg_results_per_method[method]]
                                                  for method in avg_results_per_method}
                                             for measure in interval_keys}
+
+    avg_dishonest_results_per_measurement = {measure:
+                                                {method:
+                                                     [avg_results_per_method[method][groupsize][dishonest][measure]
+                                                      if avg_results_per_method[method][groupsize][dishonest] else ""
+                                                      for groupsize in avg_results_per_method[method]]
+                                                 for method in avg_results_per_method}
+                                            for measure in keys_to_integrate}
+
+    interval_dishonest_results_per_measurement = {measure:
+                                                     {method:
+                                                          [avg_results_per_method[method][groupsize][dishonest][measure]
+                                                           if avg_results_per_method[method][groupsize][
+                                                              dishonest] else ""
+                                                           for groupsize in avg_results_per_method[method]]
+                                                      for method in avg_results_per_method}
+                                                 for measure in interval_keys}
     
     graph_method_results_per_measure = {measure: {} for measure in keys_to_average}
     for measure in graph_method_results_per_measure:
         avg_key = measure + '_Avg'
         interval_key = measure + '_interval'
-        ep_avg = avg_evenpaz_results_per_measurement[avg_key]
-        as_avg = avg_assessor_results_per_measurement[avg_key]
-        ep_interval = interval_evenpaz_results_per_measurement[interval_key]
-        as_interval = interval_assessor_results_per_measurement[interval_key]
+        honest_avg = avg_honest_results_per_measurement[avg_key]
+        assessor_avg = avg_assessor_results_per_measurement[avg_key]
+        dishonest_avg = avg_dishonest_results_per_measurement[avg_key]
+        honest_interval = interval_honest_results_per_measurement[interval_key]
+        assessor_interval = interval_assessor_results_per_measurement[interval_key]
+        dishonest_interval = interval_dishonest_results_per_measurement[interval_key]
         for method in avg_results_per_method:
-            graph_method_results_per_measure[measure][method] = parse_method_over_measure_data_entry(measure,method,available_groupsizes,ep_avg[method],ep_interval[method],as_avg[method],as_interval[method])
-        
+            graph_method_results_per_measure[measure][method] = parse_method_over_measure_data_entry(measure,method,
+                                                                                                     available_groupsizes,
+                                                                                                     honest_avg[method],honest_interval[method],
+                                                                                                     assessor_avg[method],assessor_interval[method],
+                                                                                                     dishonest_avg[method],dishonest_interval[method])
 
-    for groupSize in sum_results_per_groupsize:
-        if not sum_results_per_groupsize[groupSize]:
+
+    for groupSize in sum_honest_results_per_groupsize:
+        if not sum_honest_results_per_groupsize[groupSize]:
             continue
-        sum_results_per_groupsize[groupSize].append(create_table_summary_line(sum_results_per_groupsize[groupSize]))
-    return avg_results_per_method,\
-           sum_results_per_groupsize,\
-           avg_evenpaz_results_per_measurement,\
+        sum_honest_results_per_groupsize[groupSize].append(create_table_summary_line(sum_honest_results_per_groupsize[groupSize]))
+
+    for groupSize in sum_dishonest_results_per_groupsize:
+        if not sum_dishonest_results_per_groupsize[groupSize]:
+            continue
+        sum_dishonest_results_per_groupsize[groupSize].append(create_table_summary_line(sum_dishonest_results_per_groupsize[groupSize]))
+
+    return avg_results_per_method, \
+           sum_honest_results_per_groupsize, \
+           sum_dishonest_results_per_groupsize, \
+           avg_honest_results_per_measurement,\
            avg_assessor_results_per_measurement, \
+           avg_dishonest_results_per_measurement, \
            graph_method_results_per_measure, \
            available_groupsizes
 
 
 def write_extended_report_csv(jsonfilename, avg_results_per_method):
+    honest = "Honest_EvenPaz"
+    assessor = "Assessor_EvenPaz"
+    dishonest = "Dishonest_EvenPaz"
+    integratedH = "Integrated_Honest_EvenPaz"
+    integratedD = "Integrated_Dishonest_EvenPaz"
+
     with open(jsonfilename + '_results.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         keys_list = []
         csv_file_writer.writerow(keys_list)
         for m in avg_results_per_method:
             for n in avg_results_per_method[m]:
-                r = avg_results_per_method[m][n]["EvenPaz"]
+                r = avg_results_per_method[m][n][honest]
                 if not r:
                     continue
                 if not keys_list:
                     keys_list = list(r.keys())
                     csv_file_writer.writerow(keys_list)
                 csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n]["Assessor"]
+                r = avg_results_per_method[m][n][assessor]
                 csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n]["Integrated"]
+                r = avg_results_per_method[m][n][integratedH]
+                csv_file_writer.writerow([r[key] for key in keys_list])
+                r = avg_results_per_method[m][n][integratedD]
+                csv_file_writer.writerow([r[key] for key in keys_list])
+                r = avg_results_per_method[m][n][dishonest]
                 csv_file_writer.writerow([r[key] for key in keys_list])
 
 
-def write_summary_report_csv(jsonfilename, sum_results_per_groupsize):
-    with open(jsonfilename + '_summary.csv', "w", newline='') as csv_file:
+def write_summary_report_csv(jsonfilename, sum_results_per_groupsize, label="Honest"):
+    with open(jsonfilename + '_' + label + '_summary.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
         first_headline = ["Cut Heuristic", "egalitarianGain", "", "", "utilitarianGain", "", "", "averageFaceRatio", "",
@@ -318,7 +383,7 @@ def write_summary_report_csv(jsonfilename, sum_results_per_groupsize):
             csv_file_writer.writerow([""])
             csv_file_writer.writerow([""])
 
-def write_graphtables_report_csv(jsonfilename, results_per_measuement, groupsizes, label="EvenPaz"):
+def write_graphtables_report_csv(jsonfilename, results_per_measuement, groupsizes, label="Honest"):
     with open(jsonfilename + '_' + label + '_graphtables.csv', "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
