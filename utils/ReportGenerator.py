@@ -13,7 +13,7 @@ from utils.Types import AggregationType, CutPattern
 def calculate_confidence_interval(confidence, stdev, n):
     return stdev*t.ppf((1+confidence)/2., n-1)
 
-def calculate_avg_result(result_list, keys_to_average):
+def calculate_avg_result(result_list, keys_to_average, groupsize):
 
     if result_list:
         result = {}
@@ -22,8 +22,10 @@ def calculate_avg_result(result_list, keys_to_average):
                 key_list_values = list(map(lambda res: res[key], result_list))
                 avg_key = key+'_Avg'
                 std_key = key + '_StDev'
+                interval_key = key + '_interval'
                 result[avg_key] = mean(key_list_values)
                 result[std_key] = stdev(key_list_values)
+                result[interval_key] = calculate_confidence_interval(0.95, result[std_key], groupsize)
             else:
                 result[key] = result_list[-1][key]
                 if key == "Method":
@@ -117,6 +119,34 @@ def create_table_summary_line(groupsize_sum_results):
     return sum_result
 
 
+def write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results_per_measure):
+    directory_path = os.path.dirname(jsonfilename)
+    graph_report_path = os.path.join(directory_path, 'measuements_graphs')
+    if not os.path.exists(graph_report_path):
+        os.makedirs(graph_report_path)
+    for measure in graph_method_results_per_measure:
+        measure_results = graph_method_results_per_measure[measure]
+        if not graph_method_results_per_measure[measure]:
+            continue
+        report_file_path = os.path.join(graph_report_path, measure+'.csv')
+        with open(report_file_path, "w", newline='') as csv_file:
+            csv_file_writer = csv.writer(csv_file)
+            csv_file_writer.writerow([jsonfilename])
+            table_header = ['NumberOfAgents', 'EvenPaz', 'Assessor',  'Selling', 'EP_Conf', 'As_Conf']
+            for method in measure_results:
+                if not measure_results[method]:
+                    continue
+                csv_file_writer.writerow([method])
+                csv_file_writer.writerow(table_header)
+                for method_entry in measure_results[method]:
+                    if not method_entry:
+                        continue
+                    csv_file_writer.writerow(method_entry)
+                csv_file_writer.writerow([""])
+                csv_file_writer.writerow([""])
+                csv_file_writer.writerow([""])
+
+
 def generate_reports(jsonfilename):
     # filepath_elements = jsonfilename.split('_')
     # aggText = filepath_elements[2]
@@ -129,20 +159,31 @@ def generate_reports(jsonfilename):
     avg_results_per_method,\
     sum_results_per_groupsize,\
     avg_evenpaz_results_per_measurement,\
-    avg_assessor_results_per_measurement,\
+    avg_assessor_results_per_measurement, \
+    graph_method_results_per_measure, \
     groupsizes = preprocess_results(results)
 
     write_graphtables_report_csv(jsonfilename, avg_evenpaz_results_per_measurement, groupsizes)
     write_graphtables_report_csv(jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
     write_summary_report_csv(jsonfilename, sum_results_per_groupsize)
+    write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results_per_measure)
     write_extended_report_csv(jsonfilename, avg_results_per_method)
+
+
+def parse_method_over_measure_data_entry(measure, method, available_groupsizes, ep_avg, ep_interval, as_avg, as_interval, selling = 1.):
+    #header = ['NumberOfAgents', 'EvenPaz', 'Assessor',  'Selling', 'EP_Conf', 'As_Conf']
+    data_entry = []
+    for idx,group in enumerate(available_groupsizes):
+        data_entry.append([group, ep_avg[idx],as_avg[idx],selling,ep_interval[idx],as_interval[idx]])
+    return data_entry
 
 
 def preprocess_results(results):
     keys_to_average = ['egalitarianGain', 'utilitarianGain', 'averageFaceRatio', 'largestFaceRatio',
                        'smallestFaceRatio',
                        'largestInheritanceGain', 'averageInheritanceGain', 'largestEnvy', 'experimentDurationSec']
-    keys_to_integrate = [key +'_Avg' for key in keys_to_average]
+    keys_to_integrate = [key + '_Avg' for key in keys_to_average]
+    interval_keys = [key + '_interval' for key in keys_to_average]
     available_groupsizes = [4, 8, 16, 32, 64, 128]  # todo make dynamic to group size
 
     res_per_m = { # m - method
@@ -164,15 +205,17 @@ def preprocess_results(results):
     sum_results_per_groupsize = {n: [] for n in available_groupsizes}
     for method in res_per_a_per_gs_per_m:
         method_avg_results = {}
+        
         for groupsize in res_per_a_per_gs_per_m[method]:
             method_avg_results[groupsize] = {a: calculate_avg_result(res_per_a_per_gs_per_m[method][groupsize][a],
-                                                                     keys_to_average)
+                                                                     keys_to_average, groupsize)
                                              for a in res_per_a_per_gs_per_m[method][groupsize]}
             EvenPaz_res = method_avg_results[groupsize]["EvenPaz"]
             Assessor_res = method_avg_results[groupsize]["Assessor"]
             method_avg_results[groupsize]["Integrated"] = calculate_int_result(EvenPaz_res, Assessor_res,keys_to_integrate)
             sum_results_per_groupsize[groupsize].append(
                 parse_sum_data_entry(method_avg_results[groupsize]["EvenPaz"], method_avg_results[groupsize]["Integrated"]))
+            # todo - implement parser for graph summary file
         avg_results_per_method[method] = method_avg_results
 
     avg_evenpaz_results_per_measurement = {measure:
@@ -183,6 +226,14 @@ def preprocess_results(results):
                                         for method in avg_results_per_method}
                                    for measure in keys_to_integrate}
 
+    interval_evenpaz_results_per_measurement = {measure:
+                                               {method:
+                                                    [avg_results_per_method[method][groupsize]["EvenPaz"][measure]
+                                                     if avg_results_per_method[method][groupsize]["EvenPaz"] else ""
+                                                     for groupsize in avg_results_per_method[method]]
+                                                for method in avg_results_per_method}
+                                           for measure in interval_keys}
+
     avg_assessor_results_per_measurement = {measure:
                                        {method:
                                             [avg_results_per_method[method][groupsize]["Assessor"][measure]
@@ -191,6 +242,26 @@ def preprocess_results(results):
                                         for method in avg_results_per_method}
                                    for measure in keys_to_integrate}
 
+    interval_assessor_results_per_measurement = {measure:
+                                                {method:
+                                                     [avg_results_per_method[method][groupsize]["Assessor"][measure]
+                                                      if avg_results_per_method[method][groupsize]["Assessor"] else ""
+                                                      for groupsize in avg_results_per_method[method]]
+                                                 for method in avg_results_per_method}
+                                            for measure in interval_keys}
+    
+    graph_method_results_per_measure = {measure: {} for measure in keys_to_average}
+    for measure in graph_method_results_per_measure:
+        avg_key = measure + '_Avg'
+        interval_key = measure + '_interval'
+        ep_avg = avg_evenpaz_results_per_measurement[avg_key]
+        as_avg = avg_assessor_results_per_measurement[avg_key]
+        ep_interval = interval_evenpaz_results_per_measurement[interval_key]
+        as_interval = interval_assessor_results_per_measurement[interval_key]
+        for method in avg_results_per_method:
+            graph_method_results_per_measure[measure][method] = parse_method_over_measure_data_entry(measure,method,available_groupsizes,ep_avg[method],ep_interval[method],as_avg[method],as_interval[method])
+        
+
     for groupSize in sum_results_per_groupsize:
         if not sum_results_per_groupsize[groupSize]:
             continue
@@ -198,7 +269,8 @@ def preprocess_results(results):
     return avg_results_per_method,\
            sum_results_per_groupsize,\
            avg_evenpaz_results_per_measurement,\
-           avg_assessor_results_per_measurement,\
+           avg_assessor_results_per_measurement, \
+           graph_method_results_per_measure, \
            available_groupsizes
 
 
@@ -318,9 +390,13 @@ if __name__ == '__main__':
 
     """ generate report of experiment results from json file """
 
-    files_to_import = ['D:/MSc/Thesis/CakeCutting/results/2019-01-28T15-12-12_NoiseProportion_random_10_exp_Random.json',
-                       'D:/MSc/Thesis/CakeCutting/results/2019-01-28T19-24-55_NoiseProportion_0.2_10_exp_NewZealand.json',
-                       'D:/MSc/Thesis/CakeCutting/results/2019-01-29T03-06-01_NoiseProportion_0.2_10_exp_Israel.json']
+    files_to_import = [#'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps02HS_results/IsraelMaps02HS_2019-05-05T15-16-06_NoiseProportion_0.2_15_exp.json',
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps04HS_results/IsraelMaps04HS_2019-05-05T14-04-45_NoiseProportion_0.4_15_exp.json',
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps06HS_results/IsraelMaps06HS_2019-05-05T12-54-11_NoiseProportion_0.6_15_exp.json',
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps02HS_results/newZealandLowResAgents02HS_2019-05-05T11-19-43_NoiseProportion_0.2_15_exp.json',
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',]
 
     for jsonfilename in files_to_import:
         generate_reports(jsonfilename)
