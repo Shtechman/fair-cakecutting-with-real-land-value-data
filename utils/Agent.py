@@ -3,7 +3,7 @@ import os
 from functools import lru_cache
 import numpy as np
 
-from utils.MapFileHandler import read_valueMaps_from_file
+from utils.MapFileHandler import read_valueMaps_from_file, read_valueMaps_from_csv
 from utils.Types import CutDirection
 
 
@@ -12,10 +12,11 @@ class Agent:
     """
     an agent has a name and a value-function.
     """
-    def __init__(self, valueMapPath, name="Anonymous"):
+    def __init__(self, valueMapPath, name="Anonymous", free_play_mode=False, free_play_idx=-1):
         self.name = name
         self.valueMapPath = valueMapPath
-        self.file_num = self.extract_file_name(valueMapPath)
+        self.free_play_mode = free_play_mode
+        self.file_num = free_play_idx if self.free_play_mode else self.extract_file_name(valueMapPath)
         self.loadValueMap()
         self.cakeValue = np.sum(self.locallyLoadedValueMap)
         self.valueMapRows = len(self.locallyLoadedValueMap)
@@ -37,7 +38,10 @@ class Agent:
         return self.valueMapPath
 
     def loadValueMap(self):
-        self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
+        if self.free_play_mode:
+            self.locallyLoadedValueMap = np.array(read_valueMaps_from_csv(self.valueMapPath, self.file_num), dtype=np.float)
+        else:
+            self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
 
     def cleanMemory(self):
         del self.locallyLoadedValueMap

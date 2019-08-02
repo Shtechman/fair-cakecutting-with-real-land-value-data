@@ -337,26 +337,27 @@ def write_extended_report_csv(jsonfilename, avg_results_per_method):
     integratedD = "Integrated_Dishonest_EvenPaz"
 
     with open(jsonfilename + '_results.csv', "w", newline='') as csv_file:
+
         csv_file_writer = csv.writer(csv_file)
         keys_list = []
         csv_file_writer.writerow(keys_list)
+
+        def _write_to_csv(keys, alg):
+            r = avg_results_per_method[m][n][alg]
+            if r:
+                if not keys:
+                    keys = list(r.keys())
+                    csv_file_writer.writerow(keys)
+                csv_file_writer.writerow([r[key] for key in keys])
+            return keys
+
         for m in avg_results_per_method:
             for n in avg_results_per_method[m]:
-                r = avg_results_per_method[m][n][honest]
-                if not r:
-                    continue
-                if not keys_list:
-                    keys_list = list(r.keys())
-                    csv_file_writer.writerow(keys_list)
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n][assessor]
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n][integratedH]
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n][integratedD]
-                csv_file_writer.writerow([r[key] for key in keys_list])
-                r = avg_results_per_method[m][n][dishonest]
-                csv_file_writer.writerow([r[key] for key in keys_list])
+                keys_list = _write_to_csv(keys_list, honest)
+                keys_list = _write_to_csv(keys_list, assessor)
+                keys_list = _write_to_csv(keys_list, integratedH)
+                keys_list = _write_to_csv(keys_list, integratedD)
+                keys_list = _write_to_csv(keys_list, dishonest)
 
 
 def write_summary_report_csv(jsonfilename, sum_results_per_groupsize, label="Honest"):
@@ -461,7 +462,11 @@ if __name__ == '__main__':
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps02HS_results/newZealandLowResAgents02HS_2019-05-05T11-19-43_NoiseProportion_0.2_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
-                       'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',]
+                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/IsraelMaps06_2019-07-10T14-38-19_NoiseProportion_0.6_30_exp/IsraelMaps06_Dis_NoiseProportion_0.6_30_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/newZealandLowResAgents06_2019-07-08T21-55-28_NoiseProportion_0.6_30_exp/newZealandLowResAgents06_Dis_NoiseProportion_0.6_30_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/randomMaps06_2019-07-12T06-16-05_NoiseProportion_0.6_30_exp/randomMaps06_Dis_NoiseProportion_0.6_30_exp.json',
+    ]
 
     for jsonfilename in files_to_import:
         generate_reports(jsonfilename)

@@ -9,6 +9,8 @@ import urllib
 from time import sleep
 from urllib.parse import quote,unquote
 from xml.etree import ElementTree
+
+from utils.MapFileHandler import plot_partition_from_path
 from utils.Measurements import Measurements as Measure
 import multiprocessing as mp
 import ast
@@ -113,39 +115,6 @@ def parseResults(cur_log_file):
 	partition = list(map(_allocatePiece,agent_piece_list))
 	return measure_largest_envy(numberOfAgents, noise, method, experiment, partition)
 
-
-def plot_partition(partition_path):
-	with open(partition_path) as partition_file:
-		reader = csv.reader(partition_file)
-		partition_data = {}
-		for row in reader:
-			if row[0] == ' ':
-				continue
-			if row[1][0] == '.' or row[1][0].isalpha():
-				partition_data[row[0]] = row[1]
-			else:
-				partition_data[row[0]] = ast.literal_eval(row[1])
-
-		partition_plots = []
-		for part in partition_data["Partition"]:
-			partition_plots.append(ast.literal_eval(part.split("receives ")[1].split(" - ")[0]))
-
-	input_path = os.path.join(os.path.dirname(partition_data["Agent Files"][0]).replace('./',''),'orig.txt')
-	with open(input_path, 'rb') as mapfile:
-		a = pickle.load(mapfile)
-	fig, ax = plt.subplots(1)
-	ax.imshow(a, cmap='hot', interpolation='nearest')
-
-	for part in partition_plots:
-		xy = (part[1],part[0])
-		height = part[2]-part[0]
-		width = part[3]-part[1]
-		# Create a Rectangle patch
-		rect = patches.Rectangle(xy, width, height, linewidth=1, edgecolor='r', facecolor='none')
-		# Add the patch to the Axes
-		ax.add_patch(rect)
-
-	plt.show()
 
 
 
@@ -260,7 +229,7 @@ if __name__ == '__main__':
 	#
 	#
 
-	plot_partition('results/luna/newZealandMaps06_results_full/logs/1281_EvenPazSquarePiece.csv')
+	plot_partition_from_path('results/luna/newZealandMaps06_results_full/logs/1281_EvenPazSquarePiece.csv')
 
 	input_path = 'data/IsraelMaps02HS/0_valueMap_noise0.2.txt'
 	with open(input_path, 'rb') as mapfile:

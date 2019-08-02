@@ -1,3 +1,4 @@
+import ast
 import csv
 import os
 import pickle
@@ -9,7 +10,8 @@ import numpy as np
 import json
 
 import xlrd
-
+from matplotlib import patches
+import matplotlib.pyplot as plt
 
 
 class MapFileHandler:
@@ -26,13 +28,13 @@ class MapFileHandler:
 		:param path to the excel file
 		"""
 
-        print('creating handler for file',path)
+        print('creating handler for file', path)
         self.path = path
         self.workbook = xlrd.open_workbook(self.path, on_demand=True)
         firstSheet = self.workbook.sheet_by_index(0)
         self.mapIndex = dict()
         for row in range(firstSheet.nrows):
-            self.mapIndex[firstSheet.cell_value(row, 0)] = row+1
+            self.mapIndex[firstSheet.cell_value(row, 0)] = row + 1
         print('handler created.')
 
     def importMap(self, mapName):
@@ -82,7 +84,7 @@ class MapFileHandler:
 
         return self.maps[mapName]
 
-    def saveMapsToJson(self, folder='.', prefix='', suffix='_2D', mapreduce = lambda m : m):
+    def saveMapsToJson(self, folder='.', prefix='', suffix='_2D', mapreduce=lambda m: m):
         """
         >>>
 
@@ -90,7 +92,7 @@ class MapFileHandler:
         self.readAllMaps()
         paths = []
         for mapName in self.maps.keys():
-            filePath = folder+"\\"+prefix+mapName+suffix+".txt"
+            filePath = folder + "\\" + prefix + mapName + suffix + ".txt"
             with open(filePath, 'w') as json_file:
                 json.dump(mapreduce(self.maps[mapName]), json_file)
             paths.append(filePath)
@@ -101,14 +103,14 @@ class MapFileHandler:
         >>>
 
         """
-        return self.saveMapsToJson(folder,prefix,suffix+'_1DHor',lambda map : np.array(map).sum(axis=0).tolist())
+        return self.saveMapsToJson(folder, prefix, suffix + '_1DHor', lambda map: np.array(map).sum(axis=0).tolist())
 
     def saveMapsAs1DVerticalToJson(self, folder='.', prefix='', suffix=''):
         """
         >>>
 
         """
-        return self.saveMapsToJson(folder,prefix,suffix+'_1DVer',lambda map : np.array(map).sum(axis=1).tolist())
+        return self.saveMapsToJson(folder, prefix, suffix + '_1DVer', lambda map: np.array(map).sum(axis=1).tolist())
 
     @staticmethod
     def mapFromJson(filepath):
@@ -121,16 +123,17 @@ def hotspot_noise_function(original_map, noise_proportion, normalized_sum, max_v
     cols = len(original_map[0])
     hotspot_center = (random.randint(0, rows), random.randint(0, cols))
     print(hotspot_center)
+
     # noise*exp(-((xj-xc)^2+(yj-yc)^2)^0.1)
     def hotspot_noise(xj, yj):
-        dx = pow((hotspot_center[1]-xj), 2)
-        dy = pow((hotspot_center[0]-yj), 2)
+        dx = pow((hotspot_center[1] - xj), 2)
+        dy = pow((hotspot_center[0] - yj), 2)
 
-        noise_addition = noise_proportion*exp(-pow(dx+dy, 0.1))
+        noise_addition = noise_proportion * exp(-pow(dx + dy, 0.1))
         return noise_addition
 
-    new_map = [[original_map[r][c]*(1+hotspot_noise(c,r)) for c in range(cols)]
-              for r in range(rows)]
+    new_map = [[original_map[r][c] * (1 + hotspot_noise(c, r)) for c in range(cols)]
+               for r in range(rows)]
 
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
     return new_map
@@ -140,8 +143,8 @@ def uniform_noise_function(original_map, noise_proportion, normalized_sum, max_v
     rows = len(original_map)
     cols = len(original_map[0])
     neg_noise_proportion = max(-1, -noise_proportion)  # done to ensure noisy outcome value is not negative
-    new_map = [[original_map[r][c]*(1+random.uniform(neg_noise_proportion, noise_proportion)) for c in range(cols)]
-              for r in range(rows)]
+    new_map = [[original_map[r][c] * (1 + random.uniform(neg_noise_proportion, noise_proportion)) for c in range(cols)]
+               for r in range(rows)]
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
     return new_map
 
@@ -155,8 +158,6 @@ def normalize_map(cols, new_map, normalized_sum, rows):
     return new_map
 
 
-
-
 def randomValues(rows, cols, maxValue, normalized_sum):
     new_map = [[(random.uniform(0, maxValue)) for _ in range(cols)] for _ in range(rows)]
     if normalized_sum is not None and normalized_sum > 0:
@@ -167,8 +168,9 @@ def randomValues(rows, cols, maxValue, normalized_sum):
     return new_map
 
 
-def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, num_of_maps, normalized_sum, noise_function, rows=1490, cols=1020):
-    folder = folder+datasetName
+def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, num_of_maps, normalized_sum,
+                               noise_function, rows=1490, cols=1020):
+    folder = folder + datasetName
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -206,17 +208,17 @@ def generate_valueMaps_to_file(original_map_file, folder, datasetName, noise, nu
         end = time.time()
         print("\t\tmap %s creation time was %s seconds" % (i, end - start))
 
-    paths = [p.replace('..','.') for p in paths]
+    paths = [p.replace('..', '.') for p in paths]
     index = {"datasetName": datasetName,
-             "numOfMaps" : num_of_maps,
-             "folder" : folder.replace('..','.'),
-             "originalMapFile" : original_map_file.replace('..','.'),
-             "noise" : noise,
-             "mapsPaths" : paths}
+             "numOfMaps": num_of_maps,
+             "folder": folder.replace('..', '.'),
+             "originalMapFile": original_map_file.replace('..', '.'),
+             "noise": noise,
+             "mapsPaths": paths}
 
     with open(index_output_path, "w") as index_file:
         json.dump(index, index_file)
-    print("The whole creation process time was %s seconds" % (end-startAll))
+    print("The whole creation process time was %s seconds" % (end - startAll))
 
     return index_output_path
 
@@ -229,6 +231,36 @@ def read_valueMaps_from_file(map_path):
     return result
 
 
+def read_valueMaps_from_csv(csvfilepath, idx):
+    with open(csvfilepath, "r", newline='') as csv_file:
+        csv_file_reader = csv.reader(csv_file)
+        raw_file_data = []
+        num_of_agents = None
+        raw_map = []
+        for line in csv_file_reader:
+            if not num_of_agents:
+                if (not line) or line[0].startswith("#"):
+                    continue
+                else:
+                    num_of_agents = int(line[0])
+                    if idx >= num_of_agents:
+                        raise ValueError("searching for agent number %s "
+                                         "while file has only %s agents" % (idx+1, num_of_agents))
+            elif (not line) or (not line[0].isdigit()):
+                if not raw_map:
+                    continue
+                else:
+                    raw_file_data.append(raw_map)
+                    raw_map = []
+            else:
+                raw_map.append(line)
+
+        if raw_map:
+            raw_file_data.append(raw_map)
+
+    return raw_file_data[idx]
+
+
 def read_valueMaps_from_files(index_path, num_of_maps):
     startAll = time.time()
     paths = get_valueMaps_from_index(index_path, num_of_maps)
@@ -238,8 +270,8 @@ def read_valueMaps_from_files(index_path, num_of_maps):
         start = end
         result.append(read_valueMaps_from_file(map_path))
         end = time.time()
-        print("\t\tmap %s/%s load time was %s seconds" % (i+1, num_of_maps, end - start))
-    print("The whole read process time was %s seconds" % (end-startAll))
+        print("\t\tmap %s/%s load time was %s seconds" % (i + 1, num_of_maps, end - start))
+    print("The whole read process time was %s seconds" % (end - startAll))
     return result
 
 
@@ -259,6 +291,7 @@ def get_valueMaps_from_index(index_path, num_of_maps):
     paths = random.sample(index["mapsPaths"], num_of_maps)
     return paths
 
+
 def get_originalMap_from_index(index_path):
     print("Reading index file %s" % index_path)
     with open(index_path) as index_file:
@@ -266,8 +299,47 @@ def get_originalMap_from_index(index_path):
     return index["originalMapFile"]
 
 
+def plot_partition_from_path(partition_path):
+    partition_data = {}
+    with open(partition_path) as partition_file:
+        reader = csv.reader(partition_file)
+        for row in reader:
+            if row[0] == ' ':
+                continue
+            if row[1][0] == '.' or row[1][0].isalpha():
+                partition_data[row[0]] = row[1]
+            else:
+                partition_data[row[0]] = ast.literal_eval(row[1])
+
+    input_path = os.path.join(os.path.dirname(partition_data["Agent Files"][0]).replace('./',''),'orig.txt')
+    with open(input_path, 'rb') as mapfile:
+        baseline_map = pickle.load(mapfile)
+
+    plot_partition(baseline_map, partition_data["Partition"])
+
+
+def plot_partition(baseline_map, partition_data):
+    partition_plots = []
+    for part in partition_data:
+        partition_plots.append(ast.literal_eval(part.split("receives ")[1].split(" - ")[0]))
+    fig, ax = plt.subplots(1)
+    ax.imshow(baseline_map, cmap='hot')
+    plt.axis([0, len(baseline_map[0]), 0, len(baseline_map)])
+    for part in partition_plots:
+        xy = (part[1], part[0])
+        height = part[2] - part[0]
+        width = part[3] - part[1]
+        # Create a Rectangle patch
+        rect = patches.Rectangle(xy, width, height, linewidth=1, edgecolor='r', facecolor='none')
+        # Add the patch to the Axes
+        ax.add_patch(rect)
+    plt.show()
 
 if __name__ == '__main__':
+
+    testCsvMaps = '../data/testFolder/test2.csv'
+    agent_map = np.array(read_valueMaps_from_csv(testCsvMaps, 6), dtype=np.float)
+
     nz1d = 'D:\MSc\Thesis\CakeCutting\data\\newzealand_forests_npv_4q.1d.json'
     nz2d = 'D:/MSc/Thesis/CakeCutting/data/newzealand_forests_2D.txt'
     nz1dHor = 'D:\MSc\Thesis\CakeCutting\data\\‏‏newzealand_forests_1DHor.txt'
@@ -278,25 +350,28 @@ if __name__ == '__main__':
 
     og_maps = {"israel": '../data/originalMaps/IsraelMap.txt',
                "newzealand": '../data/originalMaps/newzealand_forests_2D_low_res.txt',
-               "random":'../data/originalMaps/RandomNoiseMap.txt'}
+               "random": '../data/originalMaps/RandomNoiseMap.txt'}
 
     noise_methods = {"uniform": uniform_noise_function,
                      "hotspot": hotspot_noise_function}
 
     datasets = [
-        {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6, "numOfAgents": numOfAgents,
+        {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6,
+         "numOfAgents": numOfAgents,
          "noise_method": noise_methods["hotspot"]},
 
         {"datasetName": "IsraelMaps06HS", "input_file": og_maps["israel"], "noise": 0.6, "numOfAgents": numOfAgents,
          "noise_method": noise_methods["hotspot"]},
 
-        {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4, "numOfAgents": numOfAgents,
+        {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4,
+         "numOfAgents": numOfAgents,
          "noise_method": noise_methods["hotspot"]},
 
         {"datasetName": "IsraelMaps04HS", "input_file": og_maps["israel"], "noise": 0.4, "numOfAgents": numOfAgents,
          "noise_method": noise_methods["hotspot"]},
 
-        {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2, "numOfAgents": numOfAgents,
+        {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2,
+         "numOfAgents": numOfAgents,
          "noise_method": noise_methods["hotspot"]},
 
         {"datasetName": "IsraelMaps02HS", "input_file": og_maps["israel"], "noise": 0.2, "numOfAgents": numOfAgents,
@@ -318,7 +393,3 @@ if __name__ == '__main__':
     #         csv_file_writer = csv.writer(csv_file)
     #         for line in original_map_data:
     #             csv_file_writer.writerow(line)
-
-
-
-

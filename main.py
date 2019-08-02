@@ -14,104 +14,28 @@ from utils.MapFileHandler import get_valueMaps_from_index, get_originalMap_from_
 from utils.Plotter import Plotter
 from utils.ReportGenerator import create_exp_folder, generate_exp_name, write_results_to_folder, create_run_folder
 from utils.Types import AggregationType, AlgType, CutPattern, RunType
-from utils.ExperimentEnvironment import ExperimentEnvironment as ExpEnv
-from utils.Measurements import Measurements as Measure
+from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
 import multiprocessing as mp
 
 plotter = Plotter()
 
 
-def parseResultsFromPartition(env, algName, method, partition, run_duration, comment=""):
+def makeSingleSimulation(env, algType, runType, cutPattern):
 
-    env.log_experiment_to_file(method, partition, run_duration, comment)
-    # print(partition)
-
-    # value of piece compared to whole cake (in the eyes of the agent)
-
-    relativeValues = Measure.calculateRelativeValues(partition)
-    # relativeValues = Measure.calculateAbsolutValues(partition) # todo - this is just a test, delete this.
-
-    egalitarianGain = Measure.calculateEgalitarianGain(env.numberOfAgents, relativeValues)
-
-    utilitarianGain = Measure.calculateUtilitarianGain(relativeValues)
-
-    largestEnvy = Measure.calculateLargestEnvy(partition)
-
-    largestFaceRatio = Measure.calculateLargestFaceRatio(partition)
-
-    smallestFaceRatio = Measure.calculateSmallestFaceRatio(partition)
-
-    averageFaceRatio = Measure.calculateAverageFaceRatio(partition)
-
-    averageInheritanceGain = Measure.calculateAverageInheritanceGain(env.numberOfAgents, relativeValues)
-
-    largestInheritanceGain = Measure.calculateLargestInheritanceGain(env.numberOfAgents, relativeValues)
-
-    return {
-        AggregationType.NumberOfAgents.name: env.numberOfAgents,
-        AggregationType.NoiseProportion.name: env.noiseProportion,
-        "Algorithm": algName,
-        "Method": method,
-        "egalitarianGain": egalitarianGain,
-        "utilitarianGain": utilitarianGain,
-        "averageFaceRatio": averageFaceRatio,
-        "largestFaceRatio": largestFaceRatio,
-        "smallestFaceRatio": smallestFaceRatio,
-        "averageInheritanceGain": averageInheritanceGain,
-        "largestInheritanceGain": largestInheritanceGain,
-        "largestEnvy": largestEnvy,
-        "experimentDurationSec": run_duration,
-        "experiment": env.iExperiment,
-    }
-
-
-def aggregateSameExperimentResults(results):
-    result = dict()
-    for dkey in results[0].keys():
-        if isinstance(results[0][dkey], str):
-            result[dkey] = results[0][dkey]
-        else:  # number
-            if 'largestEnvy' in dkey:
-                result[dkey] = min([r[dkey] for r in results])
-            else:
-                result[dkey] = max([r[dkey] for r in results])
-    return result
-
-
-def parseResultsFromPartitionList(env, algName, method, partition, run_duration):
-
-    if isinstance(partition, dict):
-        results = []
-        for pkey in partition.keys():
-            results.append(parseResultsFromPartition(env, algName, method, partition[pkey], run_duration/4.0,"_agent"+pkey))
-        return aggregateSameExperimentResults(results)
-    else:
-        return parseResultsFromPartition(env, algName, method, partition, run_duration)
-
-
-def makeSingleExperiment(env, algType, runType, cutPattern):
-    tstart = time()
     print("%s running for %s agents, %s %s algorithm, using cut pattern %s" % (
         os.getpid(), env.numberOfAgents, runType.name, algType.name, cutPattern.name))
-    partition = env.getAlgorithm(algType, runType).run(env.getAgents(), cutPattern)  # returns a list of AllocatedPiece
-    tend = time()
-    algName = runType.name + "_" + algType.name
-    run_duration = tend - tstart
-    method = algName + "_" + cutPattern.name
-
-    result = parseResultsFromPartitionList(env, algName, method, partition, run_duration)
-
+    results, partition = env.runSimulation(algType, runType, cutPattern)  # returns a list of AllocatedPiece
+    # visualize partition for debugging?
     for p in partition:
         del p
-
-    return result
+    return results
 
 
 def runExperiment(exp_data):
-    index_file, algType, runTypes, numOfAgents, noiseProportion, iExperiment, assessorAgentPool, result_folder = exp_data
+    index_file, algType, runTypes, numOfAgents, noiseProportion, iSimulation, assessorAgentPool, result_folder = exp_data
     results = []
-    print("======================= %s Agents - PID %s - Experiment %s =======================" % (
-    numOfAgents, os.getpid(), iExperiment))
+    print("======================= %s Agents - PID %s - Simulation %s =======================" % (
+    numOfAgents, os.getpid(), iSimulation))
     print("Fetching %s agents from files" % numOfAgents)
     agent_mapfiles_list = get_valueMaps_from_index(index_file, numOfAgents)
     agents = list(map(Agent, agent_mapfiles_list))
@@ -122,11 +46,11 @@ def runExperiment(exp_data):
                             CutPattern.HorVer, CutPattern.SmallestPiece, CutPattern.SquarePiece,
                             CutPattern.SmallestHalfCut]
 
-    env = ExpEnv(iExperiment, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
+    env = SimEnv(iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
                  cut_patterns_to_test)
     for cur_cut_pattern in cut_patterns_to_test:
         for runType in runTypes:
-            results.append(makeSingleExperiment(env, algType, runType, cur_cut_pattern))
+            results.append(makeSingleSimulation(env, algType, runType, cur_cut_pattern))
     return results
 
 
@@ -134,8 +58,8 @@ def calculateSingleDatapoint(index_file, algType, runTypes, numOfAgents, noisePr
                              result_folder):
     p = mp.Pool(NTASKS)
 
-    exp_data = [(index_file, algType, runTypes, numOfAgents, noiseProportion, str(numOfAgents) + str(iExperiment),
-                 assessorAgentPool, result_folder) for iExperiment in range(1, experiments_per_cell + 1)]
+    exp_data = [(index_file, algType, runTypes, numOfAgents, noiseProportion, str(numOfAgents) + str(iSimulation),
+                 assessorAgentPool, result_folder) for iSimulation in range(1, experiments_per_cell + 1)]
 
     result_lists = p.map(runExperiment, exp_data)
     p.close()
@@ -228,15 +152,15 @@ if __name__ == '__main__':
     RUN_FOLDER_PATH = create_run_folder()
 
     experiment_sets = [
-        {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
-        {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
-        {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4, 8], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
         # {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-        # {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
+         {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8], "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
     ]
 
