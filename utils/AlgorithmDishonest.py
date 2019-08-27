@@ -29,6 +29,11 @@ class AlgorithmDishonest:
 			partitions = self.algorithm.run(agents, cut_pattern)
 			set_partitions[agent.file_num] = partitions
 			agent.setDishonesty(False)
+
+		# print("%s running with honest agents" % (os.getpid()))
+		# partitions = self.algorithm.run(agents, cut_pattern)
+		# set_partitions[len(agents)] = partitions
+
 		return set_partitions  # todo: handle multiple partitions - this will not work like this
 
 

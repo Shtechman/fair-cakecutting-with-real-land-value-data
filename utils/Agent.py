@@ -14,6 +14,7 @@ class Agent:
     """
     def __init__(self, valueMapPath, name="Anonymous", free_play_mode=False, free_play_idx=-1):
         self.name = name
+        self.hname = name
         self.valueMapPath = valueMapPath
         self.free_play_mode = free_play_mode
         self.file_num = free_play_idx if self.free_play_mode else self.extract_file_name(valueMapPath)
@@ -28,6 +29,10 @@ class Agent:
 
     def setDishonesty(self, dishonesty):
         self.dishonesty = dishonesty
+        if dishonesty:
+            self.name = "Dishonest"
+        else:
+            self.name = self.hname
 
     def extract_file_name(self,file_path):
         return file_path.split("/")[-1].split('_')[0]

@@ -28,6 +28,7 @@ class AllocatedPiece:
 		if iToCol is None:   iToCol = agent.valueMapCols
 
 		self.agent = agent
+		self.agent_name = agent.name
 		self.iFromRow = iFromRow
 		self.iFromCol = iFromCol
 		self.iToRow = iToRow
@@ -35,7 +36,7 @@ class AllocatedPiece:
 		self.halfcuts = {}
 
 	def __repr__(self):
-		return "%s(%s) receives [%0.2f,%0.2f,%0.2f,%0.2f] - (Ratio %0.2f)" % (self.agent.name, self.agent.file_num, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol, self.getFaceRatio())
+		return "%s(%s) receives [%0.2f,%0.2f,%0.2f,%0.2f] - (Ratio %0.2f)" % (self.agent_name, self.agent.file_num, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol, self.getFaceRatio())
 
 	def toString(self):
 		return self.__repr__()

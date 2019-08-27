@@ -50,7 +50,8 @@ def runExperiment(exp_data):
                  cut_patterns_to_test)
     for cur_cut_pattern in cut_patterns_to_test:
         for runType in runTypes:
-            results.append(makeSingleSimulation(env, algType, runType, cur_cut_pattern))
+            for result in makeSingleSimulation(env, algType, runType, cur_cut_pattern):
+                results.append(result)
     return results
 
 
@@ -152,15 +153,15 @@ if __name__ == '__main__':
     RUN_FOLDER_PATH = create_run_folder()
 
     experiment_sets = [
-        # {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4, 8], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
-        # {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
-        # {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
+        # {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
         # {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-         {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8], "run_types": [RunType.Honest, RunType.Assessor]},
+         {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8], "run_types": [RunType.Honest, RunType.Assessor, RunType.Dishonest]},
         # {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
     ]
 

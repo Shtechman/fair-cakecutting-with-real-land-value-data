@@ -145,10 +145,10 @@ class SimulationEnvironment:
             results = []
             for pkey in partition.keys():
                 results.append(self.parseResultsFromPartition(algName, method, partition[pkey], run_duration / self.numberOfAgents,
-                                                             "_agent" + pkey, log=log))
-            return self.aggregateSameSimulationResults(results)
+                                                             "_agent" + str(pkey), log=log))
+            return results
         else:
-            return self.parseResultsFromPartition(algName, method, partition, run_duration, log=log)
+            return [self.parseResultsFromPartition(algName, method, partition, run_duration, log=log)]
 
     def runSimulation(self, algType, runType, cutPattern, log=True):
         tstart = time()
@@ -158,7 +158,11 @@ class SimulationEnvironment:
         run_duration = tend - tstart
 
         algName = "{}_{}".format(runType.name, algType.name)
-        method = "{}_{}".format(algName, cutPattern.name)
+        try:
+            method = "{}_{}".format(algName, cutPattern.name)
+        except:
+            method = "{}_{}".format(algName, cutPattern)
+
 
         result = self.parseResultsFromPartitionList(algName, method, partition, run_duration, log=log)
 
