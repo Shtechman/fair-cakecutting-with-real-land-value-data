@@ -1,18 +1,14 @@
-# In this scenario hor,ver,ver should be the unique pattern maximizing the utilitarian welfare.
+# In this scenario hor,ver,hor should be the unique pattern maximizing the utilitarian welfare.
 
 # Number of agents in simulation (can be smaller than number of maps in file)
 4
 
 
 # cut directions
-hor,hor,hor
-hor,hor,ver
-hor,ver,hor
-hor,ver,ver
-ver,hor,hor
-ver,hor,ver
-ver,ver,hor
-ver,ver,ver
+hor,hor
+hor,ver
+ver,hor
+ver,ver
 
 
 # Agent 0

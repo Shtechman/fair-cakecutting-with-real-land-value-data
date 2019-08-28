@@ -6,13 +6,13 @@
 
 # cut directions
 hor,hor,hor
-#hor,hor,ver
+hor,hor,ver
 hor,ver,hor
-#hor,ver,ver
+hor,ver,ver
 ver,hor,hor
-#ver,hor,ver
+ver,hor,ver
 ver,ver,hor
-#ver,ver,ver
+ver,ver,ver
 
 # Maps
 1,1,1,1
