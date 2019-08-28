@@ -3,3 +3,4 @@ results\*
 venv\*
 node_modules\*
 results\*
+.idea\*
