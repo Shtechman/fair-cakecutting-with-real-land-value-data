@@ -257,8 +257,7 @@ def read_valueMaps_from_csv(csvfilepath, idx):
 
         if raw_map:
             raw_file_data.append(raw_map)
-
-    return raw_file_data[idx]
+    return raw_file_data[idx][::-1]
 
 
 def read_valueMaps_from_files(index_path, num_of_maps):
@@ -319,18 +318,23 @@ def plot_partition_from_path(partition_path):
 
 
 def plot_partition(baseline_map, partition_data):
-    partition_plots = []
+    partition_plots = {}
     for part in partition_data:
-        partition_plots.append(ast.literal_eval(part.split("receives ")[1].split(" - ")[0]))
+        agnt = part.split("(")[1].split(")")[0]
+        partition_plots[agnt] = ast.literal_eval(part.split("receives ")[1].split(" - ")[0])
     fig, ax = plt.subplots(1)
     ax.imshow(baseline_map, cmap='hot')
     plt.axis([0, len(baseline_map[0]), 0, len(baseline_map)])
-    for part in partition_plots:
+    for agnt in partition_plots:
+        part = partition_plots[agnt]
         xy = (part[1], part[0])
         height = part[2] - part[0]
         width = part[3] - part[1]
+        centerx = xy[0] + 0.5 / 2
+        centery = xy[1] + 0.5 / 2
         # Create a Rectangle patch
         rect = patches.Rectangle(xy, width, height, linewidth=1, edgecolor='r', facecolor='none')
+        plt.text(centerx, centery, 'Agent '+agnt, color='red')
         # Add the patch to the Axes
         ax.add_patch(rect)
     plt.show()
