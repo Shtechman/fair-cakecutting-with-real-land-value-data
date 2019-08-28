@@ -1,6 +1,5 @@
 data\*
 results\*
-venv\*
-node_modules\*
-results\*
-.idea\*
+venv/*
+node_modules/*
+.idea/*
