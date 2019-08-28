@@ -1,0 +1,21 @@
+# In this scenario, ver should be the unique pattern maximizing the utilitarian welfare.
+
+# Number of agents in simulation (can be smaller than number of maps in file)
+2
+
+# cut directions
+hor
+ver
+
+# Maps
+# agent 0
+1,1,0,0
+1,1,0,0
+1,1,0,0
+1,1,0,0
+
+# agent 1
+0,0,1,1
+0,0,1,1
+0,0,1,1
+0,0,1,1

@@ -69,7 +69,7 @@ def extract_agents(maps_csv):
 
 
 def print_results(r, p, agents, plot):
-    keys_to_print = ['egalitarianGain', 'utilitarianGain', 'largestEnvy',
+    keys_to_print = ['utilitarianGain', 'egalitarianGain', 'largestEnvy',
                      'smallestFaceRatio', 'averageFaceRatio']
     print("%s Agents in simulation" % r['NumberOfAgents'])
     print("Cut pattern tested %s" % r['Method'])
