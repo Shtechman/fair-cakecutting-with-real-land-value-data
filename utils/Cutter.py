@@ -8,15 +8,33 @@ SMALLEST_NUMBER = 0.0000000000001
 
 class Cutter:
 
-    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, next_dir_index=-1):
+    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
         self.cut_pattern = cut_pattern
-        self.next_dir_index = next_dir_index
+        self.original_cut_pattern = cut_pattern if original_cut_pattern is None else original_cut_pattern
         self.cut_query = cut_query
         self.cut_direction = cut_direction
         self.freeplay_mode = type(cut_pattern) is list
 
+        if self.freeplay_mode:
+            if len(self.cut_pattern) < 1:
+                self.cut_pattern = self.original_cut_pattern
+            self.first_part_cut_pattern = self.cut_pattern[2::2]
+            self.second_part_cut_pattern = self.cut_pattern[1::2]
+
     def __copy__(self):
-        return Cutter(self.cut_pattern, self.cut_query, self.cut_direction, self.next_dir_index)
+        return Cutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
+
+    def get_firt_part_cutter(self):
+        if self.freeplay_mode:
+            return Cutter(self.first_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_second_part_cutter(self):
+        if self.freeplay_mode:
+            return Cutter(self.second_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
 
     def allocate_cuts(self, allocations, number_of_agents):
         number_of_agents_in_first_partition = int(np.ceil(number_of_agents/2))
@@ -89,8 +107,7 @@ class Cutter:
     def _initial_cut_direction(self):
 
         if self.freeplay_mode:
-            self.next_dir_index = 0
-            return self.cut_pattern[0]
+            return self._get_next_freeplay_query()
         else:
             switcher = {
                 CutPattern.Hor: CutDirection.Horizontal,
@@ -112,13 +129,13 @@ class Cutter:
 
         return switcher.get(self.cut_direction, CutDirection.Both)
 
-    def _get_next_query_from_list(self):
-        self.next_dir_index = self.next_dir_index + 1 if self.next_dir_index + 1 < len(self.cut_pattern) else 0
-        return self.cut_pattern[self.next_dir_index]
+    def _get_next_freeplay_query(self):
+        return self.cut_pattern[0] if len(self.cut_pattern) > 0 else CutDirection.Horizontal
+
 
     def _get_query_direction_iterator_func(self):
         if self.freeplay_mode:
-            return self._get_next_query_from_list
+            return self._get_next_freeplay_query
         else:
             switcher = {
                 CutPattern.HorVer: self._cut_pattern_opp_query_direction,

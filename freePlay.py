@@ -1,4 +1,5 @@
 import csv
+import re
 import sys
 
 import numpy as np
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         testCsvMaps = argv[1]
     else:
-        testCsvMaps = 'data/testFolder/freePlay.csv'
+        testCsvMaps = 'data/testFolder/4-agents-hor-hor-hor.csv'
     print("Maps taken from %s" % testCsvMaps)
     """-------------------------------------------------"""
 
@@ -146,6 +147,7 @@ if __name__ == '__main__':
     """ =================== Sim Execution Section =================== """
     env = SimEnv(0, 0, agents, [], [], testResultPath, cut_patterns_to_test)
     results = []
+    partitions = []
     for cut_pattern in cut_patterns_to_test:
         res, par = env.runHonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
         #res, par = env.runDishonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
@@ -153,7 +155,22 @@ if __name__ == '__main__':
             print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
             if type(p) is AllocatedPiece:
                 print_results(r, par, agents, plot)
+                partitions.append(par)
             else:
                 print_results(r, par[p], agents, plot)
+                partitions.append(par)[p]
             results.append(r)
         print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+
+        print("\n+++++++++++++++++++++++++++++ All Results ++++++++++++++++++++++++++++++\n")
+
+    partition_re = "Anonymous\(([^\)]*)[^\[]*\[([^\]]*)\][^\(]*\(Ratio ([^\)]*)"
+    for r, p in zip(results, partitions):
+        print('%s,%s,%s' % tuple(re.findall("Direction.([^:]*)", r['Method'])))
+        print('EG:',  r['egalitarianGain'],
+              ', UG:',  r['utilitarianGain'],
+              ', LE:',  r['largestEnvy'],
+              ', AFR:', r['averageFaceRatio'],
+              ', SFR:', r['smallestFaceRatio'])
+        [print('Agent %s Got [%s] - Face Ratio %s' % re.findall(partition_re, str(a))[0]) for a in sorted(p, key=str)]
+        print()
