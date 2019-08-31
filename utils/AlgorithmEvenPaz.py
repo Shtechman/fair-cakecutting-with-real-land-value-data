@@ -58,8 +58,8 @@ class AlgorithmEvenPaz:
 
         first_part_allocations, second_part_allocations = cutter.allocate_cuts(allocations, num_of_agents)
 
-        return self._runRecursive(first_part_allocations, copy(cutter)) +\
-               self._runRecursive(second_part_allocations, copy(cutter))
+        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) +\
+               self._runRecursive(second_part_allocations, cutter.get_second_part_cutter())
 
 
 if __name__ == '__main__':
