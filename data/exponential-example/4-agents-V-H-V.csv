@@ -3,34 +3,26 @@
 # Number of agents in simulation (can be smaller than number of maps in file)
 4
 
-
-# cut directions
-hor,hor,hor
-hor,hor,ver
-hor,ver,hor
-hor,ver,ver
-ver,hor,hor
-ver,hor,ver
-ver,ver,hor
-ver,ver,ver
-
 # Maps
-1,1,1,1
+
+1,0,0,0
+0,0,0,0
+0,0,0,0
+0,0,0,0
+
+0,1,0,0
+0,0,0,0
+0,0,0,0
+0,0,0,0
+
+0,0,1,0
 0,0,0,0
 0,0,0,0
 0,0,0,0
 
 0,0,0,0
-1,1,1,1
+0,0,1,0
 0,0,0,0
 0,0,0,0
 
-0,0,0,0
-0,0,0,0
-1,1,1,1
-0,0,0,0
 
-0,0,0,0
-0,0,0,0
-0,0,0,0
-1,1,1,1

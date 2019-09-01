@@ -1,10 +1,13 @@
-import csv
-import re
-import sys
+"""
+Demonstrates that, with n agents, all 2^{n-1} cut-patterns may be needed to get the optimal welfare.
 
-import numpy as np
+Uses the scenario files in folder exponential-example/*.csv.
 
-from utils.AllocatedPiece import AllocatedPiece
+Based on: freePlay.py
+"""
+
+import csv, re, itertools
+
 from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
 
 from utils.Agent import Agent
@@ -64,8 +67,7 @@ def extract_cut_patterns(maps_csv):
 
 
 def extract_agents(maps_csv):
-
-    num_of_agents = extract_num_of_agents(testCsvMaps)
+    num_of_agents = extract_num_of_agents(maps_csv)
     return [Agent(maps_csv, free_play_mode=True, free_play_idx=i) for i in range(num_of_agents)]
 
 
@@ -94,83 +96,40 @@ def print_results(r, p, agents, plot):
             plot_partition(base_map, [str(partition) for partition in p])
 
 
+h = CutDirection.Horizontal
+v = CutDirection.Vertical
+
 if __name__ == '__main__':
+    import glob
+    dataFolder = "data/exponential-example"
+    testCsvMapFiles = glob.glob(dataFolder+"/4-agents-*.csv")
+    plot = False  # Set to True to visualize the partitions
 
-    """ =================== Sim Data Section =================== """
-
-    argv = sys.argv
-
-    """Maps CSV File"""
-    if len(argv) > 1:
-        testCsvMaps = argv[1]
-    else:
-        testCsvMaps = 'data/testFolder/4-agents-H-H-H.csv'
-    print("Maps taken from %s" % testCsvMaps)
-    """-------------------------------------------------"""
-
-    agents = extract_agents(testCsvMaps)
-
-    """Number of Agents"""
-    # if not set, num of agents for simulation is as defined in csv file
-    if len(argv) > 2:
-        num_agents = int(argv[2])
-    else:
+    for testCsvMaps in testCsvMapFiles:
+        print("\n{}".format(testCsvMaps.replace(dataFolder,"")))
+        agents = extract_agents(testCsvMaps)
         num_agents = len(agents)
-    """-------------------------------------------------"""
+        cut_patterns_to_test = [list(s) for s in itertools.product([CutDirection.Horizontal,CutDirection.Vertical], repeat=3)]
 
-    """Result Folder"""
-    if len(argv) > 3:
-        testResultPath = argv[3]
-    else:
-        testResultPath = 'data/testFolder/'
-    """-------------------------------------------------"""
+        testResultPath = 'data/exponential-example/'
 
-    """to stop visualization of results set plot to False"""
-    plot = True
-    """-------------------------------------------------"""
 
-    """
-    Cut patterns:
-    Hor,    Ver,    HorVer,    VerHor,    SmallestHalfCut,
-    SmallestPiece,    LongestDim,    ShortestDim,    LargestRemainRange,
-    MostValuableRemain,    MixedValuableRemain,
-    HighestScatter,    SquarePiece
-    """
-
-    cut_patterns_to_test = extract_cut_patterns(testCsvMaps)
-
-    """-------------------------------------------------"""
-    """-------------------------------------------------"""
-
-    """ ======================================================== """
-
-    """ =================== Sim Execution Section =================== """
-    env = SimEnv(0, 0, agents, [], [], testResultPath, cut_patterns_to_test)
-    results = []
-    partitions = []
-    for cut_pattern in cut_patterns_to_test:
-        res, par = env.runHonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
-        #res, par = env.runDishonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
-        for r, p in zip(res,par):
-            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-            if type(p) is AllocatedPiece:
-                print_results(r, par, agents, plot)
+        """ =================== Sim Execution Section =================== """
+        env = SimEnv(0, 0, agents, [], [], testResultPath, cut_patterns_to_test)
+        results = []
+        partitions = []
+        for cut_pattern in cut_patterns_to_test:
+            res, par = env.runHonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
+            for r, p in zip(res,par):
+                if plot: print_results(r, par, agents, plot)
                 partitions.append(par)
-            else:
-                print_results(r, par[p], agents, plot)
-                partitions.append(par)[p]
-            results.append(r)
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+                results.append(r)
 
-        print("\n+++++++++++++++++++++++++++++ All Results ++++++++++++++++++++++++++++++\n")
+        direction_and_gain = []
+        for r, p in zip(results, partitions):
+            direction_string = '%s,%s,%s' % (tuple(re.findall("Direction.([^:]*)", r['Method'])))
+            direction_and_gain.append( (direction_string, r['utilitarianGain']) )
+        direction_and_gain.sort(key=lambda pair:-pair[1])
+        print("{}".format(direction_and_gain))
 
-    partition_re = "Anonymous\(([^\)]*)[^\[]*\[([^\]]*)\][^\(]*\(Ratio ([^\)]*)"
-    for r, p in zip(results, partitions):
-        print('%s,%s,%s' % tuple(re.findall("Direction.([^:]*)", r['Method'])))
-        print('EG:',  r['egalitarianGain'],
-              ', UG:',  r['utilitarianGain'],
-              ', LE:',  r['largestEnvy'],
-              ', AFR:', r['averageFaceRatio'],
-              ', SFR:', r['smallestFaceRatio'])
-        [print('Agent %s Got [%s] - Face Ratio %s' % re.findall(partition_re, str(a))[0]) for a in sorted(p, key=str)]
-        print()
+

@@ -1,0 +1,26 @@
+# In this scenario hor,hor,hor should be the unique pattern maximizing the utilitarian welfare.
+
+# Number of agents in simulation (can be smaller than number of maps in file)
+4
+
+# Maps
+1,0,0,0
+0,0,0,0
+0,0,0,0
+0,0,0,0
+
+0,0,0,0
+1,0,0,0
+0,0,0,0
+0,0,0,0
+
+0,0,0,0
+0,1,0,0
+0,0,0,0
+0,0,0,0
+
+0,0,0,0
+0,0,0,0
+0,1,0,0
+0,0,0,0
+
