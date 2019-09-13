@@ -41,6 +41,10 @@ class AllocatedPiece:
 	def toString(self):
 		return self.__repr__()
 
+	def clear(self):
+		self.agent.cleanMemory()
+		del self.agent
+
 	def subCut(self, iDirFrom, iDirTo, direction):
 		switcher = {
 			CutDirection.Horizontal: (iDirFrom, self.iFromCol, iDirTo, self.iToCol),

@@ -49,7 +49,10 @@ class Agent:
             self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
 
     def cleanMemory(self):
-        del self.locallyLoadedValueMap
+        try:
+            del self.locallyLoadedValueMap
+        except AttributeError:
+            print('passed agent %s clear', self.file_num)
 
     @lru_cache()
     def valueMapSubsetSum(self, cutsLocations):

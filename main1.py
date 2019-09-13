@@ -6,6 +6,7 @@ import pickle
 import re
 import sys
 import urllib
+from statistics import stdev
 from time import sleep
 from urllib.parse import quote,unquote
 from xml.etree import ElementTree
@@ -79,49 +80,194 @@ def measure_largest_envy(numberOfAgents,noiseProportion,method,experiment,partit
 		"experiment": experiment,
 	}
 
-
-def parseResults(cur_log_file):
-	print("parsing", cur_log_file)
+def readLogFile(cur_log_file):
 	with open(cur_log_file) as csv_log_file:
 		csv_reader = csv.reader(csv_log_file, delimiter=',')
 		log_dict = {}
 		for row in csv_reader:
 			log_dict[row[0]] = row[1]
-	#	print(log_dict)
 	numberOfAgents = int(log_dict['Number of Agents'])
 	noise = log_dict['Noise']
 	method = log_dict['Method']
 	experiment = log_dict['Experiment']
+	cut_pattern = log_dict['Method'].split('_')[-1]
+	alg_name = log_dict['Method'].split('_')[0]
 	agent_mapfiles_list = log_dict['Agent Files'].replace('\'','').replace('[','').replace(']','').replace(' ','').split(',')
-	cuts = log_dict['Partition'].replace('\'', '').replace('receives [', '$').replace('] -', '$').replace('[', '').replace(']', '').replace('Anonymous(', '#').replace(') $', '# $')
+	cuts = log_dict['Partition'].replace('\'', '').replace('receives [', '$').replace('] -', '$').replace('[', '').replace(']', '').replace('Anonymous(', '#').replace('Dishonest(', '#').replace(') $', '# $')
+	partitions = log_dict['Partition']
+	return numberOfAgents,\
+			noise,\
+			method,\
+			experiment,\
+			cut_pattern,\
+			alg_name,\
+			agent_mapfiles_list,\
+			cuts,\
+			partitions
+
+
+def parseResults(result_to_parse):
+	cur_log_file = result_to_parse[0]
+	agent_list = result_to_parse[1]
+	print("parsing", cur_log_file)
+	numberOfAgents,\
+	noise,\
+	method,\
+	experiment,\
+	cut_pattern,\
+	alg_name,\
+	agent_mapfiles_list,\
+	cuts,\
+	partitions = readLogFile(cur_log_file)
 
 	def _parsePartition(p):
 		matchObj = re.match(r'#([^#]*)# \$([^\$]*)\$[^\(]* ', p, re.M | re.I)
 		return matchObj.group(1), matchObj.group(2)
 
+	def _getDishonestAgent(p_string):
+		try:
+			return p_string.replace('\'', '').replace('receives [', '$').replace('] -', '$').replace('[', '')\
+				.replace(']', '').replace('Dishonest(', '@@@').replace(') $', '# $').split("@@@")[1].split("#")[0]
+		except:
+			return None
+
+	dishonest_agent = _getDishonestAgent(partitions)
+
 	cuts_list = [_parsePartition(p) for p in cuts.split('), ')]
-	agents = list(map(Agent, agent_mapfiles_list))
 
 	agent_piece_list = []
 	for p in cuts_list:
-		for agent in agents:
+		for agent in agent_list:
 			if p[0] in agent.file_num:
 				agent_piece_list = agent_piece_list + [[agent, p[1]]]
+
 
 	def _allocatePiece(agent_piece):
 		indexes = [float(i) for i in agent_piece[1].split(',')]
 		return AllocatedPiece(agent_piece[0],indexes[0],indexes[1],indexes[2],indexes[3])
 
 	partition = list(map(_allocatePiece,agent_piece_list))
-	return measure_largest_envy(numberOfAgents, noise, method, experiment, partition)
+
+	valueGains = {ap.getAgent().file_num: ap.getRelativeValue() for ap in partition}
+
+	return {
+		AggregationType.NumberOfAgents.name: numberOfAgents,
+		AggregationType.NoiseProportion.name: noise,
+		"Algorithm": alg_name,
+		"Method": method,
+		"experiment": experiment,
+		"cut_pattern": cut_pattern,
+		"dishonest": dishonest_agent,
+		"partition": valueGains
+	}
 
 
+def _get_piece_of_agent(partition, agent_num):
+	piece = [p for p in partition if p.getAgent().file_num == agent_num][0]
+	return piece
 
+
+def _get_dishonest_gain(honest_partition, dishonest_partition, dishonest_agent):
+	dis_value = dishonest_partition[dishonest_agent]
+	hon_value = honest_partition[dishonest_agent]
+
+	return dis_value - hon_value, (dis_value - hon_value)/hon_value
+
+
+def get_dishonest_gain(rlogs):
+	experiment_list = list(set([rlog["experiment"] for rlog in rlogs]))
+	cut_pattern_list = list(set([rlog["cut_pattern"] for rlog in rlogs]))
+	num_agents = list(set([rlog[AggregationType.NumberOfAgents.name] for rlog in rlogs]))
+
+	result = {numA: {} for numA in num_agents}
+
+	for exp in experiment_list:
+		numA = [rlog for rlog in rlogs if rlog["experiment"] == exp][0][AggregationType.NumberOfAgents.name]
+		result[numA][exp] = {}
+		for cp in cut_pattern_list:
+			result[numA][exp][cp] = []
+			relevant_logs = [rlog for rlog in rlogs if (rlog["experiment"] == exp and rlog["cut_pattern"] == cp)]
+			dishonest_partitions = {rlog["dishonest"]: rlog["partition"] for rlog in relevant_logs if rlog["dishonest"] is not None}
+			honest = [rlog for rlog in relevant_logs if rlog["dishonest"] is None][0]
+			honest_partitions = honest["partition"]
+			for agent in dishonest_partitions:
+				v,p = _get_dishonest_gain(honest_partitions, dishonest_partitions[agent], agent)
+
+				result[numA][exp][cp].append(
+					{
+						"agent": agent,
+						"agent_gain": v,
+						"agent_gain_per": p
+					})
+	return result
+
+
+def _write_dishonest_results_to_csv(dis_data,csv_path):
+	agg_dis_data = {}
+	for numOfAgent in dis_data:
+		agg_dis_data[numOfAgent] = {}
+		for exp in dis_data[numOfAgent].values():
+			for cut_pattern in exp:
+				try:
+					agg_dis_data[numOfAgent][cut_pattern]
+				except:
+					agg_dis_data[numOfAgent][cut_pattern] = []
+				exp[cut_pattern] = {"sgi": exp[cut_pattern],
+									"sgAvg": np.average([sgi['agent_gain'] for sgi in exp[cut_pattern]]),
+									"sgAvg_per": np.average([sgi['agent_gain_per'] for sgi in exp[cut_pattern]]),
+									"sgMax": max([sgi['agent_gain'] for sgi in exp[cut_pattern]]),
+									"sgMax_per": max([sgi['agent_gain_per'] for sgi in exp[cut_pattern]])}
+				agg_dis_data[numOfAgent][cut_pattern].append(exp[cut_pattern])
+
+		for cut_pattern in agg_dis_data[numOfAgent]:
+			exp_list = agg_dis_data[numOfAgent][cut_pattern]
+			exp_sgAvg = np.average([exp['sgAvg'] for exp in exp_list])
+			exp_sgAvg_per = np.average([exp['sgAvg_per'] for exp in exp_list])
+			exp_sgAvg_StDev = stdev([exp['sgAvg'] for exp in exp_list])
+			exp_sgMax = np.average([exp['sgMax'] for exp in exp_list])
+			exp_sgMax_per = np.average([exp['sgMax_per'] for exp in exp_list])
+			exp_sgMax_StDev = stdev([exp['sgMax'] for exp in exp_list])
+			agg_dis_data[numOfAgent][cut_pattern] = {'sgAvg': exp_sgAvg,
+													 'sgAvg_per': exp_sgAvg_per,
+													 'sgAvgStdev': exp_sgAvg_StDev,
+													 'sgMax': exp_sgMax,
+													 'sgMax_per': exp_sgMax_per,
+													 'sgMaxStdev': exp_sgMax_StDev}
+
+	# with open(in_path+'_sgRes', 'w') as json_file:
+	# 	json.dump(agg_dis_data, json_file)
+
+	with open(csv_path, "w", newline='') as csv_file:
+		csv_file_writer = csv.writer(csv_file)
+		for numOfAgent in agg_dis_data:
+			csv_file_writer.writerow([numOfAgent, "agents"])
+			csv_file_writer.writerow(["Cut Pattern", "sgAvg", "sgAvg Improv(%)", "sgAvg stdev", "sgMax", "sgMax Improv(%)", "sgMax stdev"])
+			for cp in agg_dis_data[numOfAgent]:
+				csv_file_writer.writerow([cp,
+										  agg_dis_data[numOfAgent][cp]['sgAvg'],
+										  agg_dis_data[numOfAgent][cp]['sgAvg_per'],
+										  agg_dis_data[numOfAgent][cp]['sgAvgStdev'],
+										  agg_dis_data[numOfAgent][cp]['sgMax'],
+										  agg_dis_data[numOfAgent][cp]['sgMax_per'],
+										  agg_dis_data[numOfAgent][cp]['sgMaxStdev']])
+			csv_file_writer.writerow([])
+
+
+def get_agents_for_exp(log_file):
+	_,_,_,_,_,_,agent_mapfiles_list,_,_ = readLogFile(log_file)
+	return list(map(Agent, agent_mapfiles_list))
 
 
 if __name__ == '__main__':
 
-	# index_path = 'data/madlanDataDump/wholeIsraelIndex.json'
+	in_path = 'results/2019-08-27T19-45-25/IsraelMaps06_2019-08-29T10-08-22_NoiseProportion_0.6_30_exp/dishonest_data.json'
+	with open(in_path, encoding="utf8") as in_file:
+		dis_data = json.load(in_file)
+
+	_write_dishonest_results_to_csv(dis_data,in_path+"dis_data.csv")
+
+
+	index_path = 'data/madlanDataDump/wholeIsraelIndex.json'
 	# output_path = 'data/madlanDataDump/wholeIsraelIdsList.json'
 	# with open(index_path, encoding="utf8") as index_file:
 	#     index = json.load(index_file)
@@ -229,46 +375,64 @@ if __name__ == '__main__':
 	#
 	#
 
-	plot_partition_from_path('results/luna/newZealandMaps06_results_full/logs/1281_EvenPazSquarePiece.csv')
+	# plot_partition_from_path('results/luna/newZealandMaps06_results_full/logs/1281_EvenPazSquarePiece.csv')
 
-	input_path = 'data/IsraelMaps02HS/0_valueMap_noise0.2.txt'
-	with open(input_path, 'rb') as mapfile:
-		a = pickle.load(mapfile)
-	plt.imshow(a, cmap='hot', interpolation='nearest')
-	plt.show()
-	input_path = 'data/IsraelMaps02HS/1_valueMap_noise0.2.txt'
-	with open(input_path, 'rb') as mapfile:
-		a = pickle.load(mapfile)
-	plt.imshow(a, cmap='hot', interpolation='nearest')
-	plt.show()
-	input_path = 'data/IsraelMaps06HS/0_valueMap_noise0.6.txt'
-	with open(input_path, 'rb') as mapfile:
-		a = pickle.load(mapfile)
-	plt.imshow(a, cmap='hot', interpolation='nearest')
-	plt.show()
+	# input_path = 'data/newZealand_nonZuniform/1_valueMap_noise0.6.txt'
+	# with open(input_path, 'rb') as mapfile:
+	# 	a = pickle.load(mapfile)
+	# plt.imshow(a, cmap='hot', interpolation='nearest')
+	# plt.show()
+	# input_path = 'data/IsraelMaps02HS/1_valueMap_noise0.2.txt'
+	# with open(input_path, 'rb') as mapfile:
+	# 	a = pickle.load(mapfile)
+	# plt.imshow(a, cmap='hot', interpolation='nearest')
+	# plt.show()
+	# input_path = 'data/IsraelMaps06HS/0_valueMap_noise0.6.txt'
+	# with open(input_path, 'rb') as mapfile:
+	# 	a = pickle.load(mapfile)
+	# plt.imshow(a, cmap='hot', interpolation='nearest')
+	# plt.show()
 
-	NTASKS = 10
+	NTASKS = 4
 
 	# folders_list = ['results/2019-02-10T10-13-22/IsraelMaps02_2019-02-10T20-29-15_NoiseProportion_0.2_50_exp',
 	# 				'results/2019-02-10T10-13-22/newZealandLowResAgents02_2019-02-10T15-04-23_NoiseProportion_0.2_50_exp',
 	# 				'results/2019-02-10T10-13-22/randomMaps02_2019-02-10T10-13-40_NoiseProportion_0.2_50_exp']
-	folders_list = ['results/2019-02-19T15-40-36/IsraelMaps04_2019-02-19T15-40-48_NoiseProportion_0.4_50_exp',
-					'results/2019-02-19T15-40-36/IsraelMaps06_2019-02-19T20-04-52_NoiseProportion_0.6_50_exp']
+	folders_list = ['results/2019-09-01T21-16-33/IsraelMaps02_2019-09-01T21-16-37_NoiseProportion_0.2_2_exp']
 	for input_path in folders_list:
 		log_folder = input_path+"/logs/"
 
 		# cur_log_file = log_folder+"41_AssessorHighestScatter.csv"
 		results = []
 		log_file_list = os.listdir(log_folder)
-		log_file_list = [os.path.join(log_folder, log_file) for log_file in log_file_list]
+		log_exp_list = list(set([log_name.split('_')[0] for log_name in log_file_list]))
 
-		p = mp.Pool(NTASKS)
+		print("Sort logs to experiments...")
+		log_list_per_exp = {exp: [os.path.join(log_folder, log_file) for log_file in log_file_list if exp == log_file.split('_')[0]]
+						for exp in log_exp_list}
+		rlogs = []
+		for exp in log_list_per_exp:
+			print("parsing logs in experiment %s" % exp)
+			if len(log_list_per_exp[exp]) < 1:
+				continue
 
-		results = p.map(parseResults, log_file_list)
-		p.close()
-		p.join()
+			agents = get_agents_for_exp(log_list_per_exp[exp][0])
+			results_to_parse = [(log, agents) for log in log_list_per_exp[exp]]
+			p = mp.Pool(NTASKS)
+			rlogs = rlogs + p.map(parseResults, results_to_parse)
+			p.close()
+			p.join()
 
-		del p
+			del p
 
-		write_results_to_folder(input_path+'/', "LargestEnvyCalculationFix", results)
+		results = get_dishonest_gain(rlogs)
+
+		data_output = input_path + '/dishonest_data.json'
+		csv_output = input_path + '/dishonest_data_summary.csv'
+
+		with open(data_output, 'w') as json_file:
+			json.dump(results, json_file)
+
+		_write_dishonest_results_to_csv(results, csv_output)
+
 	print("all done")

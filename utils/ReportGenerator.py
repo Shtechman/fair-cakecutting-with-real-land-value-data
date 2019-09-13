@@ -463,9 +463,9 @@ if __name__ == '__main__':
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/IsraelMaps06_2019-07-10T14-38-19_NoiseProportion_0.6_30_exp/IsraelMaps06_Dis_NoiseProportion_0.6_30_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/newZealandLowResAgents06_2019-07-08T21-55-28_NoiseProportion_0.6_30_exp/newZealandLowResAgents06_Dis_NoiseProportion_0.6_30_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/randomMaps06_2019-07-12T06-16-05_NoiseProportion_0.6_30_exp/randomMaps06_Dis_NoiseProportion_0.6_30_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/2019-09-02T23-16-45/newZealand_nonZuniform06_2019-09-02T23-16-59_NoiseProportion_0.6_30_exp/newZealand_nonZuniform06_2019-09-02T23-16-59_NoiseProportion_0.6_30_exp.json',
+                        # 'D:/MSc/Thesis/CakeCutting/results/2019-08-27T19-45-25/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp.json',
+                        #'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/randomMaps06_2019-07-12T06-16-05_NoiseProportion_0.6_30_exp/randomMaps06_Dis_NoiseProportion_0.6_30_exp.json',
     ]
 
     for jsonfilename in files_to_import:

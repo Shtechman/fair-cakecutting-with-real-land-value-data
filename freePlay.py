@@ -104,7 +104,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         testCsvMaps = argv[1]
     else:
-        testCsvMaps = 'data/testFolder/4-agents-H-H-H.csv'
+        testCsvMaps = 'data/testFolder/freePlay.csv'
     print("Maps taken from %s" % testCsvMaps)
     """-------------------------------------------------"""
 

@@ -139,12 +139,22 @@ def hotspot_noise_function(original_map, noise_proportion, normalized_sum, max_v
     return new_map
 
 
+def nonzero_uniform_noise_function(original_map, noise_proportion, normalized_sum, max_value=1000000):
+    rows = len(original_map)
+    cols = len(original_map[0])
+    new_map = [[random.uniform(0, max_value) if original_map[r][c] > 0 else 0 for c in range(cols)]
+               for r in range(rows)]
+    new_map = normalize_map(cols, new_map, normalized_sum, rows)
+    return new_map
+
 def uniform_noise_function(original_map, noise_proportion, normalized_sum, max_value):
     rows = len(original_map)
     cols = len(original_map[0])
+
     neg_noise_proportion = max(-1, -noise_proportion)  # done to ensure noisy outcome value is not negative
     new_map = [[original_map[r][c] * (1 + random.uniform(neg_noise_proportion, noise_proportion)) for c in range(cols)]
                for r in range(rows)]
+
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
     return new_map
 
@@ -341,15 +351,10 @@ def plot_partition(baseline_map, partition_data):
 
 if __name__ == '__main__':
 
-    testCsvMaps = '../data/testFolder/test2.csv'
-    agent_map = np.array(read_valueMaps_from_csv(testCsvMaps, 6), dtype=np.float)
+    # testCsvMaps = '../data/testFolder/test2.csv'
+    # agent_map = np.array(read_valueMaps_from_csv(testCsvMaps, 6), dtype=np.float)
 
-    nz1d = 'D:\MSc\Thesis\CakeCutting\data\\newzealand_forests_npv_4q.1d.json'
-    nz2d = 'D:/MSc/Thesis/CakeCutting/data/newzealand_forests_2D.txt'
-    nz1dHor = 'D:\MSc\Thesis\CakeCutting\data\\‏‏newzealand_forests_1DHor.txt'
-    nz1dVer = 'D:\MSc\Thesis\CakeCutting\data\\‏‏newzealand_forests_1DVer.txt'
-
-    noise = 0.2
+    noise = 0.6
     numOfAgents = 512
 
     og_maps = {"israel": '../data/originalMaps/IsraelMap.txt',
@@ -357,29 +362,34 @@ if __name__ == '__main__':
                "random": '../data/originalMaps/RandomNoiseMap.txt'}
 
     noise_methods = {"uniform": uniform_noise_function,
+                     "uniformNZ": nonzero_uniform_noise_function,
                      "hotspot": hotspot_noise_function}
 
     datasets = [
-        {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6,
+        {"datasetName": "newZealand_nonZuniform", "input_file": og_maps["newzealand"], "noise": 0.6,
          "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
+         "noise_method": noise_methods["uniformNZ"]},
 
-        {"datasetName": "IsraelMaps06HS", "input_file": og_maps["israel"], "noise": 0.6, "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
-
-        {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4,
-         "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
-
-        {"datasetName": "IsraelMaps04HS", "input_file": og_maps["israel"], "noise": 0.4, "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
-
-        {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2,
-         "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
-
-        {"datasetName": "IsraelMaps02HS", "input_file": og_maps["israel"], "noise": 0.2, "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["hotspot"]},
+        # {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6,
+        #  "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
+        #
+        # {"datasetName": "IsraelMaps06HS", "input_file": og_maps["israel"], "noise": 0.6, "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
+        #
+        # {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4,
+        #  "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
+        #
+        # {"datasetName": "IsraelMaps04HS", "input_file": og_maps["israel"], "noise": 0.4, "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
+        #
+        # {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2,
+        #  "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
+        #
+        # {"datasetName": "IsraelMaps02HS", "input_file": og_maps["israel"], "noise": 0.2, "numOfAgents": numOfAgents,
+        #  "noise_method": noise_methods["hotspot"]},
     ]
     folder = "../data/"
     # folder = "data/test02"
