@@ -82,10 +82,7 @@ def parse_sum_data_entry(orig_data_entry, sum_data_entry):
     dict_to_parse['utilitarianGain_Imp'] = sum_data_entry["utilitarianGain_Avg"]
     dict_to_parse['ttc_utilitarianGain_Imp'] = sum_data_entry["ttc_utilitarianGain_Avg"]
     dict_to_parse['averageFaceRatio_Imp'] = sum_data_entry["averageFaceRatio_Avg"]
-    dict_to_parse['largestFaceRatio_Imp'] = sum_data_entry["largestFaceRatio_Avg"]
     dict_to_parse['smallestFaceRatio_Imp'] = sum_data_entry["smallestFaceRatio_Avg"]
-    dict_to_parse['largestInheritanceGain_Imp'] = sum_data_entry["largestInheritanceGain_Avg"]
-    dict_to_parse['averageInheritanceGain_Imp'] = sum_data_entry["averageInheritanceGain_Avg"]
     dict_to_parse['largestEnvy_Imp'] = -1 * sum_data_entry["largestEnvy_Avg"]
     dict_to_parse['ttc_largestEnvy_Imp'] = -1 * sum_data_entry["ttc_largestEnvy_Avg"]
 
@@ -95,10 +92,7 @@ def parse_sum_data_entry(orig_data_entry, sum_data_entry):
          'utilitarianGain_Avg', 'utilitarianGain_Imp', 'utilitarianGain_StDev',
          'ttc_utilitarianGain_Avg', 'ttc_utilitarianGain_Imp', 'ttc_utilitarianGain_StDev',
          'averageFaceRatio_Avg', 'averageFaceRatio_Imp', 'averageFaceRatio_StDev',
-         'largestFaceRatio_Avg', 'largestFaceRatio_Imp', 'largestFaceRatio_StDev',
          'smallestFaceRatio_Avg', 'smallestFaceRatio_Imp', 'smallestFaceRatio_StDev',
-         'largestInheritanceGain_Avg', 'largestInheritanceGain_StDev',
-         'averageInheritanceGain_Avg', 'averageInheritanceGain_StDev',
          'largestEnvy_Avg', 'largestEnvy_Imp', 'largestEnvy_StDev',
          'ttc_largestEnvy_Avg', 'ttc_largestEnvy_Imp', 'ttc_largestEnvy_StDev',
          'experimentDurationSec_Avg', 'experimentDurationSec_StDev']
@@ -117,18 +111,14 @@ def create_table_summary_line(groupsize_sum_results):
            'ttcUGP': 11,
            'AFA': 13,
            'AFP': 14,
-           'LFA': 16,
-           'LFP': 17,
-           'SFA': 19,
-           'SFP': 20,
-           'LIA': 22,
-           'AIA': 24}
+           'SFA': 16,
+           'SFP': 17}
     min_idx_dict = {
-                'LEA': 26,
-                'LEP': 27,
-                'ttcLEA': 29,
-                'ttcLEP': 30,
-                'RDA': 32}
+                'LEA': 19,
+                'LEP': 20,
+                'ttcLEA': 22,
+                'ttcLEP': 23,
+                'RDA': 25}
     sum_result = [' ']*len(groupsize_sum_results[0])
     if sum_result:
         sum_result[0] = "Summary"
@@ -153,20 +143,20 @@ def parse_method_over_measure_data_entry(measure, method, available_groupsizes, 
 
 
 def preprocess_results(results):
-    keys_to_average = ['egalitarianGain', 'ttc_egalitarianGain', 'ttc_utilitarianGain','utilitarianGain', 'averageFaceRatio', 'largestFaceRatio',
-                       'smallestFaceRatio',
-                       'largestInheritanceGain', 'averageInheritanceGain', 'largestEnvy', 'ttc_largestEnvy', 'experimentDurationSec']
+    keys_to_average = ['egalitarianGain', 'ttc_egalitarianGain', 'ttc_utilitarianGain','utilitarianGain', 'averageFaceRatio',
+                       'smallestFaceRatio', 'largestEnvy', 'ttc_largestEnvy', 'experimentDurationSec']
     keys_to_integrate = [key + '_Avg' for key in keys_to_average]
     interval_keys = [key + '_interval' for key in keys_to_average]
     available_groupsizes = [4, 8, 16, 32, 64, 128]  # todo make dynamic to group size
 
     # # for old versions format
     # def _fix_parse(res):
-    #     m = res['Method']
+    #     m = res['Method'].replace('ValuableRemain', 'ValuableMargin').replace('RemainRange', 'Margin')
     #     if "Assessor" in m:
-    #         res['Method'] = res['Method'].replace('Assessor','Assessor_EvenPaz_')
+    #         res['Method'] = m.replace('Assessor', 'Assessor_EvenPaz_')
     #         res['Algorithm'] = 'Assessor_EvenPaz'
     #     if "Honest" in m:
+    #         res['Method'] = m
     #         res['Algorithm'] = 'Honest_EvenPaz'
     #     return res
     #

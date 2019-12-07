@@ -171,13 +171,14 @@ def write_summary_report_csv(jsonfilename, sum_results_per_groupsize, label="Hon
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
         first_headline = ["Cut Heuristic", "egalitarianGain", "", "", "ttc_egalitarianGain", "", "", "utilitarianGain",
-                          "", "", "ttc_utilitarianGain", "", "", "averageFaceRatio", "",
-                          "", "largestFaceRatio", "", "", "smallestFaceRatio", "", "", "largestInheritanceGain", "",
-                          "averageInheritanceGain", "", "largestEnvy", "", "", "ttc_largestEnvy", "", "", "runDuration(sec)", ""]
-        second_headline = ["", "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev","AverageGain", "Improv(%)", "StDev",
+                          "", "", "ttc_utilitarianGain", "", "", "averageFaceRatio", "", "", "smallestFaceRatio", "",
+                          "", "largestEnvy", "", "", "ttc_largestEnvy", "", "", "runDuration(sec)", ""]
+        second_headline = ["",
+                           "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev",
+                           "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev",
                            "AverageRatio", "Improv(%)", "StDev", "AverageRatio", "Improv(%)", "StDev",
-                           "AverageGain", "Improv(%)", "StDev", "AverageGain", "StDev",
-                           "AverageGain", "StDev", "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev", "Average Time", "StDev"]
+                           "AverageGain", "Improv(%)", "StDev", "AverageGain", "Improv(%)", "StDev",
+                           "Average Time", "StDev"]
         for groupSize in sum_results_per_groupsize:
             if not sum_results_per_groupsize[groupSize]:
                 continue
@@ -274,7 +275,7 @@ if __name__ == '__main__':
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2019-05-03T15-41-32/newZealandLowResAgents06_2019-05-03T15-41-52_NoiseProportion_0.6_50_exp/ttc_post_process_results_st16/ttc_post_process_results_st16.json',
+                        'D:/MSc/Thesis/CakeCutting/results/2019-05-05T08-10-28/ttc_post_process_results for newZ HS06/ttc_post_process_results.json',
                         # 'D:/MSc/Thesis/CakeCutting/results/2019-08-27T19-45-25/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp.json',
                         #'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/randomMaps06_2019-07-12T06-16-05_NoiseProportion_0.6_30_exp/randomMaps06_Dis_NoiseProportion_0.6_30_exp.json',
     ]
