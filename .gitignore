@@ -1,5 +1,7 @@
-data\*
-results\*
+data/*
+results/*
 venv/*
 node_modules/*
 .idea/*
+utils/__pycache__/*
+*.py.orig

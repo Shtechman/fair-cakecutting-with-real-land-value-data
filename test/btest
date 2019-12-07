@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH -n 4
+#SBATCH --output=test-%j.out
+#SBATCH --error=test-%j.err
+
+module load Anaconda3/5.1.0
+
+mpiexec -n 4 python multitest.py
+
+exit

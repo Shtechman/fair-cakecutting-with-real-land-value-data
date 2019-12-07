@@ -7,22 +7,24 @@ from utils.MapFileHandler import read_valueMaps_from_file, read_valueMaps_from_c
 from utils.Types import CutDirection
 
 
+class ShadowAgent:
+    """
+        a shadow agent has a name and a value-function-path but does never loads valuation map from file.
+        it is only used to keep runtime short when no valuations are needed and agent representation is required.
+    """
 
-class Agent:
-    """
-    an agent has a name and a value-function.
-    """
-    def __init__(self, valueMapPath, name="Anonymous", free_play_mode=False, free_play_idx=-1):
+    def __init__(self, valueMapPath, name="Anonymous"):
         self.name = name
         self.hname = name
         self.valueMapPath = valueMapPath
-        self.free_play_mode = free_play_mode
-        self.file_num = free_play_idx if self.free_play_mode else self.extract_file_name(valueMapPath)
-        self.loadValueMap()
-        self.cakeValue = np.sum(self.locallyLoadedValueMap)
-        self.valueMapRows = len(self.locallyLoadedValueMap)
-        self.valueMapCols = len(self.locallyLoadedValueMap[0])
+        self.file_num = self.extract_file_name(valueMapPath)
         self.dishonesty = False
+
+    def getName(self):
+        return self.name
+
+    def getAgentFileNumber(self):
+        return self.file_num
 
     def isDishonest(self):
         return self.dishonesty
@@ -34,13 +36,25 @@ class Agent:
         else:
             self.name = self.hname
 
-    def extract_file_name(self,file_path):
+    def extract_file_name(self, file_path):
         return file_path.split("/")[-1].split('_')[0]
-
-
 
     def getMapPath(self):
         return self.valueMapPath
+
+
+class Agent(ShadowAgent):
+    """
+    an agent has a name and a loaded value-function.
+    """
+    def __init__(self, valueMapPath, name="Anonymous", free_play_mode=False, free_play_idx=-1):
+        super(Agent, self).__init__(valueMapPath, name)
+        self.free_play_mode = free_play_mode
+        self.file_num = free_play_idx if self.free_play_mode else self.file_num
+        self.loadValueMap()
+        self.cakeValue = np.sum(self.locallyLoadedValueMap)
+        self.valueMapRows = len(self.locallyLoadedValueMap)
+        self.valueMapCols = len(self.locallyLoadedValueMap[0])
 
     def loadValueMap(self):
         if self.free_play_mode:
@@ -48,7 +62,7 @@ class Agent:
         else:
             self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
 
-    def cleanMemory(self):
+    def cleanMemory(self): # to be used for experiment with large usage of Agent
         try:
             del self.locallyLoadedValueMap
         except AttributeError:
@@ -180,6 +194,11 @@ class Agent:
     @lru_cache()
     def evaluationOfCake(self):
         return self.cakeValue
+
+    def pieceByEvaluation(self, pieces):
+        # pieces = {1: first_piece, ... , n: nth_piece}
+        sorted_piece_num_list = sorted(pieces.keys(), key=lambda piece_key: self.evaluationOfPiece(pieces[piece_key]),reverse=True)
+        return sorted_piece_num_list
 
 
 

@@ -133,7 +133,7 @@ if __name__ == '__main__':
     Cut patterns:
     Hor,    Ver,    HorVer,    VerHor,    SmallestHalfCut,
     SmallestPiece,    LongestDim,    ShortestDim,    LargestRemainRange,
-    MostValuableRemain,    MixedValuableRemain,
+    MostValuableMargin,    MixedValuableMargin,
     HighestScatter,    SquarePiece
     """
 

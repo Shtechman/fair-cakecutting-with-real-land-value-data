@@ -116,17 +116,17 @@ def calculate_avg_result(result_list):
         return {}
 
 
-def calculate_int_result(EvenPaz_res, Assessor_res):
+def calculate_int_result(Algorithm_res, Assessor_res):
     keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg', 'largestEnvy_Avg']
-    if EvenPaz_res:
+    if Algorithm_res:
         result = {}
-        for key in EvenPaz_res:
+        for key in Algorithm_res:
             if key in keys_to_integrate:
-                result[key] = EvenPaz_res[key] - Assessor_res[key]
+                result[key] = Algorithm_res[key] - Assessor_res[key]
             else:
-                result[key] = EvenPaz_res[key]
+                result[key] = Algorithm_res[key]
                 if key == "Method":
-                    result[key] = result[key].replace(EvenPaz_res["Algorithm"], "")
+                    result[key] = result[key].replace(Algorithm_res["Algorithm"], "")
                 if key == "Algorithm":
                     result[key] = "Integrated"
         return result

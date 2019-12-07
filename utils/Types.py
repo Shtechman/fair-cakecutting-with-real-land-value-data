@@ -23,6 +23,7 @@ class CutDirection(Enum):
     Vertical = 2,
     Both = 3
 
+
 class CutPattern(Enum):
     Hor = 1,
     Ver = 2,
@@ -32,11 +33,11 @@ class CutPattern(Enum):
     SmallestPiece = 6,
     LongestDim = 7,
     ShortestDim = 8,
-    LargestRemainRange = 9,
-    LargestAvgRemainRange = 10,
-    LargestRemainArea = 11,
-    MostValuableRemain = 12,
-    MixedValuableRemain = 13,
-    HighestScatter = 14,
-    SquarePiece = 15,
+    LargestMargin = 9,
+    LargestAvgMargin = 10,
+    LargestMarginArea = 11,
+    MostValuableMargin = 12,
+    HighestScatter = 13,
+    SquarePiece = 14,
+    BruteForce = 15,
 

@@ -10,10 +10,7 @@
 """
 
 from functools import lru_cache
-from utils.ValueFunction1D import ValueFunction1D
-from utils.Agent import Agent
-from utils.AllocatedPiece import AllocatedPiece1D, AllocatedPiece
-from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
+from utils.AllocatedPiece import AllocatedPiece
 
 
 class AlgorithmAssessor:
