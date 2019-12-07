@@ -51,7 +51,7 @@ class Measurements:
 
     @staticmethod
     def calculateRelativeValues(partition):
-        relativeValues = list(map(lambda piece: max(0, piece.getRelativeValue()), partition))
+        relativeValues = {piece.getAgent().file_num: max(0, piece.getRelativeValue()) for piece in partition}
         return relativeValues
 
     @staticmethod
