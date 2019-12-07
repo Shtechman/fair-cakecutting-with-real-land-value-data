@@ -203,12 +203,15 @@ class SimulationEnvironment:
 
     def runSimulation(self, algType, runType, cutPattern, log=False):
         tstart = time()
-        partition = self.getAlgorithm(algType, runType).run(self.getAgents(), cutPattern)  # returns a list of AllocatedPiece
+        algorithm = self.getAlgorithm(algType, runType)
+        partition = algorithm.run(self.getAgents(), cutPattern)  # returns a list of AllocatedPiece
         tend = time()
 
         run_duration = tend - tstart
 
-        algName = "{}_{}".format(runType.name, algType.name)
+        algName = algorithm.getAlgorithmType()
+        algName = "{}_{}".format("Honest", algName) if runType is RunType.Honest else algName
+
         try:
             method = "{}_{}".format(algName, cutPattern.name)
         except:

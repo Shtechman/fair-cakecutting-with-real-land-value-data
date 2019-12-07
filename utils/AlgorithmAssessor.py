@@ -31,9 +31,8 @@ class AlgorithmAssessor:
 			))
 		return identicalPartitionWithDifferentAgents
 
-	@staticmethod
-	def getAlgorithmType():
-		return "Assessor"
+	def getAlgorithmType(self):
+		return "{}_{}".format("Assessor", self.assessorAlgorithm.getAlgorithmType())
 
 	@lru_cache()
 	def _runAssessorAlgorithm(self, numOfAgents, cut_pattern):

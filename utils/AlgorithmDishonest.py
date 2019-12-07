@@ -31,6 +31,9 @@ class AlgorithmDishonest:
 
 		return set_partitions  # todo: handle multiple partitions - this will not work like this
 
+	def getAlgorithmType(self):
+		return "{}_{}".format("Dishonest", self.algorithm.getAlgorithmType())
+
 
 if __name__ == '__main__':
 
