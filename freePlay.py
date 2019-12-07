@@ -126,7 +126,7 @@ if __name__ == '__main__':
     """-------------------------------------------------"""
 
     """to stop visualization of results set plot to False"""
-    plot = True
+    plot = False
     """-------------------------------------------------"""
 
     """
