@@ -178,7 +178,7 @@ class Cutter:
 
 class EPCutter(Cutter):
     def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
-        super(Cutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
+        super(EPCutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
 
     def __copy__(self):
         return EPCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
@@ -260,8 +260,12 @@ class EPCutter(Cutter):
                 self.cut_direction = CutDirection.Vertical if self.cut_pattern is CutPattern.LongestDim else CutDirection.Horizontal
             return
 
-        sorted_horizontal_cuts = list(map(_get_horizontal_cutmarks, sorted(allocations, key=_get_horizontal_cutmarks)))
-        sorted_vertical_cuts = list(map(_get_vertical_cutmarks, sorted(allocations, key=_get_vertical_cutmarks)))
+        try:
+            sorted_horizontal_cuts = list(map(_get_horizontal_cutmarks, sorted(allocations, key=_get_horizontal_cutmarks)))
+            sorted_vertical_cuts = list(map(_get_vertical_cutmarks, sorted(allocations, key=_get_vertical_cutmarks)))
+        except:  # if not both ver and hor cut lists are set, use default value
+            return
+
         middle_index = int(np.ceil(number_of_agents / 2))
         horizontal_margin = sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]
         vertical_margin = sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]

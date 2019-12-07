@@ -86,14 +86,6 @@ class SimulationEnvironment:
             for data_entry in data:
                 csv_file_writer.writerow(data_entry)
 
-    @staticmethod
-    def getDishonestAgentFileNum(partition):
-        for piece in partition:
-            agent = piece.getAgent()
-            if agent.isDishonest():
-                return agent.file_num
-        return None
-
     def top_trading_cycle_repartition(self, partition, comment="", log=False):
         filenum = lambda a: a.getAgentFileNumber()
         agents = [p.getAgent() for p in partition]
@@ -146,8 +138,6 @@ class SimulationEnvironment:
 
         largestInheritanceGain = Measure.calculateLargestInheritanceGain(self.numberOfAgents, relativeValues)
 
-        dishonestAgent = self.getDishonestAgentFileNum(partition)
-
         ttc_partition = self.top_trading_cycle_repartition(partition)
         ttc_relativeValuesByAgent = Measure.calculateRelativeValues(ttc_partition)
         ttc_egalitarianGain = Measure.calculateEgalitarianGain(self.numberOfAgents, ttc_relativeValuesByAgent.values())
@@ -172,7 +162,7 @@ class SimulationEnvironment:
             "ttc_largestEnvy": ttc_largestEnvy,
             "experimentDurationSec": run_duration,
             "experiment": self.iSimulation,
-            "dishonestAgent": dishonestAgent,
+            "dishonestAgent": comment if 'Dishonest' in algName else None,
             "relativeValues": relativeValuesByAgent,
             "ttc_relativeValues": ttc_relativeValuesByAgent,
             "comment": comment,
@@ -201,7 +191,7 @@ class SimulationEnvironment:
         else:
             return [self.parseResultsFromPartition(algName, method, partition, run_duration, log=log)]
 
-    def runSimulation(self, algType, runType, cutPattern, log=False):
+    def runSimulation(self, algType, runType, cutPattern, log=True):
         tstart = time()
         algorithm = self.getAlgorithm(algType, runType)
         partition = algorithm.run(self.getAgents(), cutPattern)  # returns a list of AllocatedPiece

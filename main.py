@@ -7,12 +7,11 @@
 import math
 import os
 import sys
-from time import time
 
 from utils.Agent import Agent
 from utils.MapFileHandler import get_valueMaps_from_index, get_originalMap_from_index, get_datasetName_from_index
 from utils.Plotter import Plotter
-from utils.ReportGenerator import create_exp_folder, generate_exp_name, write_results_to_folder, create_run_folder
+from utils.ReportWriter import create_exp_folder, generate_exp_name, write_results_to_folder, create_run_folder
 from utils.Types import AggregationType, AlgType, CutPattern, RunType
 from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
 import multiprocessing as mp
@@ -43,7 +42,8 @@ def runExperiment(exp_data):
                             CutPattern.HorVer, CutPattern.SmallestPiece, CutPattern.SquarePiece,
                             CutPattern.SmallestHalfCut]
 
-    cut_patterns_to_test = [CutPattern.BruteForce, CutPattern.MostValuableMargin, CutPattern.SquarePiece]
+    # cut_patterns_to_test = [CutPattern.BruteForce, CutPattern.MostValuableMargin, CutPattern.SquarePiece]
+    # cut_patterns_to_test = [CutPattern.MostValuableMargin, CutPattern.SquarePiece]
 
     env = SimEnv(iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
                  cut_patterns_to_test)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         experiments_per_cell = int(argv[1])
     else:
-        experiments_per_cell = 30
+        experiments_per_cell = 2
 
     if len(argv) > 2:
         NTASKS = int(argv[2])
@@ -153,15 +153,15 @@ if __name__ == '__main__':
     RUN_FOLDER_PATH = create_run_folder()
 
     experiment_sets = [
-         {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
-         {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
-         {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
+         # {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
+         # {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
+         # {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
         # {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-        # {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
+        {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4,8], "run_types": [RunType.Honest,RunType.Assessor,RunType.Dishonest]},
         # {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
     ]
 

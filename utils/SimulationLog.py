@@ -94,7 +94,7 @@ class SimulationLog:
         return self.output_csv_file_path
 
     def write_log_file(self):
-        with open(self.output_log_file_path, "w") as log_file:
+        with open(self.output_log_file_path, "wb") as log_file:
             pickle.dump(self, log_file)
         return self.output_log_file_path
 
