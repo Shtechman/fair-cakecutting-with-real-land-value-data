@@ -118,8 +118,9 @@ def create_table_summary_line(groupsize_sum_results):
                 'ttcLEA': 22,
                 'ttcLEP': 23,
                 'RDA': 25}
-    sum_result = [' ']*len(groupsize_sum_results[0])
-    if sum_result:
+    groupsize_sum_results = [r for r in groupsize_sum_results if r]
+    sum_result = [' ']*50
+    if groupsize_sum_results:
         sum_result[0] = "Summary"
 
         for idx in max_idx_dict.values():
@@ -141,7 +142,7 @@ def parse_method_over_measure_data_entry(measure, method, available_groupsizes, 
     return data_entry
 
 
-def preprocess_results(results):
+def preprocess_results(results, assessor_results):
     keys_to_average = ['egalitarianGain', 'ttc_egalitarianGain', 'ttc_utilitarianGain','utilitarianGain', 'averageFaceRatio',
                        'smallestFaceRatio', 'largestEnvy', 'ttc_largestEnvy', 'experimentDurationSec']
     keys_to_integrate = [key + '_Avg' for key in keys_to_average]
@@ -168,20 +169,26 @@ def preprocess_results(results):
     in
         [m.name for m in CutPattern]}
 
+
+
     run_types_keys = list(set([r["Algorithm"] for r in results]))
 
-    assessor_key = next((key for key in run_types_keys if "Assessor" in key), "AssessorEmpty")
+    assessor_key = "Assessor"
     honest_key = next((key for key in run_types_keys if "Honest" in key), "HonestEmpty")
     dishonest_key = next((key for key in run_types_keys if "Dishonest" in key), "DishonestEmpty")
     int_honest_key = "{}_{}".format("Integrated", honest_key)
     int_dishonest_key = "{}_{}".format("Integrated", dishonest_key)
 
     res_per_gs_per_m = {}  # gs - groupsize, m - method
+    assessor_res_per_gs = {}
     res_per_a_per_gs_per_m = {}  # a - algorithm, gs - groupsize, m - method
 
     for method in res_per_m:
         res_per_gs_per_m[method] = {n: [r for r in res_per_m[method]
                                                         if r['NumberOfAgents'] == n] for n in available_groupsizes}
+        assessor_res_per_gs = {n: [r for r in assessor_results
+                                        if r['NumberOfAgents'] == n] for n in available_groupsizes}
+
         res_per_a_per_gs_per_m[method] = {n: [] for n in available_groupsizes}
         for groupsize in res_per_gs_per_m[method]:
             res_per_a_per_gs_per_m[method][groupsize] = {a: [r for r in res_per_gs_per_m[method][groupsize]
@@ -224,6 +231,8 @@ def preprocess_results(results):
             method_avg_results[groupsize] = {a: calculate_avg_result(res_per_a_per_gs_per_m[method][groupsize][a],
                                                                      keys_to_average, groupsize)
                                              for a in res_per_a_per_gs_per_m[method][groupsize]}
+            method_avg_results[groupsize][assessor_key] = calculate_avg_result(assessor_res_per_gs[groupsize],
+                                                                               keys_to_average, groupsize)
 
             for key in [assessor_key, honest_key, dishonest_key]:
                 if key not in method_avg_results[groupsize]:

@@ -9,17 +9,18 @@ from utils.ReportGenerator import preprocess_results
 
 def write_graph_method_per_measure_report_csv(path, jsonfilename, graph_method_results_per_measure):
     graph_report_path = os.path.join(path, 'measurements_graphs')
+    alg_name = os.path.basename(path)
     if not os.path.exists(graph_report_path):
         os.makedirs(graph_report_path)
     for measure in graph_method_results_per_measure:
         measure_results = graph_method_results_per_measure[measure]
         if not graph_method_results_per_measure[measure]:
             continue
-        report_file_path = os.path.join(graph_report_path, measure+'.csv')
+        report_file_path = os.path.join(graph_report_path, measure+'_'+alg_name+'.csv')
         with open(report_file_path, "w", newline='') as csv_file:
             csv_file_writer = csv.writer(csv_file)
             csv_file_writer.writerow([jsonfilename])
-            table_header = ['NumberOfAgents', 'Honest', 'Assessor', 'TTC',  'Selling', 'Hon_Conf', 'As_Conf', 'TTC_Conf']
+            table_header = ['NumberOfAgents', alg_name, 'Assessor', alg_name+'TTC',  'Selling', alg_name+'_Conf', 'As_Conf', alg_name+'TTC_Conf']
             for method in measure_results:
                 if not measure_results[method]:
                     continue
@@ -99,14 +100,17 @@ def generate_reports(jsonfilename):
         results = json.load(json_file)
 
     different_algorithm = list(set([k.split('_')[-1] for k in list(set([r["Algorithm"] for r in results]))]))
+    assessor_algorithm = next(a for a in different_algorithm if "Simple" in a)
+    different_algorithm.remove(assessor_algorithm)
     results_by_algorithm = {a: [r for r in results if a in r["Algorithm"]]
                             for a in different_algorithm}
+    assessor_results = [r for r in results if 'Assessor' in r["Algorithm"]]
 
     for algorithm in results_by_algorithm:
-        generate_algorithm_report(algorithm, jsonfilename, results_by_algorithm[algorithm])
+        generate_algorithm_report(algorithm, jsonfilename, results_by_algorithm[algorithm], assessor_results)
 
 
-def generate_algorithm_report(algorithm, jsonfilename, results):
+def generate_algorithm_report(algorithm, jsonfilename, results, assessor_results):
     avg_results_per_method, \
     sum_honest_results_per_groupsize, \
     sum_dishonest_results_per_groupsize, \
@@ -116,7 +120,7 @@ def generate_algorithm_report(algorithm, jsonfilename, results):
     graph_method_results_per_measure, \
     groupsizes, \
     dishonest_gain, \
-    bruteForce_gain = preprocess_results(results)
+    bruteForce_gain = preprocess_results(results, assessor_results)
 
     base_dir = os.path.dirname(jsonfilename)
     json_file_name = os.path.basename(jsonfilename)

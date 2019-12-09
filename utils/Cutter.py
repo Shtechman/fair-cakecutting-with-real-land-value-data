@@ -408,3 +408,55 @@ class LDCutter(Cutter):
         #     return query_cutmark - SMALLEST_NUMBER
         # else:
         #     return query_cutmark + SMALLEST_NUMBER
+
+
+class SimpleCutter(Cutter):
+    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
+        super(SimpleCutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
+
+        if self.freeplay_mode:
+            if len(self.cut_pattern) < 1:
+                self.cut_pattern = self.original_cut_pattern
+            self.first_part_cut_pattern = self.cut_pattern[2::2]
+            self.second_part_cut_pattern = self.cut_pattern[1::2]
+        elif cut_pattern not in [CutPattern.Hor,CutPattern.Ver]:
+            raise ValueError('Simple Cutter can either cut horizontally or vertically %s is not supported.' % cut_pattern)
+
+    def __copy__(self):
+        return SimpleCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
+
+    def get_firt_part_cutter(self):
+        if self.freeplay_mode:
+            return SimpleCutter(self.first_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_second_part_cutter(self):
+        if self.freeplay_mode:
+            return SimpleCutter(self.second_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_number_of_agents_in_first_partition(self, number_of_agents):
+        # for Simple Cutter, first partition holds half of the agents
+        return int(np.ceil(number_of_agents / 2))
+
+    def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
+        # for Simple cutter, cutting is made at the middle of the margin
+        return (margin_iFrom + margin_iTo) / 2.0
+
+    def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):
+        if len(honest_cutmarks) % 2 > 0:
+            middleIdx = int(np.floor(len(honest_cutmarks) / 2))
+        else:
+            raise ValueError("Odd number of agents yet to be supported")  # todo: add support for odd num of agents
+
+        honest_cutmarks.sort()
+        query_halfcut = honest_cutmarks[middleIdx]
+        low_half = allocation.subCut(allocation.getDirectionaliFrom(query_direction), query_halfcut, query_direction)
+        high_half = allocation.subCut(query_halfcut, allocation.getDirectionaliTo(query_direction), query_direction)
+
+        if low_half.getValue() > high_half.getValue():
+            return query_halfcut - SMALLEST_NUMBER
+        else:
+            return query_halfcut + SMALLEST_NUMBER

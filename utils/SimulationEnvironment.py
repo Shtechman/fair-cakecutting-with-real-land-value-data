@@ -2,7 +2,7 @@ import csv
 import os
 from time import time
 
-from utils.AlgorithmAssessor import AlgorithmAssessor
+from utils.AlgorithmAssessor import AlgorithmAssessor, AlgorithmSimpleAssessor
 from utils.AlgorithmDishonest import AlgorithmDishonest
 from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
 from utils.AlgorithmLastDiminisher import AlgorithmLastDiminisher
@@ -58,7 +58,8 @@ class SimulationEnvironment:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
     def _getAssessor(self, algType):
-        return AlgorithmAssessor(self.assessorAgentPool, self._getAlgorithm(algType))
+        return AlgorithmSimpleAssessor(self.assessorAgentPool)
+        # return AlgorithmAssessor(self.assessorAgentPool, self._getAlgorithm(algType))
 
     def getAgents(self):
         return self.agents
