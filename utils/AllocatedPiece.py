@@ -105,6 +105,11 @@ class AllocatedPiece(Piece):
 		self.agent_name = agent.name
 		self.cutmarks = {}
 
+	def __copy__(self):
+		copy_piece = AllocatedPiece(self.agent, self.iFromRow, self.iFromCol, self.iToRow, self.iToCol)
+		copy_piece.cutmarks = self.cutmarks
+		return copy_piece
+
 	def __repr__(self):
 		return "%s(%s) receives %s" % (self.agent_name, self.agent.file_num, super(AllocatedPiece, self).__repr__())
 
@@ -135,7 +140,7 @@ class AllocatedPiece(Piece):
 		else:
 			subcut_iFrom = cut_location
 			subcut_iTo = self.getDirectionaliTo(direction)
-		return self.subCut(subcut_iFrom, subcut_iTo, direction).getValue()
+		return self.subCut(subcut_iFrom, subcut_iTo, direction).getRelativeValue()
 
 	def getDirectionalFaceRatio(self, cut_location, direction):
 		if self.cutmarks[direction] < cut_location:

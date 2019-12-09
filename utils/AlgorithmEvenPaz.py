@@ -21,7 +21,7 @@ class AlgorithmEvenPaz:
         """
         Calculate a proportional cake-division using the algorithm of Even and Paz (1984).
         @param agents - a list of n Agents, each with a value-function on the same cake.
-        @return a list of n AllocatedPiece1D-s, each of which contains an Agent and an allocated part of the cake.
+        @return a list of n AllocatedPiece-s, each of which contains an Agent and an allocated part of the cake.
         todo: re-write all examples for 2d case
         >>> alg = AlgorithmEvenPaz()
         >>> Alice = Agent(name="Alice", valueFunction=ValueFunction1D([1,2,3,4]))
@@ -84,19 +84,20 @@ class AlgorithmEvenPaz:
 
 
 if __name__ == '__main__':
-    from utils.ValueFunction1D import ValueFunction1D
-    from utils.Agent import Agent
-
-
-    import doctest
-    # doctest.testmod()
-
-    # demo test
-    alg = AlgorithmEvenPaz()
-    Alice = Agent(name="Alice", valueFunction=ValueFunction1D([1, 2, 3, 4]))
-    Bob = Agent(name="Bob", valueFunction=ValueFunction1D([40, 30, 20, 10]))
-    Carl = Agent(name="Carl", valueFunction=ValueFunction1D([100, 100, 100, 100]))
-    print("when Alice is the only agent -", alg.run([Alice]))
-    print("when Alice and Bob are the only agents -", alg.run([Alice, Bob]))
-    print("when Carl and Bob are the only agents -", alg.run([Carl, Bob]))
-    print("when Alice, Bob and Carl are the agents -", alg.run([Alice, Bob, Carl]))
+    # from utils.ValueFunction1D import ValueFunction1D
+    # from utils.Agent import Agent
+    #
+    #
+    # import doctest
+    # # doctest.testmod()
+    #
+    # # demo test
+    # alg = AlgorithmEvenPaz()
+    # Alice = Agent(name="Alice", valueFunction=ValueFunction1D([1, 2, 3, 4]))
+    # Bob = Agent(name="Bob", valueFunction=ValueFunction1D([40, 30, 20, 10]))
+    # Carl = Agent(name="Carl", valueFunction=ValueFunction1D([100, 100, 100, 100]))
+    # print("when Alice is the only agent -", alg.run([Alice]))
+    # print("when Alice and Bob are the only agents -", alg.run([Alice, Bob]))
+    # print("when Carl and Bob are the only agents -", alg.run([Carl, Bob]))
+    # print("when Alice, Bob and Carl are the agents -", alg.run([Alice, Bob, Carl]))
+    pass

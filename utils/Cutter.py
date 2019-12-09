@@ -1,5 +1,6 @@
 from utils.Types import CutPattern, CutDirection
 import numpy as np
+import random
 
 SMALLEST_NUMBER = 0.0000000000001
 
@@ -12,12 +13,6 @@ class Cutter:
         self.cut_query = cut_query
         self.cut_direction = cut_direction
         self.freeplay_mode = type(cut_pattern) is list
-
-        if self.freeplay_mode:
-            if len(self.cut_pattern) < 1:
-                self.cut_pattern = self.original_cut_pattern
-            self.first_part_cut_pattern = self.cut_pattern[2::2]
-            self.second_part_cut_pattern = self.cut_pattern[1::2]
 
     def __repr__(self):
         if self.freeplay_mode:
@@ -57,11 +52,8 @@ class Cutter:
 
         allocations.sort(key=lambda alloc: alloc.cutmarks[self.cut_direction])
 
-        cut_location = self._calculate_cut_location(allocations, number_of_agents_in_first_partition)
-
-        first_part_allocations, second_part_allocations = self._divide_agents_to_partitions(allocations, cut_location,
-                                                                                            number_of_agents,
-                                                                                            number_of_agents_in_first_partition)
+        first_part_allocations, second_part_allocations = self._allocate_cuts(allocations, number_of_agents,
+                                                                              number_of_agents_in_first_partition)
 
         return first_part_allocations, second_part_allocations
 
@@ -163,72 +155,34 @@ class Cutter:
             dir_iter_func = self._get_query_direction_iterator_func()
             self.cut_query = dir_iter_func()
 
-    def _calculate_cut_location(self, sorted_allocations, number_of_agents_in_first_partition):
+    def get_number_of_agents_in_first_partition(self, number_of_agents):
         raise NotImplementedError('This method should be overridden.')
 
-    def get_number_of_agents_in_first_partition(self, number_of_agents):
+    def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
         raise NotImplementedError('This method should be overridden.')
 
     def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):
         raise NotImplementedError('This method should be overridden.')
 
-    def _set_next_cutting_direction(self, allocations, number_of_agents):
-        raise NotImplementedError('This method should be overridden.')
-
-
-class EPCutter(Cutter):
-    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
-        super(EPCutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
-
-    def __copy__(self):
-        return EPCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
-
-    def get_firt_part_cutter(self):
-        if self.freeplay_mode:
-            return EPCutter(self.first_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
-        else:
-            return self.__copy__()
-
-    def get_second_part_cutter(self):
-        if self.freeplay_mode:
-            return EPCutter(self.second_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
-        else:
-            return self.__copy__()
-
-    def _calculate_cut_location(self, sorted_allocations, number_of_agents_in_first_partition):
-        # for Even Paz, cut location is the median
+    def _allocate_cuts(self, sorted_allocations, number_of_agents, number_of_agents_in_first_partition):
         end_of_first_part = sorted_allocations[number_of_agents_in_first_partition - 1].cutmarks[self.cut_direction]
         start_of_second_part = sorted_allocations[number_of_agents_in_first_partition].cutmarks[self.cut_direction]
-        cut_location = (end_of_first_part + start_of_second_part) / 2
-        return cut_location
-
-    def get_number_of_agents_in_first_partition(self, number_of_agents):
-        # for Even Paz, first partition holds half of the agents
-        return int(np.ceil(number_of_agents / 2))
-
-    def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):
-        if len(honest_cutmarks) % 2 > 0:
-            middleIdx = int(np.floor(len(honest_cutmarks) / 2))
-        else:
-            raise ValueError("Odd number of agents yet to be supported")  # todo: add support for odd num of agents
-
-        honest_cutmarks.sort()
-        query_halfcut = honest_cutmarks[middleIdx]
-        low_half = allocation.subCut(allocation.getDirectionaliFrom(query_direction), query_halfcut, query_direction)
-        high_half = allocation.subCut(query_halfcut, allocation.getDirectionaliTo(query_direction), query_direction)
-
-        if low_half.getValue() > high_half.getValue():
-            return query_halfcut - SMALLEST_NUMBER
-        else:
-            return query_halfcut + SMALLEST_NUMBER
+        cut_location = self._calculate_optional_cut_location(end_of_first_part, start_of_second_part)
+        first_part_allocations, second_part_allocations = self._divide_agents_to_partitions(sorted_allocations,
+                                                                                            cut_location,
+                                                                                            number_of_agents,
+                                                                                            number_of_agents_in_first_partition)
+        return first_part_allocations, second_part_allocations
 
     def _set_next_cutting_direction(self, allocations, number_of_agents):
 
         self.cut_direction = self.cut_query  # default next cut direction value is the cut query
 
-        def _get_horizontal_cutmarks(alloc): return alloc.cutmarks[CutDirection.Horizontal]
+        def _get_horizontal_cutmarks(alloc):
+            return alloc.cutmarks[CutDirection.Horizontal]
 
-        def _get_vertical_cutmarks(alloc): return alloc.cutmarks[CutDirection.Vertical]
+        def _get_vertical_cutmarks(alloc):
+            return alloc.cutmarks[CutDirection.Vertical]
 
         if self.cut_pattern in [CutPattern.SmallestHalfCut, CutPattern.SmallestPiece]:
             first_hor_cut = min(allocations, key=_get_horizontal_cutmarks)
@@ -261,23 +215,18 @@ class EPCutter(Cutter):
             return
 
         try:
-            sorted_horizontal_cuts = list(map(_get_horizontal_cutmarks, sorted(allocations, key=_get_horizontal_cutmarks)))
+            sorted_horizontal_cuts = list(
+                map(_get_horizontal_cutmarks, sorted(allocations, key=_get_horizontal_cutmarks)))
             sorted_vertical_cuts = list(map(_get_vertical_cutmarks, sorted(allocations, key=_get_vertical_cutmarks)))
         except:  # if not both ver and hor cut lists are set, use default value
             return
 
-        middle_index = int(np.ceil(number_of_agents / 2))
-        horizontal_margin = sorted_horizontal_cuts[middle_index] - sorted_horizontal_cuts[middle_index - 1]
-        vertical_margin = sorted_vertical_cuts[middle_index] - sorted_vertical_cuts[middle_index - 1]
+        top_margin_index = self.get_number_of_agents_in_first_partition(number_of_agents)
+        horizontal_margin = sorted_horizontal_cuts[top_margin_index] - sorted_horizontal_cuts[top_margin_index - 1]
+        vertical_margin = sorted_vertical_cuts[top_margin_index] - sorted_vertical_cuts[top_margin_index - 1]
 
         if self.cut_pattern is CutPattern.LargestMargin:
             self.cut_direction = CutDirection.Horizontal if vertical_margin < horizontal_margin else CutDirection.Vertical
-            return
-
-        if self.cut_pattern is CutPattern.LargestAvgMargin:
-            hor_avg_margin = np.average([np.abs(halfcut - horizontal_margin) for halfcut in sorted_horizontal_cuts])
-            ver_avg_margin = np.average([np.abs(halfcut - vertical_margin) for halfcut in sorted_vertical_cuts])
-            self.cut_direction = CutDirection.Horizontal if ver_avg_margin < hor_avg_margin else CutDirection.Vertical
             return
 
         if self.cut_pattern is CutPattern.LargestMarginArea:
@@ -287,14 +236,23 @@ class EPCutter(Cutter):
             self.cut_direction = CutDirection.Horizontal if vertical_margin_area < horizontal_margin_area else CutDirection.Vertical
             return
 
-        hor_margin_iFrom = sorted_horizontal_cuts[middle_index - 1]
-        hor_margin_iTo = sorted_horizontal_cuts[middle_index]
-        hor_cut_option = (hor_margin_iFrom + hor_margin_iTo) / 2.0
-        ver_margin_iFrom = sorted_vertical_cuts[middle_index - 1]
-        ver_margin_iTo = sorted_vertical_cuts[middle_index]
-        ver_cut_option = (ver_margin_iFrom + ver_margin_iTo) / 2.0
+        hor_margin_iFrom = sorted_horizontal_cuts[top_margin_index - 1]
+        hor_margin_iTo = sorted_horizontal_cuts[top_margin_index]
+        hor_cut_option = self._calculate_optional_cut_location(hor_margin_iFrom, hor_margin_iTo)
+        ver_margin_iFrom = sorted_vertical_cuts[top_margin_index - 1]
+        ver_margin_iTo = sorted_vertical_cuts[top_margin_index]
+        ver_cut_option = self._calculate_optional_cut_location(ver_margin_iFrom, ver_margin_iTo)
+
+        if self.cut_pattern is CutPattern.LargestAvgMargin:
+            hor_avg_margin = np.average([np.abs(cutmark - hor_cut_option) for cutmark in sorted_horizontal_cuts])
+            ver_avg_margin = np.average([np.abs(cutmark - ver_cut_option) for cutmark in sorted_vertical_cuts])
+            self.cut_direction = CutDirection.Horizontal if ver_avg_margin < hor_avg_margin else CutDirection.Vertical
+            return
 
         if self.cut_pattern is CutPattern.MostValuableMargin:
+            # we average the value of the entire piece made by cutting in the suggested location in the eyes of each
+            # agent. this should be the same as measuring the actual margin because all agents have the same relative
+            # eval of the sub-piece from start to their idea of where the margin begins.
             hor_margin_avg_value = np.average(list(map(lambda alloc:
                                                        alloc.getDirectionalValue(hor_cut_option,
                                                                                  CutDirection.Horizontal),
@@ -325,3 +283,128 @@ class EPCutter(Cutter):
             ver_scatter_avg_value = np.average([b - a for (a, b) in neighbor_vertical_cuts])
             self.cut_direction = CutDirection.Horizontal if ver_scatter_avg_value < hor_scatter_avg_value else CutDirection.Vertical
             return
+
+
+class EPCutter(Cutter):
+    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
+        super(EPCutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
+
+        if self.freeplay_mode:
+            if len(self.cut_pattern) < 1:
+                self.cut_pattern = self.original_cut_pattern
+            self.first_part_cut_pattern = self.cut_pattern[2::2]
+            self.second_part_cut_pattern = self.cut_pattern[1::2]
+
+    def __copy__(self):
+        return EPCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
+
+    def get_firt_part_cutter(self):
+        if self.freeplay_mode:
+            return EPCutter(self.first_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_second_part_cutter(self):
+        if self.freeplay_mode:
+            return EPCutter(self.second_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_number_of_agents_in_first_partition(self, number_of_agents):
+        # for Even Paz, first partition holds half of the agents
+        return int(np.ceil(number_of_agents / 2))
+
+    def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
+        # for Even Paz, cutting is made at the middle of the margin
+        return (margin_iFrom + margin_iTo) / 2.0
+
+    def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):
+        if len(honest_cutmarks) % 2 > 0:
+            middleIdx = int(np.floor(len(honest_cutmarks) / 2))
+        else:
+            raise ValueError("Odd number of agents yet to be supported")  # todo: add support for odd num of agents
+
+        honest_cutmarks.sort()
+        query_halfcut = honest_cutmarks[middleIdx]
+        low_half = allocation.subCut(allocation.getDirectionaliFrom(query_direction), query_halfcut, query_direction)
+        high_half = allocation.subCut(query_halfcut, allocation.getDirectionaliTo(query_direction), query_direction)
+
+        if low_half.getValue() > high_half.getValue():
+            return query_halfcut - SMALLEST_NUMBER
+        else:
+            return query_halfcut + SMALLEST_NUMBER
+
+
+class LDCutter(Cutter):
+    def __init__(self, cut_pattern, cut_query=None, cut_direction=None, original_cut_pattern=None):
+        super(LDCutter, self).__init__(cut_pattern, cut_query, cut_direction, original_cut_pattern)
+
+        if self.freeplay_mode:
+            if len(self.cut_pattern) < 1:
+                self.cut_pattern = self.original_cut_pattern
+            self.first_part_cut_pattern = self.cut_pattern[0]
+            self.second_part_cut_pattern = self.cut_pattern[1:]
+
+    def __copy__(self):
+        return LDCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
+
+    def get_firt_part_cutter(self):
+        if self.freeplay_mode:
+            return LDCutter(self.first_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def get_second_part_cutter(self):
+        if self.freeplay_mode:
+            return LDCutter(self.second_part_cut_pattern, original_cut_pattern=self.original_cut_pattern)
+        else:
+            return self.__copy__()
+
+    def _divider_chooser_allocation(self, allocations):
+        divider_index = random.randint(0, 1)
+        chooser_index = 1 - divider_index
+        chooser_agent = allocations[chooser_index].getAgent()
+        divider_piece = allocations[divider_index]
+        divider_allocations = [divider_piece.__copy__(), divider_piece.__copy__()]
+        first_piece, second_piece = super()._allocate_cuts(divider_allocations, 2, 1)
+        chooser_allocations = [first_piece[0].getAllocatedPiece(chooser_agent),
+                              second_piece[0].getAllocatedPiece(chooser_agent)]
+        if chooser_allocations[0].getRelativeValue() > chooser_allocations[1].getRelativeValue():
+            return [chooser_allocations[0]], second_piece
+        else:
+            return first_piece, [chooser_allocations[1]]
+
+    def _allocate_cuts(self, allocations, number_of_agents, number_of_agents_in_first_partition):
+        if number_of_agents > 2:
+            first_part_allocations, second_part_allocations = \
+                super()._allocate_cuts(allocations, number_of_agents, number_of_agents_in_first_partition)
+        elif number_of_agents == 2:
+            first_part_allocations, second_part_allocations = self._divider_chooser_allocation(allocations)
+        else:
+            # should not happen
+            raise ValueError("Division is only possible from 2 agents and up.")
+
+        return first_part_allocations, second_part_allocations
+
+    def get_number_of_agents_in_first_partition(self, number_of_agents):
+        # for Last Diminisher, first partition holds only one agent (with the smallest mark)
+        return 1
+
+    def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
+        return margin_iFrom
+
+    def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):
+        honest_cutmarks.sort()
+        query_cutmark = honest_cutmarks[0]
+        raise NotImplementedError("Strategic play for LastDiminisher is not yet implemented.")
+        # todo: implement a strategic play - note that if query_cutmark results in a piece better then 1/n of the
+        #  cake than the player can claim (query_cutmark - SMALLEST_NUMBER) and if not, (query_cutmark +
+        #  SMALLEST_NUMBER).
+        #
+        # low_half = allocation.subCut(allocation.getDirectionaliFrom(query_direction), query_cutmark, query_direction)
+        # high_half = allocation.subCut(query_cutmark, allocation.getDirectionaliTo(query_direction), query_direction)
+        #
+        # if low_half.getValue() > high_half.getValue():
+        #     return query_cutmark - SMALLEST_NUMBER
+        # else:
+        #     return query_cutmark + SMALLEST_NUMBER

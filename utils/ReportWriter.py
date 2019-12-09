@@ -4,12 +4,11 @@ import os
 from datetime import datetime
 import numpy as np
 from statistics import stdev
-from utils.ReportGenerator import preprocess_results, EXTENDED_KEYS
+from utils.ReportGenerator import preprocess_results
 
 
-def write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results_per_measure):
-    directory_path = os.path.dirname(jsonfilename)
-    graph_report_path = os.path.join(directory_path, 'measurements_graphs')
+def write_graph_method_per_measure_report_csv(path, jsonfilename, graph_method_results_per_measure):
+    graph_report_path = os.path.join(path, 'measurements_graphs')
     if not os.path.exists(graph_report_path):
         os.makedirs(graph_report_path)
     for measure in graph_method_results_per_measure:
@@ -20,7 +19,7 @@ def write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results
         with open(report_file_path, "w", newline='') as csv_file:
             csv_file_writer = csv.writer(csv_file)
             csv_file_writer.writerow([jsonfilename])
-            table_header = ['NumberOfAgents', 'Honest', 'Assessor', 'Dishonest',  'Selling', 'Hon_Conf', 'As_Conf', 'Dis_Conf']
+            table_header = ['NumberOfAgents', 'Honest', 'Assessor', 'TTC',  'Selling', 'Hon_Conf', 'As_Conf', 'TTC_Conf']
             for method in measure_results:
                 if not measure_results[method]:
                     continue
@@ -35,7 +34,7 @@ def write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results
                 csv_file_writer.writerow([""])
 
 
-def write_dishonest_gain_results(jsonfilename, dishonest_gain):
+def write_dishonest_gain_results(path, dishonest_gain, label=""):
     agg_dis_data = {}
     res_found = False
     for numOfAgent in dishonest_gain:
@@ -76,7 +75,8 @@ def write_dishonest_gain_results(jsonfilename, dishonest_gain):
     # 	json.dump(agg_dis_data, json_file)
     if not res_found:
         return
-    with open(jsonfilename + '_DishonestGain.csv', "w", newline='') as csv_file:
+
+    with open(os.path.join(path, label+'_DishonestGain.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         for numOfAgent in agg_dis_data:
             csv_file_writer.writerow([numOfAgent, "agents"])
@@ -95,18 +95,22 @@ def write_dishonest_gain_results(jsonfilename, dishonest_gain):
 
 
 def generate_reports(jsonfilename):
-    # filepath_elements = jsonfilename.split('_')
-    # aggText = filepath_elements[2]
-    # aggParam = filepath_elements[3]
-    # experiments_per_cell = int(filepath_elements[4])
-    # dataParamType = AggregationType.NumberOfAgents
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
 
+    different_algorithm = list(set([k.split('_')[-1] for k in list(set([r["Algorithm"] for r in results]))]))
+    results_by_algorithm = {a: [r for r in results if a in r["Algorithm"]]
+                            for a in different_algorithm}
+
+    for algorithm in results_by_algorithm:
+        generate_algorithm_report(algorithm, jsonfilename, results_by_algorithm[algorithm])
+
+
+def generate_algorithm_report(algorithm, jsonfilename, results):
     avg_results_per_method, \
     sum_honest_results_per_groupsize, \
     sum_dishonest_results_per_groupsize, \
-    avg_honest_results_per_measurement,\
+    avg_honest_results_per_measurement, \
     avg_assessor_results_per_measurement, \
     avg_dishonest_results_per_measurement, \
     graph_method_results_per_measure, \
@@ -114,26 +118,27 @@ def generate_reports(jsonfilename):
     dishonest_gain, \
     bruteForce_gain = preprocess_results(results)
 
-    write_graphtables_report_csv(jsonfilename, avg_honest_results_per_measurement, groupsizes)
-    write_graphtables_report_csv(jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
-    # write_graphtables_report_csv(jsonfilename, avg_dishonest_results_per_measurement, groupsizes, "Dishonest")
+    base_dir = os.path.dirname(jsonfilename)
+    json_file_name = os.path.basename(jsonfilename)
+    algorithm_res_path = os.path.join(base_dir, algorithm)
+    if not os.path.exists(algorithm_res_path):
+        os.makedirs(algorithm_res_path)
 
-    write_summary_report_csv(jsonfilename, sum_honest_results_per_groupsize)
-    # write_summary_report_csv(jsonfilename, sum_dishonest_results_per_groupsize, "Dishonest")
+    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_honest_results_per_measurement, groupsizes, algorithm)
+    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
+    # write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_dishonest_results_per_measurement, groupsizes, "Dishonest")
+    write_summary_report_csv(algorithm_res_path, jsonfilename, sum_honest_results_per_groupsize, algorithm)
+    # write_summary_report_csv(algorithm_res_path, jsonfilename, sum_dishonest_results_per_groupsize, "Dishonest")
+    write_graph_method_per_measure_report_csv(algorithm_res_path, jsonfilename, graph_method_results_per_measure)
+    write_extended_report_csv(algorithm_res_path, jsonfilename, avg_results_per_method, algorithm)
+    write_dishonest_gain_results(algorithm_res_path, dishonest_gain, algorithm)
+    write_bruteforce_gain_results(algorithm_res_path, bruteForce_gain, algorithm)
 
-    write_graph_method_per_measure_report_csv(jsonfilename, graph_method_results_per_measure)
 
-    write_extended_report_csv(jsonfilename, avg_results_per_method)
-
-    write_dishonest_gain_results(jsonfilename, dishonest_gain)
-
-    write_bruteforce_gain_results(jsonfilename, bruteForce_gain)
-
-
-def write_bruteforce_gain_results(jsonfilename, bruteForce_gain):
+def write_bruteforce_gain_results(path, bruteForce_gain, label=""):
     if not bruteForce_gain:
         return
-    with open(jsonfilename + '_BruteForceGain.csv', "w", newline='') as csv_file:
+    with open(os.path.join(path, label+'_BruteForceGain.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         for groupsize in bruteForce_gain:
             csv_file_writer.writerow([groupsize, "agents"])
@@ -143,9 +148,9 @@ def write_bruteforce_gain_results(jsonfilename, bruteForce_gain):
             csv_file_writer.writerow([])
 
 
-def write_extended_report_csv(jsonfilename, avg_results_per_method):
-
-    with open(jsonfilename + '_results.csv', "w", newline='') as csv_file:
+def write_extended_report_csv(path, jsonfilename, avg_results_per_method, label="Honest"):
+    jsonfilename = os.path.basename(jsonfilename)
+    with open(os.path.join(path, jsonfilename + '_' + label + '_results.csv'), "w", newline='') as csv_file:
 
         csv_file_writer = csv.writer(csv_file)
         keys_list = []
@@ -162,12 +167,13 @@ def write_extended_report_csv(jsonfilename, avg_results_per_method):
 
         for m in avg_results_per_method:
             for n in avg_results_per_method[m]:
-                for key_report in EXTENDED_KEYS:
+                keys_to_report = avg_results_per_method[m][n].keys()
+                for key_report in keys_to_report:
                     keys_list = _write_to_csv(keys_list, key_report)
 
 
-def write_summary_report_csv(jsonfilename, sum_results_per_groupsize, label="Honest"):
-    with open(jsonfilename + '_' + label + '_summary.csv', "w", newline='') as csv_file:
+def write_summary_report_csv(path, jsonfilename, sum_results_per_groupsize, label="Honest"):
+    with open(os.path.join(path, label + '_summary.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
         first_headline = ["Cut Heuristic", "egalitarianGain", "", "", "ttc_egalitarianGain", "", "", "utilitarianGain",
@@ -193,8 +199,8 @@ def write_summary_report_csv(jsonfilename, sum_results_per_groupsize, label="Hon
             csv_file_writer.writerow([""])
 
 
-def write_graphtables_report_csv(jsonfilename, results_per_measuement, groupsizes, label="Honest"):
-    with open(jsonfilename + '_' + label + '_graphtables.csv', "w", newline='') as csv_file:
+def write_graphtables_report_csv(path, jsonfilename, results_per_measuement, groupsizes, label="Honest"):
+    with open(os.path.join(path, label + '_graphtables.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
         headline = [""]+groupsizes

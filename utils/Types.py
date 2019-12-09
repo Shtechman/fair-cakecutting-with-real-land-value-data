@@ -9,7 +9,8 @@ class AggregationType(Enum):
 
 
 class AlgType(Enum):
-    EvenPaz = 1
+    EvenPaz = 1,
+    LastDiminisher = 2
 
 
 class RunType(Enum):

@@ -4,6 +4,7 @@
  * @author Erel Segal-Halevi, Gabi Burabia (gabi3b), Itay Shtechman
  * @since 2016-11
 """
+import itertools
 import math
 import os
 import sys
@@ -28,7 +29,7 @@ def makeSingleSimulation(env, algType, runType, cutPattern):
 
 
 def runExperiment(exp_data):
-    index_file, algType, runTypes, numOfAgents, noiseProportion, iSimulation, assessorAgentPool, result_folder = exp_data
+    index_file, algTypes, runTypes, numOfAgents, noiseProportion, iSimulation, assessorAgentPool, result_folder = exp_data
     results = []
     print("======================= %s Agents - PID %s - Simulation %s =======================" % (
     numOfAgents, os.getpid(), iSimulation))
@@ -43,23 +44,22 @@ def runExperiment(exp_data):
                             CutPattern.SmallestHalfCut]
 
     # cut_patterns_to_test = [CutPattern.BruteForce, CutPattern.MostValuableMargin, CutPattern.SquarePiece]
-    # cut_patterns_to_test = [CutPattern.MostValuableMargin, CutPattern.SquarePiece]
 
     env = SimEnv(iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
                  cut_patterns_to_test)
     for cur_cut_pattern in cut_patterns_to_test:
-        for runType in runTypes:
+        for algType, runType in itertools.product(algTypes, runTypes):
             for result in makeSingleSimulation(env, algType, runType, cur_cut_pattern):
                 results.append(result)
 
     return results
 
 
-def calculateSingleDatapoint(index_file, algType, runTypes, numOfAgents, noiseProportion, experiments_per_cell, assessorAgentPool,
+def calculateSingleDatapoint(index_file, algTypes, runTypes, numOfAgents, noiseProportion, experiments_per_cell, assessorAgentPool,
                              result_folder):
     p = mp.Pool(NTASKS)
 
-    exp_data = [(index_file, algType, runTypes, numOfAgents, noiseProportion, str(numOfAgents) + str(iSimulation),
+    exp_data = [(index_file, algTypes, runTypes, numOfAgents, noiseProportion, str(numOfAgents) + str(iSimulation),
                  assessorAgentPool, result_folder) for iSimulation in range(1, experiments_per_cell + 1)]
 
     result_lists = p.map(runExperiment, exp_data)
@@ -82,7 +82,13 @@ def aggregate(index_file, runTypes, aggregationParams, dataParams, aggText, data
                                                                                            experiments_per_cell)
         result_folder = create_exp_folder(RUN_FOLDER_PATH, exp_name_string)
 
-        results = calculateMultipleDatapoints(index_file, aggParam, AlgType.EvenPaz, runTypes, dataParamType, dataParams,
+        # todo: make generic to AlgType
+        # results = calculateMultipleDatapoints(index_file, aggParam, AlgType.EvenPaz, runTypes, dataParamType,
+        #                                       dataParams,
+        #                                       dataText, experiments_per_cell, assessorAgentPool, result_folder)
+        algTypes = [AlgType.EvenPaz, AlgType.LastDiminisher]
+        results = calculateMultipleDatapoints(index_file, aggParam, algTypes, runTypes, dataParamType,
+                                              dataParams,
                                               dataText, experiments_per_cell, assessorAgentPool, result_folder)
 
         write_results_to_folder(result_folder, exp_name_string, results)
@@ -103,17 +109,17 @@ def aggregate(index_file, runTypes, aggregationParams, dataParams, aggText, data
         #                     title="egalitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
 
 
-def calculateMultipleDatapoints(index_file, aggParam, algType, runTypes, dataParamType, dataParams, dataText,
+def calculateMultipleDatapoints(index_file, aggParam, algTypes, runTypes, dataParamType, dataParams, dataText,
                                 experiments_per_cell, assessorAgentPool, result_folder):
     results = []
     # create a data point for each input of dataParam
     for dataParam in dataParams:
         print("\t" + str(dataParam) + " " + dataText)
         if dataParamType == AggregationType.NumberOfAgents:
-            results += calculateSingleDatapoint(index_file, algType, runTypes, dataParam, aggParam, experiments_per_cell,
+            results += calculateSingleDatapoint(index_file, algTypes, runTypes, dataParam, aggParam, experiments_per_cell,
                                                 assessorAgentPool, result_folder)
         else:
-            results += calculateSingleDatapoint(index_file, algType, runTypes, aggParam, dataParam, experiments_per_cell,
+            results += calculateSingleDatapoint(index_file, algTypes, runTypes, aggParam, dataParam, experiments_per_cell,
                                                 assessorAgentPool, result_folder)
     return results
 
@@ -136,7 +142,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         experiments_per_cell = int(argv[1])
     else:
-        experiments_per_cell = 2
+        experiments_per_cell = 10
 
     if len(argv) > 2:
         NTASKS = int(argv[2])
@@ -161,7 +167,7 @@ if __name__ == '__main__':
         # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-        {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4,8], "run_types": [RunType.Honest,RunType.Assessor,RunType.Dishonest]},
+        {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4], "run_types": [RunType.Honest,RunType.Assessor]},
         # {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
     ]
 

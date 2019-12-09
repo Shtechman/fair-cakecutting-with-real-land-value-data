@@ -5,6 +5,7 @@ from time import time
 from utils.AlgorithmAssessor import AlgorithmAssessor
 from utils.AlgorithmDishonest import AlgorithmDishonest
 from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
+from utils.AlgorithmLastDiminisher import AlgorithmLastDiminisher
 from utils.SimulationLog import SimulationLog
 from utils.TopTradingCycle import topTradingCycles
 from utils.Types import AlgType, RunType, AggregationType
@@ -51,6 +52,8 @@ class SimulationEnvironment:
     def _getAlgorithm(self, algType):
         if algType == AlgType.EvenPaz:
             return AlgorithmEvenPaz()
+        elif algType == AlgType.LastDiminisher:
+            return AlgorithmLastDiminisher()
         else:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
