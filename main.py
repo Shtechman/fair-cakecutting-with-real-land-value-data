@@ -38,9 +38,8 @@ def runExperiment(exp_data):
     agents = list(map(Agent, agent_mapfiles_list))
     # for each experimaent run the Algorithm for numOfAgents using noiseProportion
     cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableMargin,
-                            CutPattern.LargestMargin, CutPattern.VerHor,
-                            CutPattern.HorVer, CutPattern.SmallestPiece, CutPattern.SquarePiece,
-                            CutPattern.SmallestHalfCut]
+                            CutPattern.LargestMargin, CutPattern.VerHor, CutPattern.HorVer,
+                            CutPattern.SmallestPiece, CutPattern.SquarePiece, CutPattern.SmallestHalfCut]
 
     # cut_patterns_to_test = [CutPattern.BruteForce, CutPattern.MostValuableMargin, CutPattern.SquarePiece]
 
@@ -162,12 +161,12 @@ if __name__ == '__main__':
     RUN_FOLDER_PATH = create_run_folder()
 
     experiment_sets = [
-         # {"index_file": "data/newZealandLowResAgents06/index.txt",   "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
-         # {"index_file": "data/IsraelMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
-         # {"index_file": "data/randomMaps06/index.txt",               "noise_proportion": [0.6],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
-        # {"index_file": "data/IsraelMaps06/index.txt",             "noise_proportion": [0.6],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
-        # {"index_file": "data/IsraelMaps04/index.txt",             "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
-        {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128],   "run_types": [RunType.Honest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128],   "run_types": [RunType.Honest]},
+        {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4, 8], "run_types": [RunType.Honest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [16], "run_types": [RunType.Honest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [32], "run_types": [RunType.Honest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64], "run_types": [RunType.Honest]},
+        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [128], "run_types": [RunType.Honest]},
         # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
         # {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4,8], "run_types": [RunType.Honest]},
