@@ -24,7 +24,6 @@ import numpy as np
 
 from utils.Agent import Agent
 from utils.AllocatedPiece import AllocatedPiece
-from utils.ReportGenerator import write_results_to_folder
 from utils.TopTradingCycle import topTradingCycles
 from utils.Types import AggregationType
 from utils.SimulationLog import SimulationLog
@@ -58,7 +57,7 @@ def coor_to_list(coor_value_list, valueKey):
 
 
 def measure_largest_envy(numberOfAgents, noiseProportion, method, experiment, partition):
-    largestEnvy = Measure.calculateLargestEnvy(partition)
+    largestEnvy = Measure.get_largest_envy(partition)
     if 'Assessor' in method:
         algName = 'Assessor'
         method = method.replace(algName, '')
@@ -451,31 +450,45 @@ if __name__ == '__main__':
     #
     #     _write_dishonest_results_to_csv(results, csv_output)
 
-    exp_folders = [
-        # 'results/2019-08-27T18-35-00/IsraelMaps02_2019-08-27T18-35-05_NoiseProportion_0.2_2_exp/',
-        # 'results/2019-05-03T15-41-32/newZealandLowResAgents06_2019-05-03T15-41-52_NoiseProportion_0.6_50_exp/',
-        # 'results/2019-08-27T19-45-25/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp',
-        # 'results/2019-08-27T19-45-25/randomMaps06_2019-08-31T00-11-38_NoiseProportion_0.6_30_exp',
-        'results/2019-05-05T08-10-28/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp/',
-    ]
+    # exp_folders = [
+    #     # 'results/2019-08-27T18-35-00/IsraelMaps02_2019-08-27T18-35-05_NoiseProportion_0.2_2_exp/',
+    #     # 'results/2019-05-03T15-41-32/newZealandLowResAgents06_2019-05-03T15-41-52_NoiseProportion_0.6_50_exp/',
+    #     # 'results/2019-08-27T19-45-25/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp',
+    #     # 'results/2019-08-27T19-45-25/randomMaps06_2019-08-31T00-11-38_NoiseProportion_0.6_30_exp',
+    #     'results/2019-05-05T08-10-28/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp/',
+    # ]
+    #
+    # for exp_folder in exp_folders:
+    #     log_folder = exp_folder + 'logs/'
+    #     ttc_out_folder = exp_folder + 'ttc_post_process_results/'
+    #     logs = SimulationLog.create_logs_from_csv_folder(log_folder)
+    #     results = []
+    #     for idx, sim_log in enumerate(logs):
+    #         print("=== %s/%s ===" % (idx, len(logs)))
+    #         agents = logs[sim_log][0].recreate_agent_list()
+    #         results += [
+    #             get_TTC_results_from_log(agents, log)
+    #             for log in logs[sim_log] if "Dishonest" not in log.method
+    #         ]
+    #         for agent in agents:
+    #             agent.cleanMemory()
+    #             del agent
+    #     if not os.path.exists(ttc_out_folder):
+    #         os.makedirs(ttc_out_folder)
+    #     write_results_to_folder(ttc_out_folder, "ttc_post_process_results", results)
 
-    for exp_folder in exp_folders:
-        log_folder = exp_folder + 'logs/'
-        ttc_out_folder = exp_folder + 'ttc_post_process_results/'
-        logs = SimulationLog.create_logs_from_csv_folder(log_folder)
-        results = []
-        for idx, sim_log in enumerate(logs):
-            print("=== %s/%s ===" % (idx, len(logs)))
-            agents = logs[sim_log][0].recreate_agent_list()
-            results += [
-                get_TTC_results_from_log(agents, log)
-                for log in logs[sim_log] if "Dishonest" not in log.method
-            ]
-            for agent in agents:
-                agent.cleanMemory()
-                del agent
-        if not os.path.exists(ttc_out_folder):
-            os.makedirs(ttc_out_folder)
-        write_results_to_folder(ttc_out_folder, "ttc_post_process_results", results)
+    # exp_folder = 'results/EPnLD/combined_results.json'
+    #
+    # files = [os.path.join(exp_folder, file_name) for file_name in os.listdir(exp_folder)]
+    #
+    # results = []
+    # for file in files:
+    #     with open(file) as json_file:
+    #         results += json.load(json_file)
+    #
+    # output_file = os.path.join(exp_folder, "combined_results.json")
+    #
+    # with open(output_file, "w") as json_file:
+    #     json.dump(results, json_file)
 
     print("all done")

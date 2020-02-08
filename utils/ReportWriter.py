@@ -277,6 +277,13 @@ if __name__ == '__main__':
 
     """ generate report of experiment results from json file """
 
+    jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json'
+    folderp = 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/'
+    filename = 'copy_of_results'
+    with open(jsonfilename) as json_file:
+        results = json.load(json_file)
+    write_results_to_csv(folderp,filename,results)
+
 
     files_to_import = [#'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps02HS_results/IsraelMaps02HS_2019-05-05T15-16-06_NoiseProportion_0.2_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps04HS_results/IsraelMaps04HS_2019-05-05T14-04-45_NoiseProportion_0.4_15_exp.json',
@@ -285,9 +292,8 @@ if __name__ == '__main__':
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
                        #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2019-05-05T08-10-28/ttc_post_process_results for newZ HS06/ttc_post_process_results.json',
-                        # 'D:/MSc/Thesis/CakeCutting/results/2019-08-27T19-45-25/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp/newZealandLowResAgents06_2019-08-27T19-45-44_NoiseProportion_0.6_30_exp.json',
-                        #'D:/MSc/Thesis/CakeCutting/results/2019-07-08T21-55-10/randomMaps06_2019-07-12T06-16-05_NoiseProportion_0.6_30_exp/randomMaps06_Dis_NoiseProportion_0.6_30_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06hs/newZealandLowResAgents06HS_2019-12-24T17-49-04_NoiseProportion_0.6_50_exp.json',
+                        'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json'
     ]
 
     for jsonfilename in files_to_import:

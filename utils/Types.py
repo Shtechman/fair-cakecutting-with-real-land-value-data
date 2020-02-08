@@ -11,7 +11,8 @@ class AggregationType(Enum):
 class AlgType(Enum):
     EvenPaz = 1,
     LastDiminisher = 2,
-    Simple = 3
+    DynamicEP = 3,
+    Simple = 4
 
 
 class RunType(Enum):

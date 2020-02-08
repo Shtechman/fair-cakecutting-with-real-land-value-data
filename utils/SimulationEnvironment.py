@@ -4,11 +4,12 @@ from time import time
 
 from utils.AlgorithmAssessor import AlgorithmAssessor, AlgorithmSimpleAssessor
 from utils.AlgorithmDishonest import AlgorithmDishonest
+from utils.AlgorithmDynamicEP import AlgorithmDynamicEP
 from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
 from utils.AlgorithmLastDiminisher import AlgorithmLastDiminisher
 from utils.SimulationLog import SimulationLog
 from utils.TopTradingCycle import topTradingCycles
-from utils.Types import AlgType, RunType, AggregationType
+from utils.Types import AlgType, RunType, AggregationType, CutPattern
 from utils.Measurements import Measurements as Measure
 
 
@@ -54,6 +55,19 @@ class SimulationEnvironment:
             return AlgorithmEvenPaz()
         elif algType == AlgType.LastDiminisher:
             return AlgorithmLastDiminisher()
+        elif algType == AlgType.DynamicEP:
+            return AlgorithmDynamicEP()
+        else:
+            raise ValueError("Algorithm type '%s' is not supported" % algType)
+
+    @staticmethod
+    def algorithm_supports_cut_pattern(algType, cutPattern):
+        if algType == AlgType.EvenPaz:
+            return cutPattern not in [CutPattern.Simple]
+        elif algType == AlgType.LastDiminisher:
+            return cutPattern not in [CutPattern.Simple]
+        elif algType == AlgType.DynamicEP:
+            return cutPattern in [CutPattern.Simple]
         else:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
@@ -126,33 +140,33 @@ class SimulationEnvironment:
 
         # value of piece compared to whole cake (in the eyes of the agent)
 
+        partition.sort(key=lambda p: p.getAgent().getAgentFileNumber())
+
         relativeValuesByAgent = Measure.calculateRelativeValues(partition)
         relativeValues = relativeValuesByAgent.values()
         egalitarianGain = Measure.calculateEgalitarianGain(self.numberOfAgents, relativeValues)
         utilitarianGain = Measure.calculateUtilitarianGain(relativeValues)
-        largestEnvy = Measure.calculateLargestEnvy(partition)
+        largestEnvy = Measure.get_largest_envy(partition)
 
-        largestFaceRatio = Measure.calculateLargestFaceRatio(partition)
+        smallestFaceRatio = Measure.get_smallest_face_ratio(partition)
+        averageFaceRatio = Measure.get_average_face_ratio(partition)
 
-        smallestFaceRatio = Measure.calculateSmallestFaceRatio(partition)
-
-        averageFaceRatio = Measure.calculateAverageFaceRatio(partition)
-
+        largestFaceRatio = Measure.get_largest_face_ratio(partition)
         averageInheritanceGain = Measure.calculateAverageInheritanceGain(self.numberOfAgents, relativeValues)
-
         largestInheritanceGain = Measure.calculateLargestInheritanceGain(self.numberOfAgents, relativeValues)
+
 
         ttc_partition = self.top_trading_cycle_repartition(partition)
         ttc_relativeValuesByAgent = Measure.calculateRelativeValues(ttc_partition)
         ttc_egalitarianGain = Measure.calculateEgalitarianGain(self.numberOfAgents, ttc_relativeValuesByAgent.values())
         ttc_utilitarianGain = Measure.calculateUtilitarianGain(ttc_relativeValuesByAgent.values())
-        ttc_largestEnvy = Measure.calculateLargestEnvy(ttc_partition)
+        ttc_largestEnvy = Measure.get_largest_envy(ttc_partition)
 
         return {
             AggregationType.NumberOfAgents.name: self.numberOfAgents,
             AggregationType.NoiseProportion.name: self.noiseProportion,
             "Algorithm": algName,
-            "Method": method,
+            "Method": method if "Simple" not in method else method+comment.split('@')[0],
             "egalitarianGain": egalitarianGain,
             "ttc_egalitarianGain": ttc_egalitarianGain,
             "utilitarianGain": utilitarianGain,
@@ -169,7 +183,7 @@ class SimulationEnvironment:
             "dishonestAgent": comment if 'Dishonest' in algName else None,
             "relativeValues": relativeValuesByAgent,
             "ttc_relativeValues": ttc_relativeValuesByAgent,
-            "comment": comment,
+            "comment": comment if '@' not in comment else comment.split('@')[1],
         }
 
     def aggregateSameSimulationResults(self, results):

@@ -1,24 +1,5 @@
 import numpy as np
 class Measurements:
-    @staticmethod
-    def calculateAverageFaceRatio(partition):
-        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
-        return max(0, np.average(faceRatioList))
-
-    @staticmethod
-    def calculateLargestFaceRatio(partition):
-        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
-        return max(0, max(faceRatioList))
-
-    @staticmethod
-    def calculateSmallestFaceRatio(partition):
-        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
-        return max(0, min(faceRatioList))
-
-    @staticmethod
-    def calculateLargestEnvy(partition):
-        largestEnvyList = list(map(lambda piece: piece.getLargestEnvy(partition), partition))
-        return max(1, max(largestEnvyList))
 
     @staticmethod
     def calculateUtilitarianGain(relativeValues):
@@ -58,3 +39,59 @@ class Measurements:
     def calculateAbsolutValues(partition):
         absolutValues = list(map(lambda piece: max(0, piece.getValue()), partition))
         return absolutValues
+
+    @staticmethod
+    def get_egalitarian_gain(partition):
+        num_of_agents = len(partition)
+        relative_values = Measurements.calculateRelativeValues(partition).values()
+        return Measurements.calculateEgalitarianGain(num_of_agents, relative_values)
+
+    @staticmethod
+    def get_utilitarian_gain(partition):
+        relative_values = Measurements.calculateRelativeValues(partition).values()
+        return Measurements.calculateUtilitarianGain(relative_values)
+
+    @staticmethod
+    def get_largest_envy(partition):
+        largestEnvyList = list(map(lambda piece: piece.getLargestEnvy(partition), partition))
+        return max(1, max(largestEnvyList))
+
+    @staticmethod
+    def get_average_face_ratio(partition):
+        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
+        return max(0, np.average(faceRatioList))
+
+    @staticmethod
+    def get_largest_face_ratio(partition):
+        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
+        return max(0, max(faceRatioList))
+
+    @staticmethod
+    def get_smallest_face_ratio(partition):
+        faceRatioList = list(map(lambda piece: piece.getFaceRatio(), partition))
+        return max(0, min(faceRatioList))
+
+    @staticmethod
+    def merge_egalitarian_gain(first_eval,first_noa,second_eval,second_noa):
+        return min(first_eval/first_noa, second_eval/second_noa)*(first_noa+second_noa)
+
+    @staticmethod
+    def merge_utilitarian_gain(first_eval,first_noa,second_eval,second_noa):
+        return first_eval+second_eval
+
+    @staticmethod
+    def merge_largest_envy(first_eval,first_noa,second_eval,second_noa):
+        raise NotImplementedError("Largest Envy Merge Is Not Trivial!")
+
+    @staticmethod
+    def merge_average_face_ratio(first_eval,first_noa,second_eval,second_noa):
+        faceRatioList = [first_eval]*first_noa + [second_eval]*second_noa
+        return np.average(faceRatioList)
+
+    @staticmethod
+    def merge_largest_face_ratio(first_eval,first_noa,second_eval,second_noa):
+        return max(first_eval, second_eval)
+
+    @staticmethod
+    def merge_smallest_face_ratio(first_eval,first_noa,second_eval,second_noa):
+        return min(first_eval,second_eval)

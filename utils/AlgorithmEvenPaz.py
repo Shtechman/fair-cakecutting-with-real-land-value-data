@@ -52,8 +52,8 @@ class AlgorithmEvenPaz:
             # now, recursively divide the cake among the agents using a given cutter:
             results.append((cutter, self._runRecursive(initial_allocations, cutter)))
 
-        for r in results:
-            print(r)
+        # for r in results:
+        #     print(r)
         if len(results) > 1:
             return {str(result[0]): result[1] for result in results}
         else:

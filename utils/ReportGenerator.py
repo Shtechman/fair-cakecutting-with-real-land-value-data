@@ -13,12 +13,6 @@ except:
         return -1
 
 
-# todo - modify to support multiple algorithm types and not just 'Even and Paz'
-HONEST_KEY = "Honest_EvenPaz"
-DISHONEST_KEY = "Dishonest_EvenPaz"
-ASSESSOR_KEY = "Assessor_EvenPaz"
-INT_HONEST_KEY = "Integrated_Honest_EvenPaz"
-INT_DISHONEST_KEY = "Integrated_Dishonest_EvenPaz"
 BRUTEFORCE_KEY = "BruteForce"
 
 
@@ -164,10 +158,11 @@ def preprocess_results(results, assessor_results):
 
     dishonestGain = get_dishonest_gain(results)
 
+    method_list = [r["Method"].split("_")[-1] for r in results]
     res_per_m = { # m - method
         method: [r for r in results if r["Method"].split("_")[-1] == method] for method
     in
-        [m.name for m in CutPattern]}
+        method_list}
 
 
 
@@ -213,12 +208,12 @@ def preprocess_results(results, assessor_results):
             if not honest_key:
                 continue
             if res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]:
-                uniqe_exp_id = list(set([r['experiment'] for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][HONEST_KEY]]))
+                uniqe_exp_id = list(set([r['experiment'] for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]]))
                 best_result_per_gs[groupsize] = []
                 for key in keys:
                     cur_key_list = []
                     for exp_id in uniqe_exp_id:
-                        exp_results = [r for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][HONEST_KEY]
+                        exp_results = [r for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]
                                        if r['experiment'] == exp_id]
                         cur_key_list.append(key[1](exp_results, key=lambda r: r[key[0]])[key[0]])
 
