@@ -30,8 +30,10 @@ class SimulationLog:
         self.iSimulation = iSimulation
         self.cuts_tested = [cut_pattern.name for cut_pattern in cut_patterns_tested]
 
-        self.output_csv_file_path = self.result_folder + "logs/" + self.iSimulation + "_" + method + comment + ".csv"
-        self.output_log_file_path = self.result_folder + "logs/" + self.iSimulation + "_" + method + comment + ".log"
+        self.output_csv_file_path = self.result_folder + "logs/" +\
+                                    self.iSimulation + "_" + method.split('@')[0] + comment.split('@')[0] + ".csv"
+        self.output_log_file_path = self.result_folder + "logs/" +\
+                                    self.iSimulation + "_" + method.split('@')[0] + comment.split('@')[0] + ".log"
         self.partition = self._parse_partirion(partition)
 
         self.printable_partition = [p.toString() for p in partition]

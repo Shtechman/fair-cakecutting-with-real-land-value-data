@@ -72,26 +72,26 @@ class Measurements:
         return max(0, min(faceRatioList))
 
     @staticmethod
-    def merge_egalitarian_gain(first_eval,first_noa,second_eval,second_noa):
+    def merge_egalitarian_gain(first_eval,first_noa,second_eval,second_noa,partition):
         return min(first_eval/first_noa, second_eval/second_noa)*(first_noa+second_noa)
 
     @staticmethod
-    def merge_utilitarian_gain(first_eval,first_noa,second_eval,second_noa):
+    def merge_utilitarian_gain(first_eval,first_noa,second_eval,second_noa,partition):
         return first_eval+second_eval
 
     @staticmethod
-    def merge_largest_envy(first_eval,first_noa,second_eval,second_noa):
-        raise NotImplementedError("Largest Envy Merge Is Not Trivial!")
+    def merge_largest_envy(first_eval,first_noa,second_eval,second_noa,partition):
+        return Measurements.get_largest_envy(partition)
 
     @staticmethod
-    def merge_average_face_ratio(first_eval,first_noa,second_eval,second_noa):
+    def merge_average_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
         faceRatioList = [first_eval]*first_noa + [second_eval]*second_noa
         return np.average(faceRatioList)
 
     @staticmethod
-    def merge_largest_face_ratio(first_eval,first_noa,second_eval,second_noa):
+    def merge_largest_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
         return max(first_eval, second_eval)
 
     @staticmethod
-    def merge_smallest_face_ratio(first_eval,first_noa,second_eval,second_noa):
+    def merge_smallest_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
         return min(first_eval,second_eval)

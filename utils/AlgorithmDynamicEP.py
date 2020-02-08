@@ -34,7 +34,7 @@ class AlgorithmDynamicEP:
         self.measure_func = {
             "EV": Measure.get_egalitarian_gain,
             "UV": Measure.get_utilitarian_gain,
-            # "LE": Measure.get_largest_envy,
+            "LE": Measure.get_largest_envy,
             "AFR": Measure.get_average_face_ratio,
             "SFR": Measure.get_smallest_face_ratio
         }
@@ -45,6 +45,8 @@ class AlgorithmDynamicEP:
             "AFR": Measure.merge_average_face_ratio,
             "SFR": Measure.merge_smallest_face_ratio
         }
+        self.comparator = lambda measure, x, y: x < y if measure in "LE" else x > y
+
         self.measure_list = self.measure_func.keys()
         self.results_by_measure = {}
         self.reset_inner_data()
@@ -71,9 +73,9 @@ class AlgorithmDynamicEP:
             try:
                 zipped_list = [j for i in zip(_print_inner_cuts(cut_history.second_half_cut_history),
                                               _print_inner_cuts(cut_history.first_half_cut_history)) for j in i]
-                return [cut_history.cut_direction.name] + zipped_list
+                return [cut_history.cut_direction.name[0]] + zipped_list
             except:
-                return [cut_history.cut_direction.name]
+                return [cut_history.cut_direction.name[0]]
         for measure in measures:
             # initially, allocate the entire cake to all agents:
             initial_allocations = list(map(AllocatedPiece, agents))
@@ -102,7 +104,7 @@ class AlgorithmDynamicEP:
         hor_par_valuation = valuation_func(hor_partition)
         ver_par_valuation = valuation_func(ver_partition)
 
-        if hor_par_valuation > ver_par_valuation:
+        if self.comparator(tested_measure, hor_par_valuation, ver_par_valuation):
             return self.CutHistory(CutDirection.Horizontal, hor_partition, hor_par_valuation, tested_measure)
         else:
             return self.CutHistory(CutDirection.Vertical, ver_partition, ver_par_valuation, tested_measure)
@@ -113,13 +115,14 @@ class AlgorithmDynamicEP:
                              second_c_h.measure)
 
         measure = first_c_h.measure
+        combined_partition = first_c_h.partition+second_c_h.partition
 
         valuation = self.measure_merge_func[measure](
             first_c_h.evaluation, first_c_h.num_of_agents,
-            second_c_h.evaluation, second_c_h.num_of_agents
+            second_c_h.evaluation, second_c_h.num_of_agents, combined_partition
         )
 
-        return self.CutHistory(cut_direction,first_c_h.partition+second_c_h.partition,valuation,measure,first_c_h,second_c_h)
+        return self.CutHistory(cut_direction,combined_partition,valuation,measure,first_c_h,second_c_h)
 
     def _runRecursive(self, allocations, tested_measure):
         num_of_agents = len(allocations)
@@ -149,7 +152,7 @@ class AlgorithmDynamicEP:
                                          self._runRecursive(right_ver_allocation, tested_measure),
                                          CutDirection.Vertical)
 
-        if hor_cut.evaluation > ver_cut.evaluation:
+        if self.comparator(tested_measure, hor_cut.evaluation, ver_cut.evaluation):
             return hor_cut
         else:
             return ver_cut
