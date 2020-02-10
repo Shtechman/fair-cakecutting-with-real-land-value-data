@@ -4,8 +4,6 @@
 /**
  * Implementation of the dishonest proportional cake-cutting algorithm.
  *
- * @author Itay Shtechman
- * @since 2019-04
  */
 """
 import os

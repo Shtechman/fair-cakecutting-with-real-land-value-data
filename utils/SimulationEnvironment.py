@@ -17,8 +17,6 @@ class SimulationEnvironment:
     """/**
 	* A class that holds a simulation environment data required to a specific simulation.
 	*
-	* @author Itay Shtechman
-	* @since 2018-10
 	*/"""
 
     def __init__(self, iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,

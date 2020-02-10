@@ -4,8 +4,6 @@
 /**
  * Division of a 2-D cake using a Last Diminisher Algorithm
  *
- * @author Itay Shtechman
- * @since 2019-11
  */
 """
 from itertools import product

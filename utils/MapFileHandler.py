@@ -18,8 +18,6 @@ class MapFileHandler:
 	* A class that represents an excel file containing a collection of value maps, a new sheet for each map.
 	* the first sheet should only contain a list the names of the value maps in the following sheets.
 	*
-	* @author Itay Shtechman
-	* @since 2018-10
 	*/
 	"""
 

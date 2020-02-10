@@ -3,8 +3,6 @@ from utils.Graph import *
 """**
     * A util script implementing TTC logic.
     *
-    * @author Itay Shtechman
-    * @since 2019-10
     """
 
 # getAgents: graph, vertex -> set(vertex)

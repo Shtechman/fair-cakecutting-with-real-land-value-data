@@ -1,8 +1,7 @@
 #!python3
 
 """
- * @author Erel Segal-Halevi, Gabi Burabia (gabi3b), Itay Shtechman
- * @since 2016-11
+* main simulation script
 """
 import itertools
 import math
@@ -27,14 +26,14 @@ cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatte
 algTypes = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
 
 experiment_sets = [
-         {"index_file": "data/IsraelMaps02/index.txt",
+         {"index_file": "data/IsraelMaps06/index.txt",
           "noise_proportion": [0.6],
           "num_of_agents": [4,8],
           "run_types": [RunType.Honest]},
-         # {"index_file": "data/newZealandLowResAgents06/index.txt",
-         #  "noise_proportion": [0.6],
-         #  "num_of_agents": [4,8,16,32,64,128],
-         #  "run_types": [RunType.Honest]},
+          {"index_file": "data/newZealandLowResAgents06/index.txt",
+           "noise_proportion": [0.6],
+           "num_of_agents": [4,8,16,32,64,128],
+           "run_types": [RunType.Honest]},
     ]
 """ -------------------------------------------------------- """
 
@@ -162,7 +161,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         experiments_per_cell = int(argv[1])
     else:
-        experiments_per_cell = 2
+        experiments_per_cell = 10
 
     if len(argv) > 2:
         NTASKS = int(argv[2])

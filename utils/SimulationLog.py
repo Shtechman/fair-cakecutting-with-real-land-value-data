@@ -11,9 +11,6 @@ from utils.AllocatedPiece import AllocatedPiece, Piece
 class SimulationLog:
     """/**
     * A class that holds a simulation run log data to record a specific simulation.
-    *
-    * @author Itay Shtechman
-    * @since 2019-10
     */"""
 
     def __init__(self, result_folder, numberOfAgents, noiseProportion, agent_mapfiles_list, iSimulation,

@@ -4,8 +4,6 @@
 /**
  * Implementation of the Assessor cake-cutting algorithm on a 2-dimensional cake.
  *
- * @author Itay Shtechman
- * @since 2019-11
  */
 """
 

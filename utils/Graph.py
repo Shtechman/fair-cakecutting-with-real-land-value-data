@@ -2,8 +2,6 @@ class Vertex(object):
     """**
         * A util class for representing Graph's Vertex.
         *
-        * @author Itay Shtechman
-        * @since 2019-10
         """
 
     def __init__(self, graph, vertexId):
@@ -35,8 +33,6 @@ class Graph(object):
     """**
         * A util class for representing a Direct Graph.
         *
-        * @author Itay Shtechman
-        * @since 2019-10
         """
     def __init__(self, vertexIds):
 

@@ -4,8 +4,6 @@
 /**
  * Division of a 2-D cake using an Even Paz Algorithm
  *
- * @author Erel Segal-Halevi, Gabi Burabia, Itay Shtechman
- * @since 2016-11
  */
 """
 from itertools import product

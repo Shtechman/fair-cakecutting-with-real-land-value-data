@@ -139,10 +139,7 @@ def calculate_int_result(Algorithm_res, Assessor_res):
 if __name__ == '__main__':
     """ plot experiment results from json file """
 
-    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-23T16-09-46_NoiseProportion_random_30_exp.json'
-    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-24T03-45-40_NoiseProportion_0.2_30_exp.json'
-    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-01-07T08-20-31_NoiseProportion_0.2_30_exp.json'
-    jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2019-02-10T10-13-22/IsraelMaps02_2019-02-10T20-29-15_NoiseProportion_0.2_50_exp.json'
+    jsonfilename = './results/file.json'
     filepath_elements = jsonfilename.split('_')
     aggText = filepath_elements[2]
     aggParam = filepath_elements[3]

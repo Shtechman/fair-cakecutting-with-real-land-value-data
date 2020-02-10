@@ -4,8 +4,6 @@
 /**
  * Division of a 2-D cake using FOCS, a Dynamic Programming inspired Algorithm
  *
- * @author Itay Shtechman
- * @since 2020-01
  */
 """
 

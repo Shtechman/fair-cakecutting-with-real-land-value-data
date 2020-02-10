@@ -1,11 +1,6 @@
 #!python3
 
-"""
-/**
- * @author Itay Shtechman
- * @since 2018-11
- */
-"""
+
 from functools import lru_cache
 
 from utils.Types import CutDirection
@@ -15,8 +10,6 @@ class Piece:
     """
     A class representing a piece of 2-dimensional cake.
 
-    @author Itay Shtechman
-    @since 2018-11
     """
     def __init__(self, iFromRow, iFromCol, iToRow, iToCol):
         """ /**
@@ -94,8 +87,6 @@ class AllocatedPiece(Piece):
     """
     A class representing a piece allocated to an agent on a 2-dimensional cake.
 
-    @author Itay Shtechman
-    @since 2018-11
     """
 
     def __init__(self, agent, iFromRow=None, iFromCol=None, iToRow=None, iToCol=None):
