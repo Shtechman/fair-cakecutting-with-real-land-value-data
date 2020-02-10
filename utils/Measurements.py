@@ -1,31 +1,32 @@
 import numpy as np
+
+
 class Measurements:
 
     @staticmethod
     def calculateUtilitarianGain(relativeValues):
         utilitarianValue = sum(relativeValues)
-        utilitarianGain = utilitarianValue # - 1
+        utilitarianGain = utilitarianValue  # - 1
         # if (utilitarianGain < -0.001): raise ValueError(
         #     "In proportional division, utilitarian gain must be at least 0; got " + str(utilitarianGain))
         return max(0, utilitarianGain)
 
     @staticmethod
     def calculateAverageInheritanceGain(numOfAgents, relativeValues):
-        sell_relative_gain = 1.0/numOfAgents
+        sell_relative_gain = 1.0 / numOfAgents
         avgInheritanceGain = np.average([rv - sell_relative_gain for rv in relativeValues])
         return avgInheritanceGain
 
     @staticmethod
     def calculateLargestInheritanceGain(numOfAgents, relativeValues):
-        sell_relative_gain = 1.0/numOfAgents
+        sell_relative_gain = 1.0 / numOfAgents
         largestInheritanceGain = max([rv - sell_relative_gain for rv in relativeValues])
         return largestInheritanceGain
-
 
     @staticmethod
     def calculateEgalitarianGain(numOfAgents, relativeValues):
         egalitarianValue = min(relativeValues)
-        egalitarianGain = egalitarianValue * numOfAgents # - 1
+        egalitarianGain = egalitarianValue * numOfAgents  # - 1
         # if (egalitarianGain < -0.001): raise ValueError(
         #     "In proportional division, normalized egalitarian gain must be at least 0; got " + str(egalitarianGain));
         return max(0, egalitarianGain)
@@ -72,26 +73,26 @@ class Measurements:
         return max(0, min(faceRatioList))
 
     @staticmethod
-    def merge_egalitarian_gain(first_eval,first_noa,second_eval,second_noa,partition):
-        return min(first_eval/first_noa, second_eval/second_noa)*(first_noa+second_noa)
+    def merge_egalitarian_gain(first_eval, first_noa, second_eval, second_noa, partition):
+        return min(first_eval / first_noa, second_eval / second_noa) * (first_noa + second_noa)
 
     @staticmethod
-    def merge_utilitarian_gain(first_eval,first_noa,second_eval,second_noa,partition):
-        return first_eval+second_eval
+    def merge_utilitarian_gain(first_eval, first_noa, second_eval, second_noa, partition):
+        return first_eval + second_eval
 
     @staticmethod
-    def merge_largest_envy(first_eval,first_noa,second_eval,second_noa,partition):
+    def merge_largest_envy(first_eval, first_noa, second_eval, second_noa, partition):
         return Measurements.get_largest_envy(partition)
 
     @staticmethod
-    def merge_average_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
-        faceRatioList = [first_eval]*first_noa + [second_eval]*second_noa
+    def merge_average_face_ratio(first_eval, first_noa, second_eval, second_noa, partition):
+        faceRatioList = [first_eval] * first_noa + [second_eval] * second_noa
         return np.average(faceRatioList)
 
     @staticmethod
-    def merge_largest_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
+    def merge_largest_face_ratio(first_eval, first_noa, second_eval, second_noa, partition):
         return max(first_eval, second_eval)
 
     @staticmethod
-    def merge_smallest_face_ratio(first_eval,first_noa,second_eval,second_noa,partition):
-        return min(first_eval,second_eval)
+    def merge_smallest_face_ratio(first_eval, first_noa, second_eval, second_noa, partition):
+        return min(first_eval, second_eval)

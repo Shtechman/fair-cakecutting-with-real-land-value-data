@@ -1,17 +1,16 @@
 import ast
 import csv
+import json
 import os
 import pickle
 import random
 import time
 from math import exp
 
+import matplotlib.pyplot as plt
 import numpy as np
-import json
-
 import xlrd
 from matplotlib import patches
-import matplotlib.pyplot as plt
 
 
 class MapFileHandler:
@@ -21,7 +20,8 @@ class MapFileHandler:
 	*
 	* @author Itay Shtechman
 	* @since 2018-10
-	*/"""
+	*/
+	"""
 
     def __init__(self, path):
         """
@@ -147,6 +147,7 @@ def nonzero_uniform_noise_function(original_map, noise_proportion, normalized_su
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
     return new_map
 
+
 def uniform_noise_function(original_map, noise_proportion, normalized_sum, max_value):
     rows = len(original_map)
     cols = len(original_map[0])
@@ -255,7 +256,7 @@ def read_valueMaps_from_csv(csvfilepath, idx):
                     num_of_agents = int(line[0])
                     if idx >= num_of_agents:
                         raise ValueError("searching for agent number %s "
-                                         "while file has only %s agents" % (idx+1, num_of_agents))
+                                         "while file has only %s agents" % (idx + 1, num_of_agents))
             elif (not line) or (not line[0].isdigit()):
                 if not raw_map:
                     continue
@@ -320,7 +321,7 @@ def plot_partition_from_path(partition_path):
             else:
                 partition_data[row[0]] = ast.literal_eval(row[1])
 
-    input_path = os.path.join(os.path.dirname(partition_data["Agent Files"][0]).replace('./',''),'orig.txt')
+    input_path = os.path.join(os.path.dirname(partition_data["Agent Files"][0]).replace('./', ''), 'orig.txt')
     with open(input_path, 'rb') as mapfile:
         baseline_map = pickle.load(mapfile)
 
@@ -344,66 +345,11 @@ def plot_partition(baseline_map, partition_data):
         centery = xy[1] + 0.5 / 2
         # Create a Rectangle patch
         rect = patches.Rectangle(xy, width, height, linewidth=1, edgecolor='r', facecolor='none')
-        plt.text(centerx, centery, 'Agent '+agnt, color='red')
+        plt.text(centerx, centery, 'Agent ' + agnt, color='red')
         # Add the patch to the Axes
         ax.add_patch(rect)
     plt.show()
 
+
 if __name__ == '__main__':
-
-    # testCsvMaps = '../data/testFolder/test2.csv'
-    # agent_map = np.array(read_valueMaps_from_csv(testCsvMaps, 6), dtype=np.float)
-
-    noise = 0.6
-    numOfAgents = 512
-
-    og_maps = {"israel": '../data/originalMaps/IsraelMap.txt',
-               "newzealand": '../data/originalMaps/newzealand_forests_2D_low_res.txt',
-               "random": '../data/originalMaps/RandomNoiseMap.txt'}
-
-    noise_methods = {"uniform": uniform_noise_function,
-                     "uniformNZ": nonzero_uniform_noise_function,
-                     "hotspot": hotspot_noise_function}
-
-    datasets = [
-        {"datasetName": "newZealand_nonZuniform", "input_file": og_maps["newzealand"], "noise": 0.6,
-         "numOfAgents": numOfAgents,
-         "noise_method": noise_methods["uniformNZ"]},
-
-        # {"datasetName": "newZealandLowResAgents06HS", "input_file": og_maps["newzealand"], "noise": 0.6,
-        #  "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-        #
-        # {"datasetName": "IsraelMaps06HS", "input_file": og_maps["israel"], "noise": 0.6, "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-        #
-        # {"datasetName": "newZealandLowResAgents04HS", "input_file": og_maps["newzealand"], "noise": 0.4,
-        #  "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-        #
-        # {"datasetName": "IsraelMaps04HS", "input_file": og_maps["israel"], "noise": 0.4, "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-        #
-        # {"datasetName": "newZealandLowResAgents02HS", "input_file": og_maps["newzealand"], "noise": 0.2,
-        #  "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-        #
-        # {"datasetName": "IsraelMaps02HS", "input_file": og_maps["israel"], "noise": 0.2, "numOfAgents": numOfAgents,
-        #  "noise_method": noise_methods["hotspot"]},
-    ]
-    folder = "../data/"
-    # folder = "data/test02"
-    # input_file = TD2_MAP_2D_DATA_FILE_NAME
-    for dataset in datasets:
-        indexFile = generate_valueMaps_to_file(dataset["input_file"], folder, dataset["datasetName"],
-                                               dataset["noise"], dataset["numOfAgents"], None, dataset["noise_method"])
-        print(indexFile)
-
-    # for input_file in ['../data/originalMaps/RandomNoiseMap.txt','../data/originalMaps/newzealand_forests_2D_low_res.txt','../data/originalMaps/IsraelMap.txt']:
-    #     with open(input_file, "rb") as data_file:
-    #         original_map_data = pickle.load(data_file)
-    #     csvfilename = input_file+".csv"
-    #     with open(csvfilename, "w", newline='') as csv_file:
-    #         csv_file_writer = csv.writer(csv_file)
-    #         for line in original_map_data:
-    #             csv_file_writer.writerow(line)
+    pass

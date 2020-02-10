@@ -16,11 +16,31 @@ from utils.ReportWriter import create_exp_folder, generate_exp_name, write_resul
 from utils.Types import AggregationType, AlgType, CutPattern, RunType
 from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
 import multiprocessing as mp
-
 plotter = Plotter()
 
+""" Static definitions of cut patterns, algorithms and experiment settings to test """
+cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableMargin,
+                        CutPattern.LargestMargin, CutPattern.VerHor, CutPattern.HorVer,
+                        CutPattern.SmallestPiece, CutPattern.SquarePiece, CutPattern.SmallestHalfCut, CutPattern.NoPattern]
+# cut_patterns_to_test=[CutPattern.NoPattern,CutPattern.BruteForce,CutPattern.MostValuableMargin,CutPattern.SquarePiece]
 
-def makeSingleSimulation(env, algType=AlgType.Simple, runType=RunType.Assessor, cutPattern=CutPattern.Simple):
+algTypes = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
+
+experiment_sets = [
+         {"index_file": "data/IsraelMaps02/index.txt",
+          "noise_proportion": [0.6],
+          "num_of_agents": [4,8],
+          "run_types": [RunType.Honest]},
+         # {"index_file": "data/newZealandLowResAgents06/index.txt",
+         #  "noise_proportion": [0.6],
+         #  "num_of_agents": [4,8,16,32,64,128],
+         #  "run_types": [RunType.Honest]},
+    ]
+""" -------------------------------------------------------- """
+
+
+
+def makeSingleSimulation(env, algType=AlgType.Simple, runType=RunType.Assessor, cutPattern=CutPattern.NoPattern):
 
     print("%s running for %s agents, %s %s algorithm, using cut pattern %s" % (
         os.getpid(), env.numberOfAgents, runType.name, algType.name, cutPattern.name))
@@ -36,12 +56,6 @@ def runExperiment(exp_data):
     print("Fetching %s agents from files" % numOfAgents)
     agent_mapfiles_list = get_valueMaps_from_index(index_file, numOfAgents)
     agents = list(map(Agent, agent_mapfiles_list))
-    # for each experimaent run the Algorithm for numOfAgents using noiseProportion
-    cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableMargin,
-                            CutPattern.LargestMargin, CutPattern.VerHor, CutPattern.HorVer,
-                            CutPattern.SmallestPiece, CutPattern.SquarePiece, CutPattern.SmallestHalfCut, CutPattern.Simple]
-
-    cut_patterns_to_test = [CutPattern.Simple, CutPattern.BruteForce, CutPattern.MostValuableMargin, CutPattern.SquarePiece]
 
     env = SimEnv(iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
                  cut_patterns_to_test)
@@ -89,7 +103,6 @@ def aggregate(index_file, runTypes, aggregationParams, dataParams, aggText, data
                                                                                            experiments_per_cell)
         result_folder = create_exp_folder(RUN_FOLDER_PATH, exp_name_string)
 
-        algTypes = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.DynamicEP]
         results = calculateMultipleDatapoints(index_file, aggParam, algTypes, runTypes, dataParamType,
                                               dataParams,
                                               dataText, experiments_per_cell, assessorAgentPool, result_folder)
@@ -139,7 +152,11 @@ def calculate_results(index_file, runTypes, aggregationType, number_of_agents, n
 
 
 if __name__ == '__main__':
-    # main.py [<num_of_experiments> [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]
+    """
+    main.py [<num_of_experiments> [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]
+    
+    e.g. > main.py 50 4 1 4  -  runs 50 repetitions using 4 threads for agent groups 2,4,8,16
+    """
     print("Start experiment")
     argv = sys.argv
     if len(argv) > 1:
@@ -160,19 +177,6 @@ if __name__ == '__main__':
         num_of_agents = None
 
     RUN_FOLDER_PATH = create_run_folder()
-
-    experiment_sets = [
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4, 8, 16, 32, 64, 128],   "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4, 8], "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [16], "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [4,8,16,32,64,128], "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [64], "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents06/index.txt", "noise_proportion": [0.6],  "num_of_agents": [128], "run_types": [RunType.Honest]},
-        # {"index_file": "data/newZealandLowResAgents04/index.txt", "noise_proportion": [0.4],  "num_of_agents": [64, 128],               "run_types": [RunType.Honest, RunType.Assessor]},
-        # {"index_file": "data/newZealandLowResAgents02/index.txt", "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-         {"index_file": "data/IsraelMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [8], "run_types": [RunType.Honest]},
-        # {"index_file": "data/randomMaps02/index.txt",             "noise_proportion": [0.2],  "num_of_agents": [4, 8, 16, 32, 64, 128], "run_types": [RunType.Honest, RunType.Assessor]},
-    ]
 
     for experiment_set in experiment_sets:
         number_of_agents = num_of_agents if num_of_agents else experiment_set["num_of_agents"]

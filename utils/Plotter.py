@@ -1,12 +1,10 @@
-import csv
 import itertools
 import json
 import math
-from functools import reduce
 from statistics import mean, stdev
 
-import numpy as np
 import matplotlib.pyplot as pyplot
+import numpy as np
 
 from utils.Types import AggregationType, AlgType, CutPattern
 
@@ -34,14 +32,15 @@ class Plotter:
         dataPointsShape = ['s', 's', '*', '*', '*', '*', '*', '*', 'o', 'o', 'o', 'o', 'x', 'x', 'x', 'x', 'x', 'x',
                            'v', 'v', 'v', 'v', 'v', 'v', '^', '^', '^', '^', '^', '^', 'D', 'D', 'D', 'D', 'D', 'D']
         idx = 0
-        offsets = [-0.5+(x/len(methods)) for x in range(1,len(methods)+1)]
-        for i,method in enumerate(methods):
+        offsets = [-0.5 + (x / len(methods)) for x in range(1, len(methods) + 1)]
+        for i, method in enumerate(methods):
             algResults = [result for result in results if result["Method"] == method]
-            if len(algResults)>0:
+            if len(algResults) > 0:
                 for dataset in yAxisData:
                     yValues = list(map(lambda result: result[dataset], algResults))
-                    self.plotDataset(method + "-" + dataset, fignum, dataPointsShape[idx], dataPointsColor[idx], xValues,
-                                yValues,offsets[i])
+                    self.plotDataset(method + "-" + dataset, fignum, dataPointsShape[idx], dataPointsColor[idx],
+                                     xValues,
+                                     yValues, offsets[i])
                     idx += 1
 
         pyplot.figure(fignum)
@@ -81,7 +80,8 @@ class Plotter:
         tlYValues = [a * x + b for x in [0] + xValues]
 
         pyplot.plot([0] + xValues, tlYValues, color + ':')
-        print("%s | line = %s + %s |" % (label.ljust(45), (str(a)+'x').ljust(20), str(b).ljust(20)), list(zip(uniqueXValues, yValuesByX)))
+        print("%s | line = %s + %s |" % (label.ljust(45), (str(a) + 'x').ljust(20), str(b).ljust(20)),
+              list(zip(uniqueXValues, yValuesByX)))
 
     def setupPlotFigure(self, xLabel, maxXValues, title):
         fig, ax = pyplot.subplots()
@@ -103,7 +103,7 @@ def calculate_avg_result(result_list):
         for key in result_list[0]:
             if key in keys_to_average:
                 key_list_values = list(map(lambda res: res[key], result_list))
-                avg_key = key+'_Avg'
+                avg_key = key + '_Avg'
                 std_key = key + '_StDev'
                 result[avg_key] = mean(key_list_values)
                 result[std_key] = stdev(key_list_values)
@@ -117,7 +117,8 @@ def calculate_avg_result(result_list):
 
 
 def calculate_int_result(Algorithm_res, Assessor_res):
-    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg', 'largestEnvy_Avg']
+    keys_to_integrate = ['egalitarianGain_Avg', 'utilitarianGain_Avg', 'averageFaceRatio_Avg', 'largestFaceRatio_Avg',
+                         'largestEnvy_Avg']
     if Algorithm_res:
         result = {}
         for key in Algorithm_res:
@@ -136,7 +137,6 @@ def calculate_int_result(Algorithm_res, Assessor_res):
 
 
 if __name__ == '__main__':
-
     """ plot experiment results from json file """
 
     # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/2018-12-23T16-09-46_NoiseProportion_random_30_exp.json'
@@ -150,7 +150,6 @@ if __name__ == '__main__':
     dataParamType = AggregationType.NumberOfAgents
     with open(jsonfilename) as json_file:
         results = json.load(json_file)
-
 
     plotter = Plotter()
     # plotting

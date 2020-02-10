@@ -21,24 +21,12 @@ class AlgorithmEvenPaz:
         """
         Calculate a proportional cake-division using the algorithm of Even and Paz (1984).
         @param agents - a list of n Agents, each with a value-function on the same cake.
+        @param cut_pattern - a cut pattern to select cut directions.
         @return a list of n AllocatedPiece-s, each of which contains an Agent and an allocated part of the cake.
-        todo: re-write all examples for 2d case
-        >>> alg = AlgorithmEvenPaz()
-        >>> Alice = Agent(name="Alice", valueFunction=ValueFunction1D([1,2,3,4]))
-        >>> alg.run([Alice])
-        [Alice receives [0.00,4.00]]
-
-        >>> Bob = Agent(name="Bob", valueFunction=ValueFunction1D([40,30,20,10]))
-        >>> alg.run([Alice,Bob])
-        [Bob receives [0.00,2.00], Alice receives [2.00,4.00]]
-
-        >>> Carl = Agent(name="Carl", valueFunction=ValueFunction1D([100,100,100,100]))
-        >>> alg.run([Alice,Bob,Carl])
-        [Bob receives [0.00,1.30], Carl receives [1.30,2.92], Alice receives [2.92,4.00]]
+        todo: write examples for 2d case
         """
 
         num_of_agents = len(agents)
-
         cutters = self._get_cutters_list(cut_pattern, num_of_agents)
 
         return self.aggregate_cutters(agents, cutters)
@@ -52,17 +40,16 @@ class AlgorithmEvenPaz:
             # now, recursively divide the cake among the agents using a given cutter:
             results.append((cutter, self._runRecursive(initial_allocations, cutter)))
 
-        # for r in results:
-        #     print(r)
         if len(results) > 1:
             return {str(result[0]): result[1] for result in results}
         else:
             return results[0][1]
 
-    def _get_cutters_list(self, cut_pattern, num_of_agents):
+    @staticmethod
+    def _get_cutters_list(cut_pattern, num_of_agents):
         if cut_pattern is CutPattern.BruteForce:
             cut_series_list = [list(i) for i in product([CutDirection.Horizontal,
-                                                         CutDirection.Vertical], repeat=num_of_agents-1)]
+                                                         CutDirection.Vertical], repeat=num_of_agents - 1)]
             cutters = [EPCutter(cut_series) for cut_series in cut_series_list]
         else:
             cutters = [EPCutter(cut_pattern)]
@@ -79,25 +66,10 @@ class AlgorithmEvenPaz:
 
         first_part_allocations, second_part_allocations = cutter.allocate_cuts(allocations, num_of_agents)
 
-        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) +\
+        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) + \
                self._runRecursive(second_part_allocations, cutter.get_second_part_cutter())
 
 
 if __name__ == '__main__':
-    # from utils.ValueFunction1D import ValueFunction1D
-    # from utils.Agent import Agent
-    #
-    #
-    # import doctest
-    # # doctest.testmod()
-    #
-    # # demo test
-    # alg = AlgorithmEvenPaz()
-    # Alice = Agent(name="Alice", valueFunction=ValueFunction1D([1, 2, 3, 4]))
-    # Bob = Agent(name="Bob", valueFunction=ValueFunction1D([40, 30, 20, 10]))
-    # Carl = Agent(name="Carl", valueFunction=ValueFunction1D([100, 100, 100, 100]))
-    # print("when Alice is the only agent -", alg.run([Alice]))
-    # print("when Alice and Bob are the only agents -", alg.run([Alice, Bob]))
-    # print("when Carl and Bob are the only agents -", alg.run([Carl, Bob]))
-    # print("when Alice, Bob and Carl are the agents -", alg.run([Alice, Bob, Carl]))
+
     pass

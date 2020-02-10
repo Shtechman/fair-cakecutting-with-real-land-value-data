@@ -1,8 +1,8 @@
 import csv
+import multiprocessing as mp
 import os
 import pickle
 import re
-import multiprocessing as mp
 
 from utils.Agent import ShadowAgent, Agent
 from utils.AllocatedPiece import AllocatedPiece, Piece
@@ -15,6 +15,7 @@ class SimulationLog:
     * @author Itay Shtechman
     * @since 2019-10
     */"""
+
     def __init__(self, result_folder, numberOfAgents, noiseProportion, agent_mapfiles_list, iSimulation,
                  cut_patterns_tested, algName, method, partition, run_duration, comment):
 
@@ -30,9 +31,9 @@ class SimulationLog:
         self.iSimulation = iSimulation
         self.cuts_tested = [cut_pattern.name for cut_pattern in cut_patterns_tested]
 
-        self.output_csv_file_path = self.result_folder + "logs/" +\
+        self.output_csv_file_path = self.result_folder + "logs/" + \
                                     self.iSimulation + "_" + method.split('@')[0] + comment.split('@')[0] + ".csv"
-        self.output_log_file_path = self.result_folder + "logs/" +\
+        self.output_log_file_path = self.result_folder + "logs/" + \
                                     self.iSimulation + "_" + method.split('@')[0] + comment.split('@')[0] + ".log"
         self.partition = self._parse_partirion(partition)
 
@@ -52,16 +53,16 @@ class SimulationLog:
 
     def _parse_log(self):
         return {"Folder": self.result_folder,
-               "Number of Agents": self.numberOfAgents,
-               "Noise": self.noiseProportion,
-               "Cut Patterns Tested": self.cuts_tested,
-               "Agent Files": self.agent_mapfiles_list,
-               "Experiment": self.iSimulation,
-               " ": " ",
-               "Method": self.method,
-               "Process": self.process,
-               "Duration(sec)": self.run_duration,
-               "Partition": self.printable_partition}
+                "Number of Agents": self.numberOfAgents,
+                "Noise": self.noiseProportion,
+                "Cut Patterns Tested": self.cuts_tested,
+                "Agent Files": self.agent_mapfiles_list,
+                "Experiment": self.iSimulation,
+                " ": " ",
+                "Method": self.method,
+                "Process": self.process,
+                "Duration(sec)": self.run_duration,
+                "Partition": self.printable_partition}
 
     def recreate_allocation(self):
         return [AllocatedPiece(Agent(p['agentMap'], p['agentName']),
@@ -116,7 +117,7 @@ class SimulationLog:
         folder = log_dict['Folder']
         noise = log_dict['Noise']
         method = log_dict['Method']
-        algName = '{}_{}'.format(method.split("_")[0],method.split("_")[1])
+        algName = '{}_{}'.format(method.split("_")[0], method.split("_")[1])
         duration = log_dict['Duration(sec)']
         experiment = log_dict['Experiment']
         agent_mapfiles_list = log_dict['Agent Files'].replace('\'', '').replace('[', '').replace(']', '').replace(' ',
@@ -145,7 +146,8 @@ class SimulationLog:
 
         partition = list(map(_allocatePiece, agent_piece_list))
 
-        return SimulationLog(folder,len(agents),noise,agent_mapfiles_list,experiment,[],algName,method, partition, duration, "")
+        return SimulationLog(folder, len(agents), noise, agent_mapfiles_list, experiment, [], algName, method,
+                             partition, duration, "")
 
     @staticmethod
     def create_logs_from_csv_folder(log_folder_path):
@@ -154,8 +156,9 @@ class SimulationLog:
 
         print("Sort logs to experiments...")
         log_list_per_exp = {
-        exp: [os.path.join(log_folder_path, log_file) for log_file in log_file_list if exp == log_file.split('_')[0]]
-        for exp in log_exp_list}
+            exp: [os.path.join(log_folder_path, log_file) for log_file in log_file_list if
+                  exp == log_file.split('_')[0]]
+            for exp in log_exp_list}
         rlogs = {}
         for exp in log_list_per_exp:
             print("recreating logs for experiment %s" % exp)

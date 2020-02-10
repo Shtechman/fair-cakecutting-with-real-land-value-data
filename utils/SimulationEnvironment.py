@@ -2,15 +2,15 @@ import csv
 import os
 from time import time
 
-from utils.AlgorithmAssessor import AlgorithmAssessor, AlgorithmSimpleAssessor
+from utils.AlgorithmAssessor import AlgorithmSimpleAssessor
 from utils.AlgorithmDishonest import AlgorithmDishonest
-from utils.AlgorithmDynamicEP import AlgorithmDynamicEP
 from utils.AlgorithmEvenPaz import AlgorithmEvenPaz
+from utils.AlgorithmFOCS import AlgorithmFOCS
 from utils.AlgorithmLastDiminisher import AlgorithmLastDiminisher
+from utils.Measurements import Measurements as Measure
 from utils.SimulationLog import SimulationLog
 from utils.TopTradingCycle import topTradingCycles
 from utils.Types import AlgType, RunType, AggregationType, CutPattern
-from utils.Measurements import Measurements as Measure
 
 
 class SimulationEnvironment:
@@ -21,7 +21,8 @@ class SimulationEnvironment:
 	* @since 2018-10
 	*/"""
 
-    def __init__(self, iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder, cut_patterns_tested):
+    def __init__(self, iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
+                 cut_patterns_tested):
         self.noiseProportion = noiseProportion
         self.agents = agents
         self.numberOfAgents = len(agents)
@@ -30,12 +31,6 @@ class SimulationEnvironment:
         self.result_folder = result_folder
         self.cut_patterns_tested = cut_patterns_tested
         self.iSimulation = iSimulation
-
-
-    # def createRandomAgents(self):
-    #     agents = map(Agent, self.getMeanValues().noisyValuesArray(self.noiseProportion, None, self.numberOfAgents))
-    #     return agents
-
 
     def getAlgorithm(self, algType, runType):
         if runType == RunType.Assessor:
@@ -55,29 +50,27 @@ class SimulationEnvironment:
             return AlgorithmEvenPaz()
         elif algType == AlgType.LastDiminisher:
             return AlgorithmLastDiminisher()
-        elif algType == AlgType.DynamicEP:
-            return AlgorithmDynamicEP()
+        elif algType == AlgType.FOCS:
+            return AlgorithmFOCS()
         else:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
     @staticmethod
     def algorithm_supports_cut_pattern(algType, cutPattern):
         if algType == AlgType.EvenPaz:
-            return cutPattern not in [CutPattern.Simple]
+            return cutPattern not in [CutPattern.NoPattern]
         elif algType == AlgType.LastDiminisher:
-            return cutPattern not in [CutPattern.Simple]
-        elif algType == AlgType.DynamicEP:
-            return cutPattern in [CutPattern.Simple]
+            return cutPattern not in [CutPattern.NoPattern]
+        elif algType == AlgType.FOCS:
+            return cutPattern in [CutPattern.NoPattern]
         else:
             raise ValueError("Algorithm type '%s' is not supported" % algType)
 
     def _getAssessor(self, algType):
         return AlgorithmSimpleAssessor(self.assessorAgentPool)
-        # return AlgorithmAssessor(self.assessorAgentPool, self._getAlgorithm(algType))
 
     def getAgents(self):
         return self.agents
-
 
     def log_simulation_to_file(self, method, partition, run_duration, comment):
         output_file_path = self.result_folder + "logs/" + self.iSimulation + "_" + method + comment + ".csv"
@@ -128,18 +121,17 @@ class SimulationEnvironment:
                   {filenum(a): a.evaluationOfPiece(initialOwnership[new_allocation[filenum(a)]]) for a in agents})
             print()
 
-
         return [initialOwnership[new_allocation[filenum(a)]].getAllocatedPiece(a) for a in agents]
 
     def parseResultsFromPartition(self, algName, method, partition, run_duration, comment="", log=True):
         if log:
-            simLog = SimulationLog(self.result_folder,self.numberOfAgents,self.noiseProportion,self.agent_mapfiles_list,
-                                   self.iSimulation,self.cut_patterns_tested, algName, method, partition, run_duration, comment)
+            simLog = SimulationLog(self.result_folder, self.numberOfAgents, self.noiseProportion,
+                                   self.agent_mapfiles_list,
+                                   self.iSimulation, self.cut_patterns_tested, algName, method, partition, run_duration,
+                                   comment)
             simLog.write_log_file()
-        # print(partition)
 
         # value of piece compared to whole cake (in the eyes of the agent)
-
         partition.sort(key=lambda p: p.getAgent().getAgentFileNumber())
 
         relativeValuesByAgent = Measure.calculateRelativeValues(partition)
@@ -155,7 +147,6 @@ class SimulationEnvironment:
         averageInheritanceGain = Measure.calculateAverageInheritanceGain(self.numberOfAgents, relativeValues)
         largestInheritanceGain = Measure.calculateLargestInheritanceGain(self.numberOfAgents, relativeValues)
 
-
         ttc_partition = self.top_trading_cycle_repartition(partition)
         ttc_relativeValuesByAgent = Measure.calculateRelativeValues(ttc_partition)
         ttc_egalitarianGain = Measure.calculateEgalitarianGain(self.numberOfAgents, ttc_relativeValuesByAgent.values())
@@ -166,7 +157,7 @@ class SimulationEnvironment:
             AggregationType.NumberOfAgents.name: self.numberOfAgents,
             AggregationType.NoiseProportion.name: self.noiseProportion,
             "Algorithm": algName,
-            "Method": method if "Simple" not in method else method+comment.split('@')[0],
+            "Method": method if "NoPattern" not in method else method + comment.split('@')[0],
             "egalitarianGain": egalitarianGain,
             "ttc_egalitarianGain": ttc_egalitarianGain,
             "utilitarianGain": utilitarianGain,
@@ -226,7 +217,7 @@ class SimulationEnvironment:
             method = "{}_{}".format(algName, cutPattern)
 
         if isinstance(partition, dict):  # multiple partition lists (multiple results)
-            run_duration = run_duration/len(partition)
+            run_duration = run_duration / len(partition)
 
         result = self.parseResultsFromPartitionList(algName, method, partition, run_duration, log=log)
 

@@ -1,6 +1,8 @@
-from utils.Types import CutPattern, CutDirection
-import numpy as np
 import random
+
+import numpy as np
+
+from utils.Types import CutPattern, CutDirection
 
 SMALLEST_NUMBER = 0.0000000000001
 
@@ -368,7 +370,7 @@ class LDCutter(Cutter):
         divider_allocations = [divider_piece.__copy__(), divider_piece.__copy__()]
         first_piece, second_piece = super()._allocate_cuts(divider_allocations, 2, 1)
         chooser_allocations = [first_piece[0].getAllocatedPiece(chooser_agent),
-                              second_piece[0].getAllocatedPiece(chooser_agent)]
+                               second_piece[0].getAllocatedPiece(chooser_agent)]
         if chooser_allocations[0].getRelativeValue() > chooser_allocations[1].getRelativeValue():
             return [chooser_allocations[0]], second_piece
         else:
@@ -419,8 +421,9 @@ class SimpleCutter(Cutter):
                 self.cut_pattern = self.original_cut_pattern
             self.first_part_cut_pattern = self.cut_pattern[2::2]
             self.second_part_cut_pattern = self.cut_pattern[1::2]
-        elif cut_pattern not in [CutPattern.Hor,CutPattern.Ver]:
-            raise ValueError('Simple Cutter can either cut horizontally or vertically %s is not supported.' % cut_pattern)
+        elif cut_pattern not in [CutPattern.Hor, CutPattern.Ver]:
+            raise ValueError(
+                'NoPattern Cutter can either cut horizontally or vertically %s is not supported.' % cut_pattern)
 
     def __copy__(self):
         return SimpleCutter(self.cut_pattern, self.cut_query, self.cut_direction, self.original_cut_pattern)
@@ -438,11 +441,11 @@ class SimpleCutter(Cutter):
             return self.__copy__()
 
     def get_number_of_agents_in_first_partition(self, number_of_agents):
-        # for Simple Cutter, first partition holds half of the agents
+        # for NoPattern Cutter, first partition holds half of the agents
         return int(np.ceil(number_of_agents / 2))
 
     def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
-        # for Simple cutter, cutting is made at the middle of the margin
+        # for NoPattern cutter, cutting is made at the middle of the margin
         return (margin_iFrom + margin_iTo) / 2.0
 
     def _calculate_best_cutmark(self, allocation, query_direction, honest_cutmarks):

@@ -19,15 +19,8 @@ from utils.Types import CutPattern, CutDirection
 class AlgorithmLastDiminisher:
 
     def run(self, agents, cut_pattern):
-        """
-        Calculate a proportional cake-division using the algorithm of Last Diminisher (1948).
-        @param agents - a list of n Agents, each with a value-function on the same cake.
-        @return a list of n AllocatedPiece-s, each of which contains an Agent and an allocated part of the cake.
-        todo: write examples for 2d case
-        """
 
         num_of_agents = len(agents)
-
         cutters = self._get_cutters_list(cut_pattern, num_of_agents)
 
         return self.aggregate_cutters(agents, cutters)
@@ -35,7 +28,7 @@ class AlgorithmLastDiminisher:
     def _get_cutters_list(self, cut_pattern, num_of_agents):
         if cut_pattern is CutPattern.BruteForce:
             cut_series_list = [list(i) for i in product([CutDirection.Horizontal,
-                                                         CutDirection.Vertical], repeat=num_of_agents-1)]
+                                                         CutDirection.Vertical], repeat=num_of_agents - 1)]
             cutters = [LDCutter(cut_series) for cut_series in cut_series_list]
         else:
             cutters = [LDCutter(cut_pattern)]
@@ -54,8 +47,6 @@ class AlgorithmLastDiminisher:
             # now, recursively divide the cake among the agents using a given cutter:
             results.append((cutter, self._runRecursive(initial_allocations, cutter)))
 
-        # for r in results:
-        #     print(r)
         if len(results) > 1:
             return {str(result[0]): result[1] for result in results}
         else:
@@ -68,7 +59,7 @@ class AlgorithmLastDiminisher:
 
         first_part_allocations, second_part_allocations = cutter.allocate_cuts(allocations, num_of_agents)
 
-        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) +\
+        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) + \
                self._runRecursive(second_part_allocations, cutter.get_second_part_cutter())
 
 

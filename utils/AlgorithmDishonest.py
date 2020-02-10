@@ -13,30 +13,25 @@ import os
 
 class AlgorithmDishonest:
 
-	def __init__(self, algorithm):
-		self.algorithm = algorithm
+    def __init__(self, algorithm):
+        self.algorithm = algorithm
 
-	def run(self, agents, cut_pattern):
-		set_partitions = {}
-		for idx, agent in enumerate(agents):
-			print("%s running with dishonest agent %s" % (os.getpid(), idx))
-			agent.setDishonesty(True)
-			partitions = self.algorithm.run(agents, cut_pattern)
-			set_partitions[agent.file_num] = partitions
-			agent.setDishonesty(False)
+    def run(self, agents, cut_pattern):
+        set_partitions = {}
+        for idx, agent in enumerate(agents):
+            print("%s running with dishonest agent %s" % (os.getpid(), idx))
+            agent.setDishonesty(True)
+            partitions = self.algorithm.run(agents, cut_pattern)
+            set_partitions[agent.file_num] = partitions
+            agent.setDishonesty(False)
 
-		# print("%s running with honest agents" % (os.getpid()))
-		# partitions = self.algorithm.run(agents, cut_pattern)
-		# set_partitions[len(agents)] = partitions
+        return set_partitions
 
-		return set_partitions  # todo: handle multiple partitions - this will not work like this
-
-	def getAlgorithmType(self):
-		return "{}_{}".format("Dishonest", self.algorithm.getAlgorithmType())
+    def getAlgorithmType(self):
+        return "{}_{}".format("Dishonest", self.algorithm.getAlgorithmType())
 
 
 if __name__ == '__main__':
+    import doctest
 
-
-	import doctest
-	doctest.testmod()
+    doctest.testmod()

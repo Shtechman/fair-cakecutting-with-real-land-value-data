@@ -2,8 +2,10 @@ import csv
 import json
 import os
 from datetime import datetime
-import numpy as np
 from statistics import stdev
+
+import numpy as np
+
 from utils.ReportGenerator import preprocess_results
 
 
@@ -16,11 +18,12 @@ def write_graph_method_per_measure_report_csv(path, jsonfilename, graph_method_r
         measure_results = graph_method_results_per_measure[measure]
         if not graph_method_results_per_measure[measure]:
             continue
-        report_file_path = os.path.join(graph_report_path, measure+'_'+alg_name+'.csv')
+        report_file_path = os.path.join(graph_report_path, measure + '_' + alg_name + '.csv')
         with open(report_file_path, "w", newline='') as csv_file:
             csv_file_writer = csv.writer(csv_file)
             csv_file_writer.writerow([jsonfilename])
-            table_header = ['NumberOfAgents', alg_name, 'Assessor', alg_name+'TTC',  'Selling', alg_name+'_Conf', 'As_Conf', alg_name+'TTC_Conf']
+            table_header = ['NumberOfAgents', alg_name, 'Assessor', alg_name + 'TTC', 'Selling', alg_name + '_Conf',
+                            'As_Conf', alg_name + 'TTC_Conf']
             for method in measure_results:
                 if not measure_results[method]:
                     continue
@@ -77,7 +80,7 @@ def write_dishonest_gain_results(path, dishonest_gain, label=""):
     if not res_found:
         return
 
-    with open(os.path.join(path, label+'_DishonestGain.csv'), "w", newline='') as csv_file:
+    with open(os.path.join(path, label + '_DishonestGain.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         for numOfAgent in agg_dis_data:
             csv_file_writer.writerow([numOfAgent, "agents"])
@@ -100,7 +103,7 @@ def generate_reports(jsonfilename):
         results = json.load(json_file)
 
     different_algorithm = list(set([k.split('_')[-1] for k in list(set([r["Algorithm"] for r in results]))]))
-    assessor_algorithm = next(a for a in different_algorithm if "Simple" in a)
+    assessor_algorithm = next(a for a in different_algorithm if "NoPattern" in a)
     different_algorithm.remove(assessor_algorithm)
     results_by_algorithm = {a: [r for r in results if a in r["Algorithm"]]
                             for a in different_algorithm}
@@ -128,8 +131,10 @@ def generate_algorithm_report(algorithm, jsonfilename, results, assessor_results
     if not os.path.exists(algorithm_res_path):
         os.makedirs(algorithm_res_path)
 
-    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_honest_results_per_measurement, groupsizes, algorithm)
-    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_assessor_results_per_measurement, groupsizes, "Assessor")
+    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_honest_results_per_measurement, groupsizes,
+                                 algorithm)
+    write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_assessor_results_per_measurement, groupsizes,
+                                 "Assessor")
     # write_graphtables_report_csv(algorithm_res_path, jsonfilename, avg_dishonest_results_per_measurement, groupsizes, "Dishonest")
     write_summary_report_csv(algorithm_res_path, jsonfilename, sum_honest_results_per_groupsize, algorithm)
     # write_summary_report_csv(algorithm_res_path, jsonfilename, sum_dishonest_results_per_groupsize, "Dishonest")
@@ -142,7 +147,7 @@ def generate_algorithm_report(algorithm, jsonfilename, results, assessor_results
 def write_bruteforce_gain_results(path, bruteForce_gain, label=""):
     if not bruteForce_gain:
         return
-    with open(os.path.join(path, label+'_BruteForceGain.csv'), "w", newline='') as csv_file:
+    with open(os.path.join(path, label + '_BruteForceGain.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         for groupsize in bruteForce_gain:
             csv_file_writer.writerow([groupsize, "agents"])
@@ -207,11 +212,11 @@ def write_graphtables_report_csv(path, jsonfilename, results_per_measuement, gro
     with open(os.path.join(path, label + '_graphtables.csv'), "w", newline='') as csv_file:
         csv_file_writer = csv.writer(csv_file)
         csv_file_writer.writerow([jsonfilename])
-        headline = [""]+groupsizes
+        headline = [""] + groupsizes
         for measure in results_per_measuement:
             if not results_per_measuement[measure]:
                 continue
-            csv_file_writer.writerow([label,measure])
+            csv_file_writer.writerow([label, measure])
             csv_file_writer.writerow(headline)
             for method in results_per_measuement[measure]:
                 if not method:
@@ -220,7 +225,7 @@ def write_graphtables_report_csv(path, jsonfilename, results_per_measuement, gro
                     continue
                 if not [x for x in results_per_measuement[measure][method] if x]:
                     continue
-                csv_file_writer.writerow([method]+results_per_measuement[measure][method])
+                csv_file_writer.writerow([method] + results_per_measuement[measure][method])
             csv_file_writer.writerow([""])
             csv_file_writer.writerow([""])
 
@@ -275,26 +280,18 @@ def write_results_to_json(result_folder, file_name_string, results):
 
 if __name__ == '__main__':
 
-    """ generate report of experiment results from json file """
-    #
-    # jsonfilename = 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json'
-    # folderp = 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/'
-    # filename = 'copy_of_results'
-    # with open(jsonfilename) as json_file:
-    #     results = json.load(json_file)
-    # write_results_to_csv(folderp,filename,results)
-
-
-    files_to_import = [#'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps02HS_results/IsraelMaps02HS_2019-05-05T15-16-06_NoiseProportion_0.2_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps04HS_results/IsraelMaps04HS_2019-05-05T14-04-45_NoiseProportion_0.4_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps06HS_results/IsraelMaps06HS_2019-05-05T12-54-11_NoiseProportion_0.6_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps02HS_results/newZealandLowResAgents02HS_2019-05-05T11-19-43_NoiseProportion_0.2_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06hs/newZealandLowResAgents06HS_2019-12-24T17-49-04_NoiseProportion_0.6_50_exp.json',
-                       #'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json',
-                        'D:/MSc/Thesis/CakeCutting/results/2020-02-08T19-02-59/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp.json'
+    """ generate report of experiment results from simulation output json file """
+    files_to_import = [
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps02HS_results/IsraelMaps02HS_2019-05-05T15-16-06_NoiseProportion_0.2_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps04HS_results/IsraelMaps04HS_2019-05-05T14-04-45_NoiseProportion_0.4_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps06HS_results/IsraelMaps06HS_2019-05-05T12-54-11_NoiseProportion_0.6_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps02HS_results/newZealandLowResAgents02HS_2019-05-05T11-19-43_NoiseProportion_0.2_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06hs/newZealandLowResAgents06HS_2019-12-24T17-49-04_NoiseProportion_0.6_50_exp.json',
+        # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json',
+        'D:/MSc/Thesis/CakeCutting/results/2020-02-08T19-02-59/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp.json'
     ]
 
     for jsonfilename in files_to_import:

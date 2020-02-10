@@ -1,6 +1,6 @@
 #!python3
-import os
 from functools import lru_cache
+
 import numpy as np
 
 from utils.MapFileHandler import read_valueMaps_from_file, read_valueMaps_from_csv
@@ -47,10 +47,12 @@ class Agent(ShadowAgent):
     """
     an agent has a name and a loaded value-function.
     """
+
     def __init__(self, valueMapPath, name="Anonymous", free_play_mode=False, free_play_idx=-1):
         super(Agent, self).__init__(valueMapPath, name)
         self.free_play_mode = free_play_mode
         self.file_num = free_play_idx if self.free_play_mode else self.file_num
+        self.locallyLoadedValueMap = None
         self.loadValueMap()
         self.cakeValue = np.sum(self.locallyLoadedValueMap)
         self.valueMapRows = len(self.locallyLoadedValueMap)
@@ -58,11 +60,12 @@ class Agent(ShadowAgent):
 
     def loadValueMap(self):
         if self.free_play_mode:
-            self.locallyLoadedValueMap = np.array(read_valueMaps_from_csv(self.valueMapPath, self.file_num), dtype=np.float)
+            self.locallyLoadedValueMap = np.array(read_valueMaps_from_csv(self.valueMapPath, self.file_num),
+                                                  dtype=np.float)
         else:
             self.locallyLoadedValueMap = np.array(read_valueMaps_from_file(self.valueMapPath), dtype=np.float)
 
-    def cleanMemory(self): # to be used for experiment with large usage of Agent
+    def cleanMemory(self):  # to be used for experiment with large usage of Agent
         try:
             del self.locallyLoadedValueMap
         except AttributeError:
@@ -100,8 +103,8 @@ class Agent(ShadowAgent):
 
         fromRowFraction = (fromRowFloor + 1 - iFromRow)
         fromColFraction = (fromColFloor + 1 - iFromCol)
-        toRowFraction = 1-(toRowCeiling - iToRow)
-        toColFraction = 1-(toColCeiling - iToCol)
+        toRowFraction = 1 - (toRowCeiling - iToRow)
+        toColFraction = 1 - (toColCeiling - iToCol)
 
         pieceValueMap = self.locallyLoadedValueMap[fromRowFloor:toRowCeiling, fromColFloor:toColCeiling].copy()
 
@@ -123,13 +126,13 @@ class Agent(ShadowAgent):
             raise ValueError("iToCol out of range: " + str(iToCol))
 
         fromRowFloor = int(np.floor(iFromRow))
-        value = self.valueMapSubsetSum((iFromRow, iFromCol, fromRowFloor+1, iToCol))
+        value = self.valueMapSubsetSum((iFromRow, iFromCol, fromRowFloor + 1, iToCol))
 
         if value >= wanted_sum:
             return iFromRow + (wanted_sum / value)
         wanted_sum -= value
         for i in range(fromRowFloor + 1, self.valueMapRows):
-            value = self.valueMapSubsetSum((i, iFromCol, i+1, iToCol))
+            value = self.valueMapSubsetSum((i, iFromCol, i + 1, iToCol))
             if wanted_sum <= value:
                 return i + (wanted_sum / value)
             wanted_sum -= value
@@ -148,13 +151,13 @@ class Agent(ShadowAgent):
             raise ValueError("iToRow out of range: " + str(iToRow))
 
         fromColFloor = int(np.floor(iFromCol))
-        value = self.valueMapSubsetSum((iFromRow, iFromCol, iToRow, fromColFloor+1))
+        value = self.valueMapSubsetSum((iFromRow, iFromCol, iToRow, fromColFloor + 1))
 
         if value >= wanted_sum:
             return iFromCol + (wanted_sum / value)
         wanted_sum -= value
         for i in range(fromColFloor + 1, self.valueMapCols):
-            value = self.valueMapSubsetSum((iFromRow, i, iToRow, i+1))
+            value = self.valueMapSubsetSum((iFromRow, i, iToRow, i + 1))
             if wanted_sum <= value:
                 return i + (wanted_sum / value)
             wanted_sum -= value
@@ -197,41 +200,6 @@ class Agent(ShadowAgent):
 
     def pieceByEvaluation(self, pieces):
         # pieces = {1: first_piece, ... , n: nth_piece}
-        sorted_piece_num_list = sorted(pieces.keys(), key=lambda piece_key: self.evaluationOfPiece(pieces[piece_key]),reverse=True)
+        sorted_piece_num_list = sorted(pieces.keys(), key=lambda piece_key: self.evaluationOfPiece(pieces[piece_key]),
+                                       reverse=True)
         return sorted_piece_num_list
-
-
-
-
-if __name__ == '__main__':
-
-	a = Agent([[1]*8 for _ in range(8)])
-	print(a.valueMap)
-	print(a.valueMapSubset((0, 0, len(a.valueMap), len(a.valueMap[0]))))
-	print(a.valueMapSubset((0, 1, 0, 2)))
-	print(a.valueMapSubset((0, 1, 1, 2)))
-	print(a.valueMapSubset((0.4, 1, 1, 4)))
-	print(a.valueMapSubset((1, 1, 2, 4)))
-	print(a.valueMapSubset((1, 1, 1.1, 4)))
-	print(a.valueMapSubset((1, 1, 4, 1)))
-	print(a.valueMapSubset((1, 1, 4, 2)))
-	print(a.valueMapSubset((1, 1, 4, 1.1)))
-	print(a.valueMapSubset((1, 1, 6, 4)))
-	print(a.valueMapSubset((1,1.5,6,4)))
-	print(a.valueMapSubset((0.5,1,6,4)))
-	print(a.valueMapSubset((1, 1, 6, 4.5)))
-	print(a.valueMapSubset((1, 1, 5.5, 4)))
-	print(a.valueMapSubset((1, 1, 5.5, 4.5)))
-	print(a.valueMapSubset((1, 1.5, 5.5, 4.5)))
-	print(a.valueMapSubset((2.3, 0.6, 3.4, 2.7)))
-	print(a.evalQuery((2.3, 0.6, 3.4, 2.7)))
-	iTo = a.markQuery(0.2,1,3,6,CutDirection.Horizontal)
-	print(iTo)
-	vms = a.valueMapSubset((0.2,1,iTo,3))
-	print(vms)
-	print(np.sum(vms))
-	iTo = a.markQuery(0.1,2.5,3.5,5.2,CutDirection.Vertical)
-	print(iTo)
-	vms = a.valueMapSubset((2.5, 0.1, 3.5, iTo))
-	print(vms)
-	print(np.sum(vms))

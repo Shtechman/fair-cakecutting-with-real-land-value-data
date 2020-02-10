@@ -1,48 +1,40 @@
 from utils.Graph import *
 
+"""**
+    * A util script implementing TTC logic.
+    *
+    * @author Itay Shtechman
+    * @since 2019-10
+    """
 
 # getAgents: graph, vertex -> set(vertex)
 
 # get the set of agents on a cycle starting at the given vertex
 
 def getAgents(G, cycle, agents):
+    # a cycle in G is represented by any vertex of the cycle
 
-   # a cycle in G is represented by any vertex of the cycle
+    # outdegree guarantee means we don't care which vertex it is
 
-   # outdegree guarantee means we don't care which vertex it is
+    # make sure starting vertex is a house
 
+    if cycle.vertexId in agents:
+        cycle = cycle.anyNext()
 
+    startingHouse = cycle
 
-   # make sure starting vertex is a house
+    currentVertex = startingHouse.anyNext()
 
-   if cycle.vertexId in agents:
+    theAgents = set()
 
-      cycle = cycle.anyNext()
+    while currentVertex not in theAgents:
+        theAgents.add(currentVertex)
 
+        currentVertex = currentVertex.anyNext()
 
+        currentVertex = currentVertex.anyNext()
 
-   startingHouse = cycle
-
-   currentVertex = startingHouse.anyNext()
-
-   theAgents = set()
-
-
-
-   while currentVertex not in theAgents:
-
-      theAgents.add(currentVertex)
-
-      currentVertex = currentVertex.anyNext()
-
-      currentVertex = currentVertex.anyNext()
-
-
-
-   return theAgents
-
-
-
+    return theAgents
 
 
 # anyCycle: graph -> vertex
@@ -50,108 +42,83 @@ def getAgents(G, cycle, agents):
 # find any vertex involved in a cycle
 
 def anyCycle(G):
+    visited = set()
 
-   visited = set()
+    v = G.anyVertex()
 
-   v = G.anyVertex()
+    while v not in visited:
+        visited.add(v)
 
+        v = v.anyNext()
 
-
-   while v not in visited:
-
-      visited.add(v)
-
-      v = v.anyNext()
+    return v
 
 
+# find a core matching of agents to pieces
 
-   return v
-
-
-
-
-
-# find a core matching of agents to houses
-
-# agents and houses are unique identifiers for the agents and houses involved
+# agents and pieces are unique identifiers for the agents and pieces involved
 
 # agentPreferences is a dictionary with keys being agents and values being
 
-# lists that are permutations of the list of all houses.
+# lists that are permutations of the list of all pieces.
 
-# initiailOwnerships is a dict {houses:agents}
+# initiailOwnerships is a dict {pieces:agents}
 
-def topTradingCycles(agents, houses, agentPreferences, initialOwnership):
+def topTradingCycles(agents, pieces, agentPreferences, initialOwnership):
+    # ensure agent ids and pieces ids are unique
+    agents = {'a_' + a for a in agents}
+    pieces = {'h_' + h for h in pieces}
+    initialOwnership = {'h_' + h: 'a_' + initialOwnership[h] for h in initialOwnership}
+    agentPreferences = {'a_' + a: ['h_' + h for h in agentPreferences[a]]
+                        for a in agentPreferences}
 
+    # form the initial graph
+    agents = set(agents)
 
-   # ensure agent ids and houses ids are unique
-   agents = {'a_' + a for a in agents}
-   houses = {'h_' + h for h in houses}
-   initialOwnership = {'h_' + h: 'a_' + initialOwnership[h] for h in initialOwnership}
-   agentPreferences = {'a_' + a: ['h_' + h for h in agentPreferences[a]]
-                       for a in agentPreferences}
+    vertexSet = set(agents) | set(pieces)
 
-   # form the initial graph
-   agents = set(agents)
+    G = Graph(vertexSet)
 
-   vertexSet = set(agents) | set(houses)
+    # maps agent to an index of the list agentPreferences[agent]
 
-   G = Graph(vertexSet)
+    currentPreferenceIndex = dict((a, 0) for a in agents)
 
+    preferredPiece = lambda a: agentPreferences[a][currentPreferenceIndex[a]]
 
+    for a in agents:
+        G.addEdge(a, preferredPiece(a))
 
-   # maps agent to an index of the list agentPreferences[agent]
+    for h in pieces:
+        G.addEdge(h, initialOwnership[h])
 
-   currentPreferenceIndex = dict((a,0) for a in agents)
+    # iteratively remove top trading cycles
 
-   preferredHouse = lambda a: agentPreferences[a][currentPreferenceIndex[a]]
+    allocation = dict()
 
+    while len(G.vertices) > 0:
 
+        cycle = anyCycle(G)
 
-   for a in agents:
+        cycleAgents = getAgents(G, cycle, agents)
 
-      G.addEdge(a, preferredHouse(a))
+        # assign agents in the cycle their piece
 
-   for h in houses:
+        for a in cycleAgents:
+            h = a.anyNext().vertexId
 
-      G.addEdge(h, initialOwnership[h])
+            allocation[a.vertexId.replace('a_', '')] = h.replace('h_', '')
 
+            G.delete(a)
 
+            G.delete(h)
 
-   # iteratively remove top trading cycles
+        for a in agents:
 
-   allocation = dict()
+            if a in G.vertices and G[a].outdegree() == 0:
 
-   while len(G.vertices) > 0:
+                while preferredPiece(a) not in G.vertices:
+                    currentPreferenceIndex[a] += 1
 
-      cycle = anyCycle(G)
+                G.addEdge(a, preferredPiece(a))
 
-      cycleAgents = getAgents(G, cycle, agents)
-
-
-
-      # assign agents in the cycle their house
-
-      for a in cycleAgents:
-
-         h = a.anyNext().vertexId
-
-         allocation[a.vertexId.replace('a_','')] = h.replace('h_','')
-
-         G.delete(a)
-
-         G.delete(h)
-
-
-
-      for a in agents:
-
-         if a in G.vertices and G[a].outdegree() == 0:
-
-            while preferredHouse(a) not in G.vertices:
-
-               currentPreferenceIndex[a] += 1
-
-            G.addEdge(a, preferredHouse(a))
-
-   return allocation
+    return allocation

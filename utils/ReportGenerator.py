@@ -1,8 +1,10 @@
 from statistics import mean, stdev
-from utils.Types import AggregationType, CutPattern
+
+from utils.Types import AggregationType
 
 try:
     from scipy.stats import t
+
 
     def calculate_confidence_interval(confidence, stdev, n):
         return stdev * t.ppf((1 + confidence) / 2., n - 1)
@@ -11,7 +13,6 @@ except:
     # we then locally re-run Report Generation on our local machine
     def calculate_confidence_interval(confidence, stdev, n):
         return -1
-
 
 BRUTEFORCE_KEY = "BruteForce"
 
@@ -22,7 +23,7 @@ def calculate_avg_result(result_list, keys_to_average, groupsize):
         for key in result_list[0]:
             if key in keys_to_average:
                 key_list_values = list(map(lambda res: res[key], result_list))
-                avg_key = key+'_Avg'
+                avg_key = key + '_Avg'
                 std_key = key + '_StDev'
                 interval_key = key + '_interval'
                 result[avg_key] = mean(key_list_values)
@@ -62,7 +63,6 @@ def calculate_int_result(algorithm_res, assessor_res, keys_to_integrate):
 
 
 def parse_sum_data_entry(orig_data_entry, sum_data_entry):
-
     if not sum_data_entry or not orig_data_entry:
         return []
     dict_to_parse = {}
@@ -80,40 +80,40 @@ def parse_sum_data_entry(orig_data_entry, sum_data_entry):
     dict_to_parse['ttc_largestEnvy_Imp'] = -1 * sum_data_entry["ttc_largestEnvy_Avg"]
 
     key_order = ['Method',
-         'egalitarianGain_Avg', 'egalitarianGain_Imp', 'egalitarianGain_StDev',
-         'ttc_egalitarianGain_Avg', 'ttc_egalitarianGain_Imp', 'ttc_egalitarianGain_StDev',
-         'utilitarianGain_Avg', 'utilitarianGain_Imp', 'utilitarianGain_StDev',
-         'ttc_utilitarianGain_Avg', 'ttc_utilitarianGain_Imp', 'ttc_utilitarianGain_StDev',
-         'averageFaceRatio_Avg', 'averageFaceRatio_Imp', 'averageFaceRatio_StDev',
-         'smallestFaceRatio_Avg', 'smallestFaceRatio_Imp', 'smallestFaceRatio_StDev',
-         'largestEnvy_Avg', 'largestEnvy_Imp', 'largestEnvy_StDev',
-         'ttc_largestEnvy_Avg', 'ttc_largestEnvy_Imp', 'ttc_largestEnvy_StDev',
-         'experimentDurationSec_Avg', 'experimentDurationSec_StDev']
+                 'egalitarianGain_Avg', 'egalitarianGain_Imp', 'egalitarianGain_StDev',
+                 'ttc_egalitarianGain_Avg', 'ttc_egalitarianGain_Imp', 'ttc_egalitarianGain_StDev',
+                 'utilitarianGain_Avg', 'utilitarianGain_Imp', 'utilitarianGain_StDev',
+                 'ttc_utilitarianGain_Avg', 'ttc_utilitarianGain_Imp', 'ttc_utilitarianGain_StDev',
+                 'averageFaceRatio_Avg', 'averageFaceRatio_Imp', 'averageFaceRatio_StDev',
+                 'smallestFaceRatio_Avg', 'smallestFaceRatio_Imp', 'smallestFaceRatio_StDev',
+                 'largestEnvy_Avg', 'largestEnvy_Imp', 'largestEnvy_StDev',
+                 'ttc_largestEnvy_Avg', 'ttc_largestEnvy_Imp', 'ttc_largestEnvy_StDev',
+                 'experimentDurationSec_Avg', 'experimentDurationSec_StDev']
 
     return [dict_to_parse[key] for key in key_order]
 
 
 def create_table_summary_line(groupsize_sum_results):
     max_idx_dict = {'EGA': 1,
-           'EGP': 2,
-           'ttcEGA': 4,
-           'ttcEGP': 5,
-           'UGA': 7,
-           'UGP': 8,
-           'ttcUGA': 10,
-           'ttcUGP': 11,
-           'AFA': 13,
-           'AFP': 14,
-           'SFA': 16,
-           'SFP': 17}
+                    'EGP': 2,
+                    'ttcEGA': 4,
+                    'ttcEGP': 5,
+                    'UGA': 7,
+                    'UGP': 8,
+                    'ttcUGA': 10,
+                    'ttcUGP': 11,
+                    'AFA': 13,
+                    'AFP': 14,
+                    'SFA': 16,
+                    'SFP': 17}
     min_idx_dict = {
-                'LEA': 19,
-                'LEP': 20,
-                'ttcLEA': 22,
-                'ttcLEP': 23,
-                'RDA': 25}
+        'LEA': 19,
+        'LEP': 20,
+        'ttcLEA': 22,
+        'ttcLEP': 23,
+        'RDA': 25}
     groupsize_sum_results = [r for r in groupsize_sum_results if r]
-    sum_result = [' ']*50
+    sum_result = [' '] * 50
     if groupsize_sum_results:
         sum_result[0] = "Summary"
 
@@ -127,8 +127,9 @@ def create_table_summary_line(groupsize_sum_results):
     return sum_result
 
 
-def parse_method_over_measure_data_entry(measure, method, available_groupsizes, hon_avg, hon_interval, as_avg, as_interval, ttc_avg, ttc_interval, selling = 1.):
-    #header = ['NumberOfAgents', 'Honest', 'Assessor', 'TTC',  'Selling', 'Hon_Conf', 'As_Conf', 'TTC_Conf']
+def parse_method_over_measure_data_entry(measure, method, available_groupsizes, hon_avg, hon_interval, as_avg,
+                                         as_interval, ttc_avg, ttc_interval, selling=1.):
+    # header = ['NumberOfAgents', 'Honest', 'Assessor', 'TTC',  'Selling', 'Hon_Conf', 'As_Conf', 'TTC_Conf']
     data_entry = []
     for idx, group in enumerate(available_groupsizes):
         data_entry.append([group, hon_avg[idx], as_avg[idx], ttc_avg[idx], selling,
@@ -137,7 +138,8 @@ def parse_method_over_measure_data_entry(measure, method, available_groupsizes, 
 
 
 def preprocess_results(results, assessor_results):
-    keys_to_average = ['egalitarianGain', 'ttc_egalitarianGain', 'ttc_utilitarianGain','utilitarianGain', 'averageFaceRatio',
+    keys_to_average = ['egalitarianGain', 'ttc_egalitarianGain', 'ttc_utilitarianGain', 'utilitarianGain',
+                       'averageFaceRatio',
                        'smallestFaceRatio', 'largestEnvy', 'ttc_largestEnvy', 'experimentDurationSec']
     keys_to_integrate = [key + '_Avg' for key in keys_to_average]
     interval_keys = [key + '_interval' for key in keys_to_average]
@@ -159,12 +161,10 @@ def preprocess_results(results, assessor_results):
     dishonestGain = get_dishonest_gain(results)
 
     method_list = [r["Method"].split("_")[-1] for r in results]
-    res_per_m = { # m - method
+    res_per_m = {  # m - method
         method: [r for r in results if r["Method"].split("_")[-1] == method] for method
-    in
+        in
         method_list}
-
-
 
     run_types_keys = list(set([r["Algorithm"] for r in results]))
 
@@ -180,9 +180,9 @@ def preprocess_results(results, assessor_results):
 
     for method in res_per_m:
         res_per_gs_per_m[method] = {n: [r for r in res_per_m[method]
-                                                        if r['NumberOfAgents'] == n] for n in available_groupsizes}
-        assessor_res_per_gs = {n: [r for r in assessor_results
                                         if r['NumberOfAgents'] == n] for n in available_groupsizes}
+        assessor_res_per_gs = {n: [r for r in assessor_results
+                                   if r['NumberOfAgents'] == n] for n in available_groupsizes}
 
         res_per_a_per_gs_per_m[method] = {n: [] for n in available_groupsizes}
         for groupsize in res_per_gs_per_m[method]:
@@ -194,21 +194,23 @@ def preprocess_results(results, assessor_results):
 
     best_result_per_gs = {}
     if BRUTEFORCE_KEY in res_per_a_per_gs_per_m:
-        keys = [('egalitarianGain',max),
-                ('ttc_egalitarianGain',max),
-                ('ttc_utilitarianGain',max),
-                ('utilitarianGain',max),
-                ('averageFaceRatio',max),
-                ('smallestFaceRatio',max),
-                ('largestEnvy',min),
-                ('ttc_largestEnvy',min),
-                ('experimentDurationSec',min)]
+        keys = [('egalitarianGain', max),
+                ('ttc_egalitarianGain', max),
+                ('ttc_utilitarianGain', max),
+                ('utilitarianGain', max),
+                ('averageFaceRatio', max),
+                ('smallestFaceRatio', max),
+                ('largestEnvy', min),
+                ('ttc_largestEnvy', min),
+                ('experimentDurationSec', min)]
         for groupsize in res_per_a_per_gs_per_m[BRUTEFORCE_KEY]:
-            honest_key = next((key for key in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize].keys() if "Honest" in key), None)
+            honest_key = next(
+                (key for key in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize].keys() if "Honest" in key), None)
             if not honest_key:
                 continue
             if res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]:
-                uniqe_exp_id = list(set([r['experiment'] for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]]))
+                uniqe_exp_id = list(
+                    set([r['experiment'] for r in res_per_a_per_gs_per_m[BRUTEFORCE_KEY][groupsize][honest_key]]))
                 best_result_per_gs[groupsize] = []
                 for key in keys:
                     cur_key_list = []
@@ -221,7 +223,7 @@ def preprocess_results(results, assessor_results):
 
     for method in res_per_a_per_gs_per_m:
         method_avg_results = {}
-        
+
         for groupsize in res_per_a_per_gs_per_m[method]:
             method_avg_results[groupsize] = {a: calculate_avg_result(res_per_a_per_gs_per_m[method][groupsize][a],
                                                                      keys_to_average, groupsize)
@@ -238,68 +240,74 @@ def preprocess_results(results, assessor_results):
             honest_res = method_avg_results[groupsize][honest_key]
             method_avg_results[groupsize][int_honest_key] = calculate_int_result(honest_res, assessor_res,
                                                                                  keys_to_integrate)
-            sum_honest_results_per_groupsize[groupsize].append(parse_sum_data_entry(method_avg_results[groupsize][honest_key],
-                                                                                    method_avg_results[groupsize][int_honest_key]))
+            sum_honest_results_per_groupsize[groupsize].append(
+                parse_sum_data_entry(method_avg_results[groupsize][honest_key],
+                                     method_avg_results[groupsize][int_honest_key]))
 
             dishonest_res = method_avg_results[groupsize][dishonest_key]
             method_avg_results[groupsize][int_dishonest_key] = calculate_int_result(dishonest_res, assessor_res,
                                                                                     keys_to_integrate)
-            sum_dishonest_results_per_groupsize[groupsize].append(parse_sum_data_entry(method_avg_results[groupsize][dishonest_key],
-                                                                                       method_avg_results[groupsize][int_dishonest_key]))
+            sum_dishonest_results_per_groupsize[groupsize].append(
+                parse_sum_data_entry(method_avg_results[groupsize][dishonest_key],
+                                     method_avg_results[groupsize][int_dishonest_key]))
 
         # todo - implement parser for graph summary file
         avg_results_per_method[method] = method_avg_results
 
     avg_honest_results_per_measurement = {measure:
-                                       {method:
-                                            [avg_results_per_method[method][groupsize][honest_key][measure]
-                                             if avg_results_per_method[method][groupsize][honest_key] else ""
-                                             for groupsize in avg_results_per_method[method]]
-                                        for method in avg_results_per_method}
-                                   for measure in keys_to_integrate}
+                                              {method:
+                                                   [avg_results_per_method[method][groupsize][honest_key][measure]
+                                                    if avg_results_per_method[method][groupsize][honest_key] else ""
+                                                    for groupsize in avg_results_per_method[method]]
+                                               for method in avg_results_per_method}
+                                          for measure in keys_to_integrate}
 
     interval_honest_results_per_measurement = {measure:
-                                               {method:
-                                                    [avg_results_per_method[method][groupsize][honest_key][measure]
-                                                     if avg_results_per_method[method][groupsize][honest_key] else ""
-                                                     for groupsize in avg_results_per_method[method]]
-                                                for method in avg_results_per_method}
-                                           for measure in interval_keys}
+                                                   {method:
+                                                        [avg_results_per_method[method][groupsize][honest_key][measure]
+                                                         if avg_results_per_method[method][groupsize][
+                                                            honest_key] else ""
+                                                         for groupsize in avg_results_per_method[method]]
+                                                    for method in avg_results_per_method}
+                                               for measure in interval_keys}
 
     avg_assessor_results_per_measurement = {measure:
-                                       {method:
-                                            [avg_results_per_method[method][groupsize][assessor_key][measure]
-                                            if avg_results_per_method[method][groupsize][assessor_key] else ""
-                                             for groupsize in avg_results_per_method[method]]
-                                        for method in avg_results_per_method}
-                                   for measure in keys_to_integrate}
-
-
-    interval_assessor_results_per_measurement = {measure:
                                                 {method:
                                                      [avg_results_per_method[method][groupsize][assessor_key][measure]
                                                       if avg_results_per_method[method][groupsize][assessor_key] else ""
                                                       for groupsize in avg_results_per_method[method]]
                                                  for method in avg_results_per_method}
-                                            for measure in interval_keys}
-
-    avg_dishonest_results_per_measurement = {measure:
-                                                {method:
-                                                     [avg_results_per_method[method][groupsize][dishonest_key][measure]
-                                                      if avg_results_per_method[method][groupsize][dishonest_key] else ""
-                                                      for groupsize in avg_results_per_method[method]]
-                                                 for method in avg_results_per_method}
                                             for measure in keys_to_integrate}
 
-    interval_dishonest_results_per_measurement = {measure:
+    interval_assessor_results_per_measurement = {measure:
                                                      {method:
-                                                          [avg_results_per_method[method][groupsize][dishonest_key][measure]
+                                                          [avg_results_per_method[method][groupsize][assessor_key][
+                                                               measure]
                                                            if avg_results_per_method[method][groupsize][
-                                                              dishonest_key] else ""
+                                                              assessor_key] else ""
                                                            for groupsize in avg_results_per_method[method]]
                                                       for method in avg_results_per_method}
                                                  for measure in interval_keys}
-    
+
+    avg_dishonest_results_per_measurement = {measure:
+                                                 {method:
+                                                      [avg_results_per_method[method][groupsize][dishonest_key][measure]
+                                                       if avg_results_per_method[method][groupsize][
+                                                          dishonest_key] else ""
+                                                       for groupsize in avg_results_per_method[method]]
+                                                  for method in avg_results_per_method}
+                                             for measure in keys_to_integrate}
+
+    interval_dishonest_results_per_measurement = {measure:
+                                                      {method:
+                                                           [avg_results_per_method[method][groupsize][dishonest_key][
+                                                                measure]
+                                                            if avg_results_per_method[method][groupsize][
+                                                               dishonest_key] else ""
+                                                            for groupsize in avg_results_per_method[method]]
+                                                       for method in avg_results_per_method}
+                                                  for measure in interval_keys}
+
     graph_method_results_per_measure = {measure: {} for measure in keys_to_average}
     for measure in graph_method_results_per_measure:
         if 'ttc' in measure:
@@ -314,38 +322,45 @@ def preprocess_results(results, assessor_results):
         if ttc_avg_key in avg_honest_results_per_measurement:
             ttc_honest_avg = avg_honest_results_per_measurement[ttc_avg_key]
         else:
-            ttc_honest_avg = {method: ['']*len(available_groupsizes) for method in avg_results_per_method}
+            ttc_honest_avg = {method: [''] * len(available_groupsizes) for method in avg_results_per_method}
         assessor_avg = avg_assessor_results_per_measurement[ass_avg_key]
         honest_interval = interval_honest_results_per_measurement[interval_key]
         if ttc_interval_key in interval_honest_results_per_measurement:
             ttc_honest_interval = interval_honest_results_per_measurement[ttc_interval_key]
         else:
-            ttc_honest_interval = {method: ['']*len(available_groupsizes) for method in avg_results_per_method}
+            ttc_honest_interval = {method: [''] * len(available_groupsizes) for method in avg_results_per_method}
         assessor_interval = interval_assessor_results_per_measurement[ass_int_key]
         for method in avg_results_per_method:
             graph_method_results_per_measure[measure][method] = parse_method_over_measure_data_entry(measure, method,
                                                                                                      available_groupsizes,
                                                                                                      honest_avg[method],
-                                                                                                     honest_interval[method],
-                                                                                                     assessor_avg[method],
-                                                                                                     assessor_interval[method],
-                                                                                                     ttc_honest_avg[method],
-                                                                                                     ttc_honest_interval[method])
+                                                                                                     honest_interval[
+                                                                                                         method],
+                                                                                                     assessor_avg[
+                                                                                                         method],
+                                                                                                     assessor_interval[
+                                                                                                         method],
+                                                                                                     ttc_honest_avg[
+                                                                                                         method],
+                                                                                                     ttc_honest_interval[
+                                                                                                         method])
 
     for groupSize in sum_honest_results_per_groupsize:
         if not sum_honest_results_per_groupsize[groupSize]:
             continue
-        sum_honest_results_per_groupsize[groupSize].append(create_table_summary_line(sum_honest_results_per_groupsize[groupSize]))
+        sum_honest_results_per_groupsize[groupSize].append(
+            create_table_summary_line(sum_honest_results_per_groupsize[groupSize]))
 
     for groupSize in sum_dishonest_results_per_groupsize:
         if not sum_dishonest_results_per_groupsize[groupSize]:
             continue
-        sum_dishonest_results_per_groupsize[groupSize].append(create_table_summary_line(sum_dishonest_results_per_groupsize[groupSize]))
+        sum_dishonest_results_per_groupsize[groupSize].append(
+            create_table_summary_line(sum_dishonest_results_per_groupsize[groupSize]))
 
     return avg_results_per_method, \
            sum_honest_results_per_groupsize, \
            sum_dishonest_results_per_groupsize, \
-           avg_honest_results_per_measurement,\
+           avg_honest_results_per_measurement, \
            avg_assessor_results_per_measurement, \
            avg_dishonest_results_per_measurement, \
            graph_method_results_per_measure, \
@@ -356,7 +371,7 @@ def preprocess_results(results, assessor_results):
 
 def get_dishonest_gain(results):
     experiment_list = list(set([rlog["experiment"] for rlog in results]))
-    cut_pattern_list = list(set([rlog["Method"].replace("Dishonest_","").replace("Honest_","") for rlog in results]))
+    cut_pattern_list = list(set([rlog["Method"].replace("Dishonest_", "").replace("Honest_", "") for rlog in results]))
     num_agents = list(set([rlog[AggregationType.NumberOfAgents.name] for rlog in results]))
 
     result = {numA: {} for numA in num_agents}
@@ -372,19 +387,21 @@ def get_dishonest_gain(results):
         result[numA][exp] = {}
         for cp in cut_pattern_list:
             result[numA][exp][cp] = []
-            relevant_logs = [rlog for rlog in results if (rlog["experiment"] == exp and rlog["Method"].replace("Dishonest_","").replace("Honest_","") == cp)]
-            dishonest_partitions = {rlog["dishonestAgent"]: rlog["relativeValues"] for rlog in relevant_logs if rlog["dishonestAgent"] is not None}
+            relevant_logs = [rlog for rlog in results if (
+                    rlog["experiment"] == exp and rlog["Method"].replace("Dishonest_", "").replace("Honest_",
+                                                                                                   "") == cp)]
+            dishonest_partitions = {rlog["dishonestAgent"]: rlog["relativeValues"] for rlog in relevant_logs if
+                                    rlog["dishonestAgent"] is not None}
             honest = [rlog for rlog in relevant_logs if rlog["dishonestAgent"] is None][0]
             honest_partitions = honest["relativeValues"]
             for agent in dishonest_partitions:
-                v,p = _get_dishonest_gain(honest_partitions, dishonest_partitions[agent], agent)
+                v, p = _get_dishonest_gain(honest_partitions, dishonest_partitions[agent], agent)
 
                 result[numA][exp][cp].append(
-                {
-                "agent": agent,
-                "agent_gain": v,
-                "agent_gain_per": p
-                })
+                    {
+                        "agent": agent,
+                        "agent_gain": v,
+                        "agent_gain_per": p
+                    })
 
     return result
-

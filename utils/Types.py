@@ -11,7 +11,7 @@ class AggregationType(Enum):
 class AlgType(Enum):
     EvenPaz = 1,
     LastDiminisher = 2,
-    DynamicEP = 3,
+    FOCS = 3,
     Simple = 4
 
 
@@ -43,5 +43,4 @@ class CutPattern(Enum):
     HighestScatter = 13,
     SquarePiece = 14,
     BruteForce = 15,
-    Simple = 16,
-
+    NoPattern = 16,
