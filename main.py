@@ -9,149 +9,289 @@ import math
 import os
 import sys
 
-from utils.Agent import Agent
-from utils.MapFileHandler import get_valueMaps_from_index, get_originalMap_from_index, get_datasetName_from_index
-from utils.Plotter import Plotter
-from utils.ReportWriter import create_exp_folder, generate_exp_name, write_results_to_folder, create_run_folder
-from utils.Types import AggregationType, AlgType, CutPattern, RunType
-from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
+from utils.mapfile_handler import (
+    get_value_maps_from_index,
+    get_original_map_from_index,
+    get_dataset_name_from_index,
+)
+from utils.plotter import Plotter
+from utils.report_writer import (
+    create_exp_folder,
+    generate_exp_name,
+    write_results_to_folder,
+    create_run_folder,
+)
+from utils.types import AggregationType, AlgType, CutPattern, RunType
+from utils.simulation_environment import SimulationEnvironment as SimEnv
+from utils.agent import Agent
 import multiprocessing as mp
+
 plotter = Plotter()
 
 """ Static definitions of cut patterns, algorithms and experiment settings to test """
-cut_patterns_to_test = [CutPattern.Hor, CutPattern.Ver, CutPattern.HighestScatter, CutPattern.MostValuableMargin,
-                        CutPattern.LargestMargin, CutPattern.VerHor, CutPattern.HorVer,
-                        CutPattern.SmallestPiece, CutPattern.SquarePiece, CutPattern.SmallestHalfCut, CutPattern.NoPattern]
+cut_patterns_to_test = [
+    CutPattern.Hor,
+    CutPattern.Ver,
+    CutPattern.HighestScatter,
+    CutPattern.MostValuableMargin,
+    CutPattern.LargestMargin,
+    CutPattern.VerHor,
+    CutPattern.HorVer,
+    CutPattern.SmallestPiece,
+    CutPattern.SquarePiece,
+    CutPattern.SmallestHalfCut,
+    CutPattern.NoPattern,
+]
 # cut_patterns_to_test=[CutPattern.NoPattern,CutPattern.BruteForce,CutPattern.MostValuableMargin,CutPattern.SquarePiece]
 
-algTypes = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
+alg_types = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
 
 experiment_sets = [
-         {"index_file": "data/IsraelMaps02/index.txt",
-          "noise_proportion": [0.6],
-          "num_of_agents": [4,8],
-          "run_types": [RunType.Honest]},
-         # {"index_file": "data/newZealandLowResAgents06/index.txt",
-         #  "noise_proportion": [0.6],
-         #  "num_of_agents": [4,8,16,32,64,128],
-         #  "run_types": [RunType.Honest]},
-    ]
+    {
+        "index_file": "data/IsraelMaps02/index.txt",
+        "noise_proportion": [0.6],
+        "num_of_agents": [4, 8],
+        "run_types": [RunType.Honest],
+    },
+    # {"index_file": "data/newZealandLowResAgents06/index.txt",
+    #  "noise_proportion": [0.6],
+    #  "num_of_agents": [4,8,16,32,64,128],
+    #  "run_types": [RunType.Honest]},
+]
 """ -------------------------------------------------------- """
 
 
+def run_single_simulation(
+    env,
+    alg_type=AlgType.Simple,
+    run_type=RunType.Assessor,
+    cut_pattern=CutPattern.NoPattern,
+):
 
-def makeSingleSimulation(env, algType=AlgType.Simple, runType=RunType.Assessor, cutPattern=CutPattern.NoPattern):
-
-    print("%s running for %s agents, %s %s algorithm, using cut pattern %s" % (
-        os.getpid(), env.numberOfAgents, runType.name, algType.name, cutPattern.name))
-    results = env.runSimulation(algType, runType, cutPattern)  # returns a list of AllocatedPiece
+    print(
+        "%s running for %s agents, %s %s algorithm, using cut pattern %s"
+        % (
+            os.getpid(),
+            env.num_of_agents,
+            run_type.name,
+            alg_type.name,
+            cut_pattern.name,
+        )
+    )
+    results = env.run_simulation(
+        alg_type, run_type, cut_pattern
+    )  # returns a list of AllocatedPiece
     return results
 
 
-def runExperiment(exp_data):
-    index_file, algTypes, runTypes, numOfAgents, noiseProportion, iSimulation, assessorAgentPool, result_folder = exp_data
+def run_experiment(exp_data):
+    (
+        index_file,
+        alg_types,
+        run_types,
+        num_of_agents,
+        noise_proportion,
+        i_simulation,
+        assessor_agent_pool,
+        result_folder,
+    ) = exp_data
     results = []
-    print("======================= %s Agents - PID %s - Simulation %s =======================" % (
-    numOfAgents, os.getpid(), iSimulation))
-    print("Fetching %s agents from files" % numOfAgents)
-    agent_mapfiles_list = get_valueMaps_from_index(index_file, numOfAgents)
-    agents = list(map(Agent, agent_mapfiles_list))
+    print(
+        "======================= %s Agents - PID %s - Simulation %s ======================="
+        % (num_of_agents, os.getpid(), i_simulation)
+    )
+    print("Fetching %s agents from files" % num_of_agents)
+    agent_map_files_list = get_value_maps_from_index(index_file, num_of_agents)
+    agents = list(map(Agent, agent_map_files_list))
 
-    env = SimEnv(iSimulation, noiseProportion, agents, assessorAgentPool, agent_mapfiles_list, result_folder,
-                 cut_patterns_to_test)
+    env = SimEnv(
+        i_simulation,
+        noise_proportion,
+        agents,
+        assessor_agent_pool,
+        agent_map_files_list,
+        result_folder,
+        cut_patterns_to_test,
+    )
     for cur_cut_pattern in cut_patterns_to_test:
-        for algType, runType in itertools.product(algTypes, runTypes):
+        for algType, runType in itertools.product(alg_types, run_types):
             if env.algorithm_supports_cut_pattern(algType, cur_cut_pattern):
-                for result in makeSingleSimulation(env, algType, runType, cur_cut_pattern):
+                for result in run_single_simulation(
+                    env, algType, runType, cur_cut_pattern
+                ):
                     results.append(result)
 
-    assessor_results = makeSingleSimulation(env)
+    assessor_results = run_single_simulation(env)
     for result in assessor_results:
         results.append(result)
 
     for agent in agents:
-        agent.cleanMemory()
+        agent.clean_memory()
         del agent
 
     return results
 
 
-def calculateSingleDatapoint(index_file, algTypes, runTypes, numOfAgents, noiseProportion, experiments_per_cell, assessorAgentPool,
-                             result_folder):
+def calculate_single_datapoint(
+    index_file,
+    alg_types,
+    run_types,
+    num_of_agents,
+    noise_proportion,
+    experiments_per_cell,
+    assessor_agent_pool,
+    result_folder,
+):
     p = mp.Pool(NTASKS)
 
-    exp_data = [(index_file, algTypes, runTypes, numOfAgents, noiseProportion, str(numOfAgents) + str(iSimulation),
-                 assessorAgentPool, result_folder) for iSimulation in range(1, experiments_per_cell + 1)]
+    exp_data = [
+        (
+            index_file,
+            alg_types,
+            run_types,
+            num_of_agents,
+            noise_proportion,
+            str(num_of_agents) + str(i_simulation),
+            assessor_agent_pool,
+            result_folder,
+        )
+        for i_simulation in range(1, experiments_per_cell + 1)
+    ]
 
-    result_lists = p.map(runExperiment, exp_data)
+    result_lists = p.map(run_experiment, exp_data)
     p.close()
     p.join()
 
     del p
 
-    results = [result for result_list in result_lists for result in result_list]
+    results = [
+        result for result_list in result_lists for result in result_list
+    ]
 
     return results
 
 
-def aggregate(index_file, runTypes, aggregationParams, dataParams, aggText, dataText, dataParamType, experiments_per_cell):
-    # create a result graph for each aggregationParam
-    assessorAgentPool = list(map(Agent, [get_originalMap_from_index(index_file)] * MAX_NUM_OF_AGENTS))
-    for aggParam in aggregationParams:
-        print("\n" + aggText + " " + str(aggParam))
-        exp_name_string = get_datasetName_from_index(index_file) + '_' + generate_exp_name(aggParam, aggText,
-                                                                                           experiments_per_cell)
+def aggregate(
+    index_file,
+    run_types,
+    aggregation_params,
+    data_params,
+    agg_text,
+    data_text,
+    data_param_type,
+    experiments_per_cell,
+):
+    """ Create a result graph for each aggregationParam """
+    assessor_agent_pool = list(
+        map(
+            Agent,
+            [get_original_map_from_index(index_file)] * MAX_NUM_OF_AGENTS,
+        )
+    )
+
+    for agg_param in aggregation_params:
+        print("\n" + agg_text + " " + str(agg_param))
+        exp_name_string = (
+            get_dataset_name_from_index(index_file)
+            + "_"
+            + generate_exp_name(agg_param, agg_text, experiments_per_cell)
+        )
         result_folder = create_exp_folder(RUN_FOLDER_PATH, exp_name_string)
 
-        results = calculateMultipleDatapoints(index_file, aggParam, algTypes, runTypes, dataParamType,
-                                              dataParams,
-                                              dataText, experiments_per_cell, assessorAgentPool, result_folder)
+        results = calculate_multiple_datapoints(
+            index_file,
+            agg_param,
+            alg_types,
+            run_types,
+            data_param_type,
+            data_params,
+            data_text,
+            experiments_per_cell,
+            assessor_agent_pool,
+            result_folder,
+        )
 
         write_results_to_folder(result_folder, exp_name_string, results)
 
-        """ plotting - don't run plotting if you run it with no human supervision """
-        # plotter.plotResults(results, list(map(lambda pair: pair[0].name+pair[1].name, list(itertools.product(AlgType, CutPattern)))), xAxisDataType=dataParamType,
-        #                     yAxisData=["largestEnvy"],
-        #                     title="largestEnvy for "+aggText+" "+str(aggParam), experiments=experiments_per_cell)
-        # plotter.plotResults(results, list(
-        #     map(lambda pair: pair[0].name + pair[1].name, list(itertools.product(AlgType, CutPattern)))),
-        #                     xAxisDataType=dataParamType,
-        #                     yAxisData=["utilitarianGain"],
-        #                     title="utilitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
-        # plotter.plotResults(results, list(
-        #     map(lambda pair: pair[0].name + pair[1].name, list(itertools.product(AlgType, CutPattern)))),
-        #                     xAxisDataType=dataParamType,
-        #                     yAxisData=["egalitarianGain"],
-        #                     title="egalitarianGain for " + aggText + " " + str(aggParam), experiments=experiments_per_cell)
 
-
-def calculateMultipleDatapoints(index_file, aggParam, algTypes, runTypes, dataParamType, dataParams, dataText,
-                                experiments_per_cell, assessorAgentPool, result_folder):
+def calculate_multiple_datapoints(
+    index_file,
+    agg_param,
+    alg_types,
+    run_types,
+    data_param_type,
+    data_params,
+    data_text,
+    experiments_per_cell,
+    assessor_agent_pool,
+    result_folder,
+):
     results = []
-    # create a data point for each input of dataParam
-    for dataParam in dataParams:
-        print("\t" + str(dataParam) + " " + dataText)
-        if dataParamType == AggregationType.NumberOfAgents:
-            results += calculateSingleDatapoint(index_file, algTypes, runTypes, dataParam, aggParam, experiments_per_cell,
-                                                assessorAgentPool, result_folder)
+    """ Create a data point for each input of data_param """
+    for data_param in data_params:
+        print("\t" + str(data_param) + " " + data_text)
+        if data_param_type == AggregationType.NumberOfAgents:
+            results += calculate_single_datapoint(
+                index_file,
+                alg_types,
+                run_types,
+                data_param,
+                agg_param,
+                experiments_per_cell,
+                assessor_agent_pool,
+                result_folder,
+            )
         else:
-            results += calculateSingleDatapoint(index_file, algTypes, runTypes, aggParam, dataParam, experiments_per_cell,
-                                                assessorAgentPool, result_folder)
+            results += calculate_single_datapoint(
+                index_file,
+                alg_types,
+                run_types,
+                agg_param,
+                data_param,
+                experiments_per_cell,
+                assessor_agent_pool,
+                result_folder,
+            )
     return results
 
 
-def calculate_results(index_file, runTypes, aggregationType, number_of_agents, noise_proportion, experiments_per_cell):
-    if aggregationType == AggregationType.NumberOfAgents:
-        aggregate(index_file, runTypes, number_of_agents, noise_proportion, aggregationType.name, "noise",
-                  aggregationType.NoiseProportion, experiments_per_cell)
-    elif aggregationType == AggregationType.NoiseProportion:
-        aggregate(index_file, runTypes, noise_proportion, number_of_agents, aggregationType.name, "agents",
-                  aggregationType.NumberOfAgents, experiments_per_cell)
+def calculate_results(
+    index_file,
+    run_types,
+    aggregation_type,
+    num_of_agents,
+    noise_proportion,
+    experiments_per_cell,
+):
+    if aggregation_type == AggregationType.NumberOfAgents:
+        aggregate(
+            index_file,
+            run_types,
+            num_of_agents,
+            noise_proportion,
+            aggregation_type.name,
+            "noise",
+            aggregation_type.NoiseProportion,
+            experiments_per_cell,
+        )
+    elif aggregation_type == AggregationType.NoiseProportion:
+        aggregate(
+            index_file,
+            run_types,
+            noise_proportion,
+            num_of_agents,
+            aggregation_type.name,
+            "agents",
+            aggregation_type.NumberOfAgents,
+            experiments_per_cell,
+        )
     else:
-        raise Exception("Aggregation Type '%s' is not supported" % aggregationType)
+        raise Exception(
+            "Aggregation Type '%s' is not supported" % aggregation_type
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     main.py [<num_of_experiments> [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]
     
@@ -172,20 +312,27 @@ if __name__ == '__main__':
     if len(argv) > 4:
         log_min_num_of_agents = int(argv[3])
         log_max_num_of_agents = int(argv[4])
-        num_of_agents = [int(math.pow(2, y)) for y in range(log_min_num_of_agents, log_max_num_of_agents + 1)]
+        num_of_agents = [
+            int(math.pow(2, y))
+            for y in range(log_min_num_of_agents, log_max_num_of_agents + 1)
+        ]
     else:
         num_of_agents = None
 
     RUN_FOLDER_PATH = create_run_folder()
 
     for experiment_set in experiment_sets:
-        number_of_agents = num_of_agents if num_of_agents else experiment_set["num_of_agents"]
+        number_of_agents = (
+            num_of_agents if num_of_agents else experiment_set["num_of_agents"]
+        )
         MAX_NUM_OF_AGENTS = max(number_of_agents)
-        calculate_results(experiment_set["index_file"],
-                          experiment_set["run_types"],
-                          AggregationType.NoiseProportion,
-                          number_of_agents,
-                          experiment_set["noise_proportion"],
-                          experiments_per_cell)
+        calculate_results(
+            experiment_set["index_file"],
+            experiment_set["run_types"],
+            AggregationType.NoiseProportion,
+            number_of_agents,
+            experiment_set["noise_proportion"],
+            experiments_per_cell,
+        )
 
-    print('End experiment')
+    print("End experiment")

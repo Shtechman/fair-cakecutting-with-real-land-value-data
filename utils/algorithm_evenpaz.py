@@ -10,13 +10,12 @@
 """
 from itertools import product
 
-from utils.AllocatedPiece import AllocatedPiece
-from utils.Cutter import EPCutter
-from utils.Types import CutPattern, CutDirection
+from utils.allocated_piece import AllocatedPiece
+from utils.cutter import EPCutter
+from utils.types import CutPattern, CutDirection
 
 
 class AlgorithmEvenPaz:
-
     def run(self, agents, cut_pattern):
         """
         Calculate a proportional cake-division using the algorithm of Even and Paz (1984).
@@ -38,7 +37,9 @@ class AlgorithmEvenPaz:
             initial_allocations = list(map(AllocatedPiece, agents))
 
             # now, recursively divide the cake among the agents using a given cutter:
-            results.append((cutter, self._runRecursive(initial_allocations, cutter)))
+            results.append(
+                (cutter, self._run_recursive(initial_allocations, cutter))
+            )
 
         if len(results) > 1:
             return {str(result[0]): result[1] for result in results}
@@ -48,28 +49,38 @@ class AlgorithmEvenPaz:
     @staticmethod
     def _get_cutters_list(cut_pattern, num_of_agents):
         if cut_pattern is CutPattern.BruteForce:
-            cut_series_list = [list(i) for i in product([CutDirection.Horizontal,
-                                                         CutDirection.Vertical], repeat=num_of_agents - 1)]
+            cut_series_list = [
+                list(i)
+                for i in product(
+                    [CutDirection.Horizontal, CutDirection.Vertical],
+                    repeat=num_of_agents - 1,
+                )
+            ]
             cutters = [EPCutter(cut_series) for cut_series in cut_series_list]
         else:
             cutters = [EPCutter(cut_pattern)]
         return cutters
 
     @staticmethod
-    def getAlgorithmType():
+    def get_algorithm_type():
         return "EvenPaz"
 
-    def _runRecursive(self, allocations, cutter):
+    def _run_recursive(self, allocations, cutter):
         num_of_agents = len(allocations)
         if num_of_agents == 1:
             return allocations  # allocate the entire cake to the single agent.
 
-        first_part_allocations, second_part_allocations = cutter.allocate_cuts(allocations, num_of_agents)
+        first_part_allocations, second_part_allocations = cutter.allocate_cuts(
+            allocations, num_of_agents
+        )
 
-        return self._runRecursive(first_part_allocations, cutter.get_firt_part_cutter()) + \
-               self._runRecursive(second_part_allocations, cutter.get_second_part_cutter())
+        return self._run_recursive(
+            first_part_allocations, cutter.get_first_part_cutter()
+        ) + self._run_recursive(
+            second_part_allocations, cutter.get_second_part_cutter()
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     pass

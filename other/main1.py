@@ -11,22 +11,23 @@ from time import sleep
 from urllib.parse import quote, unquote
 from xml.etree import ElementTree
 
-from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
-from utils.MapFileHandler import plot_partition_from_path
-from utils.Measurements import Measurements as Measure
+from utils.simulation_environment import SimulationEnvironment as SimEnv
+from utils.mapfile_handler import plot_partition_from_path
+from utils.measurements import Measurements as Measure
 import multiprocessing as mp
 import ast
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+
 # import requests
 
-from utils.Agent import Agent
-from utils.AllocatedPiece import AllocatedPiece
-from utils.TopTradingCycle import topTradingCycles
-from utils.Types import AggregationType
-from utils.SimulationLog import SimulationLog
+from utils.agent import Agent
+from utils.allocated_piece import AllocatedPiece
+from utils.top_trading_cycle import top_trading_cycles
+from utils.types import AggregationType
+from utils.simulation_log import SimulationLog
 
 
 def coor_to_list(coor_value_list, valueKey):
@@ -56,14 +57,16 @@ def coor_to_list(coor_value_list, valueKey):
     return israel_map
 
 
-def measure_largest_envy(numberOfAgents, noiseProportion, method, experiment, partition):
+def measure_largest_envy(
+    numberOfAgents, noiseProportion, method, experiment, partition
+):
     largestEnvy = Measure.get_largest_envy(partition)
-    if 'Assessor' in method:
-        algName = 'Assessor'
-        method = method.replace(algName, '')
+    if "Assessor" in method:
+        algName = "Assessor"
+        method = method.replace(algName, "")
     else:
-        algName = 'EvenPaz'
-        method = method.replace(algName, '')
+        algName = "EvenPaz"
+        method = method.replace(algName, "")
     return {
         AggregationType.NumberOfAgents.name: numberOfAgents,
         AggregationType.NoiseProportion.name: noiseProportion,
@@ -84,76 +87,107 @@ def measure_largest_envy(numberOfAgents, noiseProportion, method, experiment, pa
 
 def readLogFile(cur_log_file):
     with open(cur_log_file) as csv_log_file:
-        csv_reader = csv.reader(csv_log_file, delimiter=',')
+        csv_reader = csv.reader(csv_log_file, delimiter=",")
         log_dict = {}
         for row in csv_reader:
             log_dict[row[0]] = row[1]
-    numberOfAgents = int(log_dict['Number of Agents'])
-    noise = log_dict['Noise']
-    method = log_dict['Method']
-    experiment = log_dict['Experiment']
-    cut_pattern = log_dict['Method'].split('_')[-1]
-    alg_name = log_dict['Method'].split('_')[0]
-    agent_mapfiles_list = log_dict['Agent Files'].replace('\'', '').replace('[', '').replace(']', '').replace(' ',
-                                                                                                              '').split(
-        ',')
-    cuts = log_dict['Partition'].replace('\'', '').replace('receives [', '$').replace('] -', '$').replace('[',
-                                                                                                          '').replace(
-        ']', '').replace('Anonymous(', '#').replace('Dishonest(', '#').replace(') $', '# $')
-    partitions = log_dict['Partition']
-    return numberOfAgents, \
-           noise, \
-           method, \
-           experiment, \
-           cut_pattern, \
-           alg_name, \
-           agent_mapfiles_list, \
-           cuts, \
-           partitions
+    numberOfAgents = int(log_dict["Number of Agents"])
+    noise = log_dict["Noise"]
+    method = log_dict["Method"]
+    experiment = log_dict["Experiment"]
+    cut_pattern = log_dict["Method"].split("_")[-1]
+    alg_name = log_dict["Method"].split("_")[0]
+    agent_mapfiles_list = (
+        log_dict["Agent Files"]
+        .replace("'", "")
+        .replace("[", "")
+        .replace("]", "")
+        .replace(" ", "")
+        .split(",")
+    )
+    cuts = (
+        log_dict["Partition"]
+        .replace("'", "")
+        .replace("receives [", "$")
+        .replace("] -", "$")
+        .replace("[", "")
+        .replace("]", "")
+        .replace("Anonymous(", "#")
+        .replace("Dishonest(", "#")
+        .replace(") $", "# $")
+    )
+    partitions = log_dict["Partition"]
+    return (
+        numberOfAgents,
+        noise,
+        method,
+        experiment,
+        cut_pattern,
+        alg_name,
+        agent_mapfiles_list,
+        cuts,
+        partitions,
+    )
 
 
 def parseResults(result_to_parse):
     cur_log_file = result_to_parse[0]
     agent_list = result_to_parse[1]
     print("parsing", cur_log_file)
-    numberOfAgents, \
-    noise, \
-    method, \
-    experiment, \
-    cut_pattern, \
-    alg_name, \
-    agent_mapfiles_list, \
-    cuts, \
-    partitions = readLogFile(cur_log_file)
+    (
+        numberOfAgents,
+        noise,
+        method,
+        experiment,
+        cut_pattern,
+        alg_name,
+        agent_mapfiles_list,
+        cuts,
+        partitions,
+    ) = readLogFile(cur_log_file)
 
     def _parsePartition(p):
-        matchObj = re.match(r'#([^#]*)# \$([^\$]*)\$[^\(]* ', p, re.M | re.I)
+        matchObj = re.match(r"#([^#]*)# \$([^\$]*)\$[^\(]* ", p, re.M | re.I)
         return matchObj.group(1), matchObj.group(2)
 
     def _getDishonestAgent(p_string):
         try:
-            return p_string.replace('\'', '').replace('receives [', '$').replace('] -', '$').replace('[', '') \
-                .replace(']', '').replace('Dishonest(', '@@@').replace(') $', '# $').split("@@@")[1].split("#")[0]
+            return (
+                p_string.replace("'", "")
+                .replace("receives [", "$")
+                .replace("] -", "$")
+                .replace("[", "")
+                .replace("]", "")
+                .replace("Dishonest(", "@@@")
+                .replace(") $", "# $")
+                .split("@@@")[1]
+                .split("#")[0]
+            )
         except:
             return None
 
     dishonest_agent = _getDishonestAgent(partitions)
 
-    cuts_list = [_parsePartition(p) for p in cuts.split('), ')]
+    cuts_list = [_parsePartition(p) for p in cuts.split("), ")]
 
     agent_piece_list = []
     for p in cuts_list:
         for agent in agent_list:
-            if p[0] in agent.file_num:
+            if p[0] in agent.get_map_file_number():
                 agent_piece_list = agent_piece_list + [[agent, p[1]]]
 
     def _allocatePiece(agent_piece):
-        indexes = [float(i) for i in agent_piece[1].split(',')]
-        return AllocatedPiece(agent_piece[0], indexes[0], indexes[1], indexes[2], indexes[3])
+        indexes = [float(i) for i in agent_piece[1].split(",")]
+        return AllocatedPiece(
+            agent_piece[0], indexes[0], indexes[1], indexes[2], indexes[3]
+        )
 
     partition = list(map(_allocatePiece, agent_piece_list))
 
-    valueGains = {ap.getAgent().file_num: ap.getRelativeValue() for ap in partition}
+    valueGains = {
+        ap.get_agent().get_map_file_number(): ap.get_relative_value()
+        for ap in partition
+    }
 
     return {
         AggregationType.NumberOfAgents.name: numberOfAgents,
@@ -163,16 +197,22 @@ def parseResults(result_to_parse):
         "experiment": experiment,
         "cut_pattern": cut_pattern,
         "dishonest": dishonest_agent,
-        "partition": valueGains
+        "partition": valueGains,
     }
 
 
 def _get_piece_of_agent(partition, agent_num):
-    piece = [p for p in partition if p.getAgent().file_num == agent_num][0]
+    piece = [
+        p
+        for p in partition
+        if p.get_agent().get_map_file_number() == agent_num
+    ][0]
     return piece
 
 
-def _get_dishonest_gain(honest_partition, dishonest_partition, dishonest_agent):
+def _get_dishonest_gain(
+    honest_partition, dishonest_partition, dishonest_agent
+):
     dis_value = dishonest_partition[dishonest_agent]
     hon_value = honest_partition[dishonest_agent]
 
@@ -182,29 +222,41 @@ def _get_dishonest_gain(honest_partition, dishonest_partition, dishonest_agent):
 def get_dishonest_gain(rlogs):
     experiment_list = list(set([rlog["experiment"] for rlog in rlogs]))
     cut_pattern_list = list(set([rlog["cut_pattern"] for rlog in rlogs]))
-    num_agents = list(set([rlog[AggregationType.NumberOfAgents.name] for rlog in rlogs]))
+    num_agents = list(
+        set([rlog[AggregationType.NumberOfAgents.name] for rlog in rlogs])
+    )
 
     result = {numA: {} for numA in num_agents}
 
     for exp in experiment_list:
-        numA = [rlog for rlog in rlogs if rlog["experiment"] == exp][0][AggregationType.NumberOfAgents.name]
+        numA = [rlog for rlog in rlogs if rlog["experiment"] == exp][0][
+            AggregationType.NumberOfAgents.name
+        ]
         result[numA][exp] = {}
         for cp in cut_pattern_list:
             result[numA][exp][cp] = []
-            relevant_logs = [rlog for rlog in rlogs if (rlog["experiment"] == exp and rlog["cut_pattern"] == cp)]
-            dishonest_partitions = {rlog["dishonest"]: rlog["partition"] for rlog in relevant_logs if
-                                    rlog["dishonest"] is not None}
-            honest = [rlog for rlog in relevant_logs if rlog["dishonest"] is None][0]
+            relevant_logs = [
+                rlog
+                for rlog in rlogs
+                if (rlog["experiment"] == exp and rlog["cut_pattern"] == cp)
+            ]
+            dishonest_partitions = {
+                rlog["dishonest"]: rlog["partition"]
+                for rlog in relevant_logs
+                if rlog["dishonest"] is not None
+            }
+            honest = [
+                rlog for rlog in relevant_logs if rlog["dishonest"] is None
+            ][0]
             honest_partitions = honest["partition"]
             for agent in dishonest_partitions:
-                v, p = _get_dishonest_gain(honest_partitions, dishonest_partitions[agent], agent)
+                v, p = _get_dishonest_gain(
+                    honest_partitions, dishonest_partitions[agent], agent
+                )
 
                 result[numA][exp][cp].append(
-                    {
-                        "agent": agent,
-                        "agent_gain": v,
-                        "agent_gain_per": p
-                    })
+                    {"agent": agent, "agent_gain": v, "agent_gain_per": p}
+                )
     return result
 
 
@@ -218,45 +270,70 @@ def _write_dishonest_results_to_csv(dis_data, csv_path):
                     agg_dis_data[numOfAgent][cut_pattern]
                 except:
                     agg_dis_data[numOfAgent][cut_pattern] = []
-                exp[cut_pattern] = {"sgi": exp[cut_pattern],
-                                    "sgAvg": np.average([sgi['agent_gain'] for sgi in exp[cut_pattern]]),
-                                    "sgAvg_per": np.average([sgi['agent_gain_per'] for sgi in exp[cut_pattern]]),
-                                    "sgMax": max([sgi['agent_gain'] for sgi in exp[cut_pattern]]),
-                                    "sgMax_per": max([sgi['agent_gain_per'] for sgi in exp[cut_pattern]])}
+                exp[cut_pattern] = {
+                    "sgi": exp[cut_pattern],
+                    "sgAvg": np.average(
+                        [sgi["agent_gain"] for sgi in exp[cut_pattern]]
+                    ),
+                    "sgAvg_per": np.average(
+                        [sgi["agent_gain_per"] for sgi in exp[cut_pattern]]
+                    ),
+                    "sgMax": max(
+                        [sgi["agent_gain"] for sgi in exp[cut_pattern]]
+                    ),
+                    "sgMax_per": max(
+                        [sgi["agent_gain_per"] for sgi in exp[cut_pattern]]
+                    ),
+                }
                 agg_dis_data[numOfAgent][cut_pattern].append(exp[cut_pattern])
 
         for cut_pattern in agg_dis_data[numOfAgent]:
             exp_list = agg_dis_data[numOfAgent][cut_pattern]
-            exp_sgAvg = np.average([exp['sgAvg'] for exp in exp_list])
-            exp_sgAvg_per = np.average([exp['sgAvg_per'] for exp in exp_list])
-            exp_sgAvg_StDev = stdev([exp['sgAvg'] for exp in exp_list])
-            exp_sgMax = np.average([exp['sgMax'] for exp in exp_list])
-            exp_sgMax_per = np.average([exp['sgMax_per'] for exp in exp_list])
-            exp_sgMax_StDev = stdev([exp['sgMax'] for exp in exp_list])
-            agg_dis_data[numOfAgent][cut_pattern] = {'sgAvg': exp_sgAvg,
-                                                     'sgAvg_per': exp_sgAvg_per,
-                                                     'sgAvgStdev': exp_sgAvg_StDev,
-                                                     'sgMax': exp_sgMax,
-                                                     'sgMax_per': exp_sgMax_per,
-                                                     'sgMaxStdev': exp_sgMax_StDev}
+            exp_sgAvg = np.average([exp["sgAvg"] for exp in exp_list])
+            exp_sgAvg_per = np.average([exp["sgAvg_per"] for exp in exp_list])
+            exp_sgAvg_StDev = stdev([exp["sgAvg"] for exp in exp_list])
+            exp_sgMax = np.average([exp["sgMax"] for exp in exp_list])
+            exp_sgMax_per = np.average([exp["sgMax_per"] for exp in exp_list])
+            exp_sgMax_StDev = stdev([exp["sgMax"] for exp in exp_list])
+            agg_dis_data[numOfAgent][cut_pattern] = {
+                "sgAvg": exp_sgAvg,
+                "sgAvg_per": exp_sgAvg_per,
+                "sgAvgStdev": exp_sgAvg_StDev,
+                "sgMax": exp_sgMax,
+                "sgMax_per": exp_sgMax_per,
+                "sgMaxStdev": exp_sgMax_StDev,
+            }
 
     # with open(in_path+'_sgRes', 'w') as json_file:
     # 	json.dump(agg_dis_data, json_file)
 
-    with open(csv_path, "w", newline='') as csv_file:
+    with open(csv_path, "w", newline="") as csv_file:
         csv_file_writer = csv.writer(csv_file)
         for numOfAgent in agg_dis_data:
             csv_file_writer.writerow([numOfAgent, "agents"])
             csv_file_writer.writerow(
-                ["Cut Pattern", "sgAvg", "sgAvg Improv(%)", "sgAvg stdev", "sgMax", "sgMax Improv(%)", "sgMax stdev"])
+                [
+                    "Cut Pattern",
+                    "sgAvg",
+                    "sgAvg Improv(%)",
+                    "sgAvg stdev",
+                    "sgMax",
+                    "sgMax Improv(%)",
+                    "sgMax stdev",
+                ]
+            )
             for cp in agg_dis_data[numOfAgent]:
-                csv_file_writer.writerow([cp,
-                                          agg_dis_data[numOfAgent][cp]['sgAvg'],
-                                          agg_dis_data[numOfAgent][cp]['sgAvg_per'],
-                                          agg_dis_data[numOfAgent][cp]['sgAvgStdev'],
-                                          agg_dis_data[numOfAgent][cp]['sgMax'],
-                                          agg_dis_data[numOfAgent][cp]['sgMax_per'],
-                                          agg_dis_data[numOfAgent][cp]['sgMaxStdev']])
+                csv_file_writer.writerow(
+                    [
+                        cp,
+                        agg_dis_data[numOfAgent][cp]["sgAvg"],
+                        agg_dis_data[numOfAgent][cp]["sgAvg_per"],
+                        agg_dis_data[numOfAgent][cp]["sgAvgStdev"],
+                        agg_dis_data[numOfAgent][cp]["sgMax"],
+                        agg_dis_data[numOfAgent][cp]["sgMax_per"],
+                        agg_dis_data[numOfAgent][cp]["sgMaxStdev"],
+                    ]
+                )
             csv_file_writer.writerow([])
 
 
@@ -266,9 +343,19 @@ def get_agents_for_exp(log_file):
 
 
 def get_TTC_results_from_log(agents, log):
-    SE = SimEnv(log.iSimulation,log.noiseProportion,agents,[],[],log.result_folder,[])
+    SE = SimEnv(
+        log.iSimulation,
+        log.noiseProportion,
+        agents,
+        [],
+        [],
+        log.result_folder,
+        [],
+    )
     org_alloc = log.recreate_allocation()
-    result = SE.parseResultsFromPartition(log.algName, log.method, org_alloc, log.run_duration, "", False)
+    result = SE.parse_results_from_partition(
+        log.algName, log.method, org_alloc, log.run_duration, "", False
+    )
     for p in org_alloc:
         p.clear()
         del p
@@ -276,7 +363,7 @@ def get_TTC_results_from_log(agents, log):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # in_path = 'results/2019-08-27T19-45-25/IsraelMaps06_2019-08-29T10-08-22_NoiseProportion_0.6_30_exp/dishonest_data.json'
     # with open(in_path, encoding="utf8") as in_file:

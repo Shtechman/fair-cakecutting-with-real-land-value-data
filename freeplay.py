@@ -4,16 +4,16 @@ import sys
 
 import numpy as np
 
-from utils.AllocatedPiece import AllocatedPiece
-from utils.SimulationEnvironment import SimulationEnvironment as SimEnv
+from utils.allocated_piece import AllocatedPiece
+from utils.simulation_environment import SimulationEnvironment as SimEnv
 
-from utils.Agent import Agent
-from utils.MapFileHandler import read_valueMaps_from_csv, plot_partition
-from utils.Types import CutPattern, AlgType, CutDirection
+from utils.agent import Agent
+from utils.mapfile_handler import read_value_maps_from_csv, plot_partition
+from utils.types import CutPattern, AlgType, CutDirection
 
 
 def extract_num_of_agents(maps_csv):
-    with open(maps_csv, "r", newline='') as csv_file:
+    with open(maps_csv, "r", newline="") as csv_file:
         csv_file_reader = csv.reader(csv_file)
         num_of_agents = None
         for line in csv_file_reader:
@@ -26,7 +26,7 @@ def extract_num_of_agents(maps_csv):
 
 
 def extract_cut_patterns(maps_csv):
-    with open(maps_csv, "r", newline='') as csv_file:
+    with open(maps_csv, "r", newline="") as csv_file:
         csv_file_reader = csv.reader(csv_file)
         cutPattern = []
         cutPattern_list = False
@@ -42,20 +42,29 @@ def extract_cut_patterns(maps_csv):
                     cutPattern_list = True
                 elif cutPattern_list:
                     for entry in line:
-                        cutPattern.append(next(value for name,value in vars(CutPattern).items() if name in entry))
+                        cutPattern.append(
+                            next(
+                                value
+                                for name, value in vars(CutPattern).items()
+                                if name in entry
+                            )
+                        )
                     break
                 else:
                     freePlay_cuts = True
                     freeplay_cuts_list.append(line)
             elif freePlay_cuts and line[0].isdigit():
                 for seq in freeplay_cuts_list:
-                    for i,dir in enumerate(seq):
-                        if 'hor' in dir.lower():
+                    for i, dir in enumerate(seq):
+                        if "hor" in dir.lower():
                             seq[i] = CutDirection.Horizontal
-                        elif 'ver' in dir.lower():
+                        elif "ver" in dir.lower():
                             seq[i] = CutDirection.Vertical
                         else:
-                            raise ValueError("did not recognize direction %s, please use either hor or ver." % dir)
+                            raise ValueError(
+                                "did not recognize direction %s, please use either hor or ver."
+                                % dir
+                            )
                 return freeplay_cuts_list
             else:
                 continue
@@ -66,14 +75,22 @@ def extract_cut_patterns(maps_csv):
 def extract_agents(maps_csv):
 
     num_of_agents = extract_num_of_agents(testCsvMaps)
-    return [Agent(maps_csv, free_play_mode=True, free_play_idx=i) for i in range(num_of_agents)]
+    return [
+        Agent(maps_csv, free_play_mode=True, free_play_idx=i)
+        for i in range(num_of_agents)
+    ]
 
 
 def print_results(r, p, agents, plot):
-    keys_to_print = ['utilitarianGain', 'egalitarianGain', 'largestEnvy',
-                     'smallestFaceRatio', 'averageFaceRatio']
-    print("%s Agents in simulation" % r['NumberOfAgents'])
-    print("Cut pattern tested %s" % r['Method'])
+    keys_to_print = [
+        "utilitarianGain",
+        "egalitarianGain",
+        "largestEnvy",
+        "smallestFaceRatio",
+        "averageFaceRatio",
+    ]
+    print("%s Agents in simulation" % r["NumberOfAgents"])
+    print("Cut pattern tested %s" % r["Method"])
     print("\n#PARTITION")
     [print(p[i]) for i in range(len(p))]
     print("\n#METRICS")
@@ -83,18 +100,20 @@ def print_results(r, p, agents, plot):
     rows = a.valueMapRows
     cols = a.valueMapCols
 
-    base_map = [[0]*cols]*rows
+    base_map = [[0] * cols] * rows
 
     """plot a visualization of the simulation"""
     if plot:
         if isinstance(p, dict):
             for part in p.values():
-                plot_partition(base_map, [str(partition) for partition in part])
+                plot_partition(
+                    base_map, [str(partition) for partition in part]
+                )
         else:
             plot_partition(base_map, [str(partition) for partition in p])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     """ =================== Sim Data Section =================== """
 
@@ -104,7 +123,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         testCsvMaps = argv[1]
     else:
-        testCsvMaps = 'data/testFolder/freePlay.csv'
+        testCsvMaps = "data/testFolder/freePlay.csv"
     print("Maps taken from %s" % testCsvMaps)
     """-------------------------------------------------"""
 
@@ -122,7 +141,7 @@ if __name__ == '__main__':
     if len(argv) > 3:
         testResultPath = argv[3]
     else:
-        testResultPath = 'data/testFolder/'
+        testResultPath = "data/testFolder/"
     """-------------------------------------------------"""
 
     """to stop visualization of results set plot to False"""
@@ -149,10 +168,14 @@ if __name__ == '__main__':
     results = []
     partitions = []
     for cut_pattern in cut_patterns_to_test:
-        res, par = env.runHonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
-        #res, par = env.runDishonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
-        for r, p in zip(res,par):
-            print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        res, par = env.run_honest_simulation(
+            AlgType.EvenPaz, cut_pattern, log=False
+        )
+        # res, par = env.runDishonestSimulation(AlgType.EvenPaz, cut_pattern, log=False)
+        for r, p in zip(res, par):
+            print(
+                "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+            )
             if type(p) is AllocatedPiece:
                 print_results(r, par, agents, plot)
                 partitions.append(par)
@@ -160,17 +183,36 @@ if __name__ == '__main__':
                 print_results(r, par[p], agents, plot)
                 partitions.append(par)[p]
             results.append(r)
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print(
+            "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        )
 
-        print("\n+++++++++++++++++++++++++++++ All Results ++++++++++++++++++++++++++++++\n")
+        print(
+            "\n+++++++++++++++++++++++++++++ All Results ++++++++++++++++++++++++++++++\n"
+        )
 
-    partition_re = "Anonymous\(([^\)]*)[^\[]*\[([^\]]*)\][^\(]*\(Ratio ([^\)]*)"
+    partition_re = (
+        "Anonymous\(([^\)]*)[^\[]*\[([^\]]*)\][^\(]*\(Ratio ([^\)]*)"
+    )
     for r, p in zip(results, partitions):
-        print('%s,%s,%s' % tuple(re.findall("Direction.([^:]*)", r['Method'])))
-        print('EG:',  r['egalitarianGain'],
-              ', UG:',  r['utilitarianGain'],
-              ', LE:',  r['largestEnvy'],
-              ', AFR:', r['averageFaceRatio'],
-              ', SFR:', r['smallestFaceRatio'])
-        [print('Agent %s Got [%s] - Face Ratio %s' % re.findall(partition_re, str(a))[0]) for a in sorted(p, key=str)]
+        print("%s,%s,%s" % tuple(re.findall("Direction.([^:]*)", r["Method"])))
+        print(
+            "EG:",
+            r["egalitarianGain"],
+            ", UG:",
+            r["utilitarianGain"],
+            ", LE:",
+            r["largestEnvy"],
+            ", AFR:",
+            r["averageFaceRatio"],
+            ", SFR:",
+            r["smallestFaceRatio"],
+        )
+        [
+            print(
+                "Agent %s Got [%s] - Face Ratio %s"
+                % re.findall(partition_re, str(a))[0]
+            )
+            for a in sorted(p, key=str)
+        ]
         print()
