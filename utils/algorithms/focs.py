@@ -9,10 +9,10 @@
  */
 """
 
-from utils.allocated_piece import AllocatedPiece
-from utils.cutter import EPCutter
-from utils.measurements import Measurements as Measure
-from utils.types import CutPattern, CutDirection
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.cutters.even_paz_cutter import EPCutter
+from utils.simulation.measurements import Measurements as Measure
+from utils.simulation.cc_types import CutPattern, CutDirection
 
 
 class AlgorithmFOCS:

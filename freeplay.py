@@ -2,14 +2,12 @@ import csv
 import re
 import sys
 
-import numpy as np
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.simulation.simulation_environment import SimulationEnvironment as SimEnv
 
-from utils.allocated_piece import AllocatedPiece
-from utils.simulation_environment import SimulationEnvironment as SimEnv
-
-from utils.agent import Agent
-from utils.mapfile_handler import read_value_maps_from_csv, plot_partition
-from utils.types import CutPattern, AlgType, CutDirection
+from utils.simulation.agent import Agent
+from utils.maps.map_plotters import plot_partition
+from utils.simulation.cc_types import CutPattern, AlgType, CutDirection
 
 
 def extract_num_of_agents(maps_csv):

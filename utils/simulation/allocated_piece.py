@@ -8,7 +8,7 @@
 """
 from functools import lru_cache
 
-from utils.types import CutDirection
+from utils.simulation.cc_types import CutDirection
 
 
 class Piece:

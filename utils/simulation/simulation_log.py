@@ -4,8 +4,9 @@ import os
 import pickle
 import re
 
-from utils.agent import ShadowAgent, Agent
-from utils.allocated_piece import AllocatedPiece, Piece
+from utils.simulation.agent import ShadowAgent, Agent
+from utils.simulation.allocated_piece import AllocatedPiece, Piece
+from utils.rename_unpickler import renamed_load
 
 
 class SimulationLog:
@@ -153,8 +154,8 @@ class SimulationLog:
 
     @staticmethod
     def load_log_file(log_file_path):
-        with open(log_file_path, "r") as log_file:
-            log = pickle.load(log_file)
+        with open(log_file_path, 'rb') as log_file:
+            log = renamed_load(log_file,'utils.simulation_log','utils.simulation.simulation_log')
         return log
 
     @staticmethod

@@ -1,13 +1,11 @@
-import random
-
 import numpy as np
 
-from utils.types import CutPattern, CutDirection
+from utils.simulation.cc_types import CutPattern, CutDirection
 
 SMALLEST_NUMBER = 0.0000000000001
 
 
-class Cutter:
+class BaseCutter:
     def __init__(
         self,
         cut_pattern,
@@ -38,7 +36,7 @@ class Cutter:
         return self.__repr__()
 
     def __copy__(self):
-        return Cutter(
+        return BaseCutter(
             self.cut_pattern,
             self.cut_query,
             self.cut_direction,
@@ -47,7 +45,7 @@ class Cutter:
 
     def get_first_part_cutter(self):
         if self.freeplay_mode:
-            return Cutter(
+            return BaseCutter(
                 self.first_part_cut_pattern,
                 original_cut_pattern=self.original_cut_pattern,
             )
@@ -56,7 +54,7 @@ class Cutter:
 
     def get_second_part_cutter(self):
         if self.freeplay_mode:
-            return Cutter(
+            return BaseCutter(
                 self.second_part_cut_pattern,
                 original_cut_pattern=self.original_cut_pattern,
             )
@@ -531,286 +529,3 @@ class Cutter:
             return
 
 
-class EPCutter(Cutter):
-    def __init__(
-        self,
-        cut_pattern,
-        cut_query=None,
-        cut_direction=None,
-        original_cut_pattern=None,
-    ):
-        super(EPCutter, self).__init__(
-            cut_pattern, cut_query, cut_direction, original_cut_pattern
-        )
-
-        if self.freeplay_mode:
-            if len(self.cut_pattern) < 1:
-                self.cut_pattern = self.original_cut_pattern
-            self.first_part_cut_pattern = self.cut_pattern[2::2]
-            self.second_part_cut_pattern = self.cut_pattern[1::2]
-
-    def __copy__(self):
-        return EPCutter(
-            self.cut_pattern,
-            self.cut_query,
-            self.cut_direction,
-            self.original_cut_pattern,
-        )
-
-    def get_first_part_cutter(self):
-        if self.freeplay_mode:
-            return EPCutter(
-                self.first_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def get_second_part_cutter(self):
-        if self.freeplay_mode:
-            return EPCutter(
-                self.second_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def get_number_of_agents_in_first_partition(self, num_of_agents):
-        """ For Even Paz, first partition holds half of the agents """
-        return int(np.ceil(num_of_agents / 2))
-
-    def _calculate_optional_cut_location(self, margin_i_from, margin_i_to):
-        """ For Even Paz, cutting is made at the middle of the margin """
-        return (margin_i_from + margin_i_to) / 2.0
-
-    def _calculate_best_cutmark(
-        self, allocation, query_direction, honest_cut_marks
-    ):
-        if len(honest_cut_marks) % 2 > 0:
-            middle_idx = int(np.floor(len(honest_cut_marks) / 2))
-        else:
-            raise ValueError(
-                "Odd number of agents yet to be supported"
-            )  # todo: add support for odd num of agents
-
-        honest_cut_marks.sort()
-
-        query_halfcut = honest_cut_marks[middle_idx]
-        low_half = allocation.subcut(
-            allocation.get_directional_i_from(query_direction),
-            query_halfcut,
-            query_direction,
-        )
-
-        high_half = allocation.subcut(
-            query_halfcut,
-            allocation.get_directional_i_to(query_direction),
-            query_direction,
-        )
-
-        if low_half.get_value() > high_half.get_value():
-            return query_halfcut - SMALLEST_NUMBER
-        else:
-            return query_halfcut + SMALLEST_NUMBER
-
-
-class LDCutter(Cutter):
-    def __init__(
-        self,
-        cut_pattern,
-        cut_query=None,
-        cut_direction=None,
-        original_cut_pattern=None,
-    ):
-        super(LDCutter, self).__init__(
-            cut_pattern, cut_query, cut_direction, original_cut_pattern
-        )
-
-        if self.freeplay_mode:
-            if len(self.cut_pattern) < 1:
-                self.cut_pattern = self.original_cut_pattern
-            self.first_part_cut_pattern = self.cut_pattern[0]
-            self.second_part_cut_pattern = self.cut_pattern[1:]
-
-    def __copy__(self):
-        return LDCutter(
-            self.cut_pattern,
-            self.cut_query,
-            self.cut_direction,
-            self.original_cut_pattern,
-        )
-
-    def get_first_part_cutter(self):
-        if self.freeplay_mode:
-            return LDCutter(
-                self.first_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def get_second_part_cutter(self):
-        if self.freeplay_mode:
-            return LDCutter(
-                self.second_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def _divider_chooser_allocation(self, allocations):
-        divider_index = random.randint(0, 1)
-        chooser_index = 1 - divider_index
-        chooser_agent = allocations[chooser_index].get_agent()
-        divider_piece = allocations[divider_index]
-        divider_allocations = [
-            divider_piece.__copy__(),
-            divider_piece.__copy__(),
-        ]
-        first_piece, second_piece = super()._allocate_cuts(
-            divider_allocations, 2, 1
-        )
-        chooser_allocations = [
-            first_piece[0].get_allocated_piece(chooser_agent),
-            second_piece[0].get_allocated_piece(chooser_agent),
-        ]
-        if (
-            chooser_allocations[0].get_relative_value()
-            > chooser_allocations[1].get_relative_value()
-        ):
-            return [chooser_allocations[0]], second_piece
-        else:
-            return first_piece, [chooser_allocations[1]]
-
-    def _allocate_cuts(
-        self,
-        allocations,
-        number_of_agents,
-        number_of_agents_in_first_partition,
-    ):
-        if number_of_agents > 2:
-            (
-                first_part_allocations,
-                second_part_allocations,
-            ) = super()._allocate_cuts(
-                allocations,
-                number_of_agents,
-                number_of_agents_in_first_partition,
-            )
-        elif number_of_agents == 2:
-            (
-                first_part_allocations,
-                second_part_allocations,
-            ) = self._divider_chooser_allocation(allocations)
-        else:
-            raise ValueError("Division is only possible from 2 agents and up.")
-
-        return first_part_allocations, second_part_allocations
-
-    def get_number_of_agents_in_first_partition(self, num_of_agents):
-        """ For Last Diminisher, first partition holds only one agent (with the smallest mark) """
-        return 1
-
-    def _calculate_optional_cut_location(self, margin_i_from, margin_i_to):
-        """ For Last Diminisher, cutting is made at the smallest proposed cut """
-        return margin_i_from
-
-    def _calculate_best_cutmark(
-        self, allocation, query_direction, honest_cut_marks
-    ):
-        honest_cut_marks.sort()
-        query_cutmark = honest_cut_marks[0]
-        raise NotImplementedError(
-            "Strategic play for LastDiminisher is not yet implemented."
-        )
-        # todo: implement a strategic play - note that if query_cutmark results in a piece better then 1/n of the
-        #  cake than the player can claim (query_cutmark - SMALLEST_NUMBER) and if not, (query_cutmark +
-        #  SMALLEST_NUMBER).
-
-
-class SimpleCutter(Cutter):
-    def __init__(
-        self,
-        cut_pattern,
-        cut_query=None,
-        cut_direction=None,
-        original_cut_pattern=None,
-    ):
-        super(SimpleCutter, self).__init__(
-            cut_pattern, cut_query, cut_direction, original_cut_pattern
-        )
-
-        if self.freeplay_mode:
-            if len(self.cut_pattern) < 1:
-                self.cut_pattern = self.original_cut_pattern
-            self.first_part_cut_pattern = self.cut_pattern[2::2]
-            self.second_part_cut_pattern = self.cut_pattern[1::2]
-        elif cut_pattern not in [CutPattern.Hor, CutPattern.Ver]:
-            raise ValueError(
-                "NoPattern Cutter can either cut horizontally or vertically %s is not supported."
-                % cut_pattern
-            )
-
-    def __copy__(self):
-        return SimpleCutter(
-            self.cut_pattern,
-            self.cut_query,
-            self.cut_direction,
-            self.original_cut_pattern,
-        )
-
-    def get_first_part_cutter(self):
-        if self.freeplay_mode:
-            return SimpleCutter(
-                self.first_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def get_second_part_cutter(self):
-        if self.freeplay_mode:
-            return SimpleCutter(
-                self.second_part_cut_pattern,
-                original_cut_pattern=self.original_cut_pattern,
-            )
-        else:
-            return self.__copy__()
-
-    def get_number_of_agents_in_first_partition(self, number_of_agents):
-        """ For NoPattern Cutter, first partition holds half of the agents """
-        return int(np.ceil(number_of_agents / 2))
-
-    def _calculate_optional_cut_location(self, margin_iFrom, margin_iTo):
-        """ For NoPattern cutter, cutting is made at the middle of the margin """
-        return (margin_iFrom + margin_iTo) / 2.0
-
-    def _calculate_best_cutmark(
-        self, allocation, query_direction, honest_cut_marks
-    ):
-        if len(honest_cut_marks) % 2 > 0:
-            middle_idx = int(np.floor(len(honest_cut_marks) / 2))
-        else:
-            raise ValueError(
-                "Odd number of agents yet to be supported"
-            )  # todo: add support for odd num of agents
-
-        honest_cut_marks.sort()
-        query_halfcut = honest_cut_marks[middle_idx]
-
-        low_half = allocation.subcut(
-            allocation.get_directional_i_from(query_direction),
-            query_halfcut,
-            query_direction,
-        )
-
-        high_half = allocation.subcut(
-            query_halfcut,
-            allocation.get_directional_i_to(query_direction),
-            query_direction,
-        )
-
-        if low_half.get_value() > high_half.get_value():
-            return query_halfcut - SMALLEST_NUMBER
-        else:
-            return query_halfcut + SMALLEST_NUMBER

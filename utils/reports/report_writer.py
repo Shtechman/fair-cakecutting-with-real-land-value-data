@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from statistics import stdev
 import numpy as np
-from utils.report_generator import preprocess_results
+from utils.reports.report_generator import preprocess_results
 
 
 def write_graph_method_per_measure_report_csv(

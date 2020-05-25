@@ -1,4 +1,4 @@
-from utils.graph import *
+from utils.ttc.graph import *
 
 """**
     * A util script implementing TTC logic.

@@ -10,9 +10,9 @@
 """
 from itertools import product
 
-from utils.allocated_piece import AllocatedPiece
-from utils.cutter import EPCutter
-from utils.types import CutPattern, CutDirection
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.cutters.even_paz_cutter import EPCutter
+from utils.simulation.cc_types import CutPattern, CutDirection
 
 
 class AlgorithmEvenPaz:

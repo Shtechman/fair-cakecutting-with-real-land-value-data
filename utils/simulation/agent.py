@@ -3,11 +3,11 @@ from functools import lru_cache
 
 import numpy as np
 
-from utils.mapfile_handler import (
+from utils.maps.map_handler import (
     read_value_maps_from_file,
     read_value_maps_from_csv,
 )
-from utils.types import CutDirection
+from utils.simulation.cc_types import CutDirection
 
 
 class ShadowAgent:

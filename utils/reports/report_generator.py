@@ -1,6 +1,6 @@
 from statistics import mean, stdev
 
-from utils.types import AggregationType
+from utils.simulation.cc_types import AggregationType
 
 try:
     from scipy.stats import t

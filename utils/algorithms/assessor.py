@@ -12,9 +12,9 @@
 from functools import lru_cache
 from math import log, ceil, floor
 
-from utils.allocated_piece import AllocatedPiece
-from utils.cutter import SimpleCutter
-from utils.types import CutPattern
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.cutters.simple_cutter import SimpleCutter
+from utils.simulation.cc_types import CutPattern
 
 
 class AlgorithmAssessor:

@@ -1,12 +1,11 @@
 import itertools
 import json
 import math
-from statistics import mean, stdev
 
 import matplotlib.pyplot as pyplot
 import numpy as np
 
-from utils.types import AggregationType, AlgType, CutPattern
+from utils.simulation.cc_types import AggregationType, AlgType, CutPattern
 
 
 class Plotter:
@@ -201,60 +200,6 @@ class Plotter:
         pyplot.title(title)
         return fig_num
 
-
-def calculate_avg_result(result_list):
-    keys_to_average = [
-        "egalitarianGain",
-        "utilitarianGain",
-        "averageFaceRatio",
-        "largestFaceRatio",
-        "largestEnvy",
-    ]
-    if result_list:
-        result = {}
-        for key in result_list[0]:
-            if key in keys_to_average:
-                key_list_values = list(map(lambda res: res[key], result_list))
-                avg_key = key + "_Avg"
-                std_key = key + "_StDev"
-                result[avg_key] = mean(key_list_values)
-                result[std_key] = stdev(key_list_values)
-            else:
-                result[key] = result_list[-1][key]
-                if key == "Method":
-                    result[key] = result[key].replace(
-                        result_list[-1]["Algorithm"], ""
-                    )
-        return result
-    else:
-        return {}
-
-
-def calculate_int_result(algorithm_res, assessor_res):
-    keys_to_integrate = [
-        "egalitarianGain_Avg",
-        "utilitarianGain_Avg",
-        "averageFaceRatio_Avg",
-        "largestFaceRatio_Avg",
-        "largestEnvy_Avg",
-    ]
-    if algorithm_res:
-        result = {}
-        for key in algorithm_res:
-            if key in keys_to_integrate:
-                result[key] = algorithm_res[key] - assessor_res[key]
-            else:
-                result[key] = algorithm_res[key]
-                if key == "Method":
-                    result[key] = result[key].replace(
-                        algorithm_res["Algorithm"], ""
-                    )
-                if key == "Algorithm":
-                    result[key] = "Integrated"
-        return result
-    else:
-        return {}
-    pass
 
 
 if __name__ == "__main__":

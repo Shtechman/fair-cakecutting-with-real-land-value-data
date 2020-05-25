@@ -3,5 +3,5 @@ results/*
 venv/*
 node_modules/*
 .idea/*
-utils/__pycache__/*
+**/__pycache__/*
 *.py.orig

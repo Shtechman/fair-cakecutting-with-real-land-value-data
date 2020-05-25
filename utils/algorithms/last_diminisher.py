@@ -10,12 +10,12 @@
 """
 from itertools import product
 
-from utils.allocated_piece import AllocatedPiece
-from utils.cutter import LDCutter
-from utils.types import CutPattern, CutDirection
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.cutters.last_diminisher_cutter import LDCutter
+from utils.simulation.cc_types import CutPattern, CutDirection
 
 
-# todo: this class can be refactored because it is very similar to algorithm_evenpaz.py
+# todo: this class can be refactored because it is very similar to even_paz.py
 class AlgorithmLastDiminisher:
     def run(self, agents, cut_pattern):
 

@@ -2,15 +2,16 @@ import csv
 import os
 from time import time
 
-from utils.algorithm_assessor import AlgorithmSimpleAssessor
-from utils.algorithm_dishonest import AlgorithmDishonest
-from utils.algorithm_evenpaz import AlgorithmEvenPaz
-from utils.algorithm_focs import AlgorithmFOCS
-from utils.algorithm_lastdiminisher import AlgorithmLastDiminisher
-from utils.measurements import Measurements as Measure
-from utils.simulation_log import SimulationLog
-from utils.top_trading_cycle import top_trading_cycles
-from utils.types import AlgType, RunType, AggregationType, CutPattern
+from utils.algorithms.assessor import AlgorithmSimpleAssessor
+from utils.algorithms.strategic import AlgorithmDishonest
+from utils.algorithms.even_paz import AlgorithmEvenPaz
+from utils.algorithms.focs import AlgorithmFOCS
+from utils.algorithms.last_diminisher import AlgorithmLastDiminisher
+from utils.maps.map_plotters import plot_all_plots_from_log_object
+from utils.simulation.measurements import Measurements as Measure
+from utils.simulation.simulation_log import SimulationLog
+from utils.ttc.top_trading_cycle import top_trading_cycles
+from utils.simulation.cc_types import AlgType, RunType, AggregationType, CutPattern
 
 
 class SimulationEnvironment:
@@ -196,6 +197,7 @@ class SimulationEnvironment:
                 comment,
             )
             sim_log.write_log_file()
+            plot_all_plots_from_log_object(sim_log)
 
         """ Value of piece compared to whole cake (in the eyes of the agent) """
         partition.sort(key=lambda p: p.get_agent().get_map_file_number())
@@ -210,15 +212,6 @@ class SimulationEnvironment:
 
         smallest_face_ratio = Measure.get_smallest_face_ratio(partition)
         average_face_ratio = Measure.get_average_face_ratio(partition)
-
-        # todo: remove calculations of largest_face_ratio, average_inheritance_gain, largest_inheritance_gain from code.
-        largest_face_ratio = Measure.get_largest_face_ratio(partition)
-        average_inheritance_gain = Measure.calculate_average_inheritance_gain(
-            self.num_of_agents, relative_values
-        )
-        largest_inheritance_gain = Measure.calculate_largest_inheritance_gain(
-            self.num_of_agents, relative_values
-        )
 
         ttc_partition = self.top_trading_cycle_repartition(partition)
         ttc_relative_values_by_agent = Measure.calculate_relative_values(
@@ -244,10 +237,10 @@ class SimulationEnvironment:
             "utilitarianGain": utilitarian_gain,
             "ttc_utilitarianGain": ttc_utilitarian_gain,
             "averageFaceRatio": average_face_ratio,
-            "largestFaceRatio": largest_face_ratio,
+            "largestFaceRatio": 0,        # todo: this field is not used, should be refactored
             "smallestFaceRatio": smallest_face_ratio,
-            "averageInheritanceGain": average_inheritance_gain,
-            "largestInheritanceGain": largest_inheritance_gain,
+            "averageInheritanceGain": 0,  # todo: this field is not used, should be refactored
+            "largestInheritanceGain": 0,  # todo: this field is not used, should be refactored
             "largestEnvy": largest_envy,
             "ttc_largestEnvy": ttc_largest_envy,
             "experimentDurationSec": run_duration,

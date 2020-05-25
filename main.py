@@ -9,21 +9,21 @@ import math
 import os
 import sys
 
-from utils.mapfile_handler import (
+from utils.maps.map_handler import (
     get_value_maps_from_index,
     get_original_map_from_index,
     get_dataset_name_from_index,
 )
-from utils.plotter import Plotter
-from utils.report_writer import (
+from utils.reports.report_plotter import Plotter
+from utils.reports.report_writer import (
     create_exp_folder,
     generate_exp_name,
     write_results_to_folder,
     create_run_folder,
 )
-from utils.types import AggregationType, AlgType, CutPattern, RunType
-from utils.simulation_environment import SimulationEnvironment as SimEnv
-from utils.agent import Agent
+from utils.simulation.cc_types import AggregationType, AlgType, CutPattern, RunType
+from utils.simulation.simulation_environment import SimulationEnvironment as SimEnv
+from utils.simulation.agent import Agent
 import multiprocessing as mp
 
 plotter = Plotter()
@@ -49,7 +49,7 @@ alg_types = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
 experiment_sets = [
     {
         "index_file": "data/IsraelMaps02/index.txt",
-        "noise_proportion": [0.6],
+        "noise_proportion": [0.2],
         "num_of_agents": [4, 8],
         "run_types": [RunType.Honest],
     },

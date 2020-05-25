@@ -1,33 +1,18 @@
 #!python3
 import csv
-import json
-import os
-import pickle
 import re
-import sys
-import urllib
 from statistics import stdev
-from time import sleep
-from urllib.parse import quote, unquote
-from xml.etree import ElementTree
 
-from utils.simulation_environment import SimulationEnvironment as SimEnv
-from utils.mapfile_handler import plot_partition_from_path
-from utils.measurements import Measurements as Measure
-import multiprocessing as mp
-import ast
+from utils.simulation.simulation_environment import SimulationEnvironment as SimEnv
+from utils.simulation.measurements import Measurements as Measure
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as np
 
 # import requests
 
-from utils.agent import Agent
-from utils.allocated_piece import AllocatedPiece
-from utils.top_trading_cycle import top_trading_cycles
-from utils.types import AggregationType
-from utils.simulation_log import SimulationLog
+from utils.simulation.agent import Agent
+from utils.simulation.allocated_piece import AllocatedPiece
+from utils.simulation.cc_types import AggregationType
 
 
 def coor_to_list(coor_value_list, valueKey):
