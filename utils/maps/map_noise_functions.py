@@ -28,7 +28,7 @@ def hotspot_noise_function(
     ]
 
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
-    return new_map
+    return new_map, "_HS%s_%s" % hotspot_center
 
 
 def nonzero_uniform_noise_function(
@@ -44,7 +44,7 @@ def nonzero_uniform_noise_function(
         for r in range(rows)
     ]
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
-    return new_map
+    return new_map,""
 
 
 def uniform_noise_function(
@@ -66,7 +66,7 @@ def uniform_noise_function(
     ]
 
     new_map = normalize_map(cols, new_map, normalized_sum, rows)
-    return new_map
+    return new_map,""
 
 
 def normalize_map(cols, new_map, normalized_sum, rows):
@@ -141,18 +141,20 @@ def generate_value_maps_to_file(
     for i in range(num_of_maps):
         start = end
         output_path = "%s/%s_valueMap_noise%s.txt" % (folder, i, noise)
-        paths.append(output_path)
-        print("\tstart saving value maps to file %s" % output_path)
+
+        print("\tstart saving value maps to file #%s" % i)
+        if random_maps:
+            new_map = random_values(rows, cols, noise, normalized_sum)
+            if i == 0:
+                original_map_file = output_path
+        else:
+            new_map, label = noise_function(
+                original_map_data, noise, normalized_sum, max_value
+            )
+            output_path = output_path.replace(".txt", label+".txt")
         with open(output_path, "wb") as object_file:
-            if random_maps:
-                new_map = random_values(rows, cols, noise, normalized_sum)
-                if i == 0:
-                    original_map_file = output_path
-            else:
-                new_map = noise_function(
-                    original_map_data, noise, normalized_sum, max_value
-                )
             pickle.dump(new_map, object_file)
+        paths.append(output_path)
         end = time.time()
         print("\t\tmap %s creation time was %s seconds" % (i, end - start))
 

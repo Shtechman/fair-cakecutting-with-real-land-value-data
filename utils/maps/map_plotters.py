@@ -146,7 +146,21 @@ def _extract_partition_plots(partition_data):
     return partition_plots
 
 
+def plot_map(path: str):
+    with open(path, "rb") as mapfile:
+        partition_map = pickle.load(mapfile)
+    fig, ax = plt.subplots(1)
+    ax.imshow(partition_map, cmap="hot")
+    if "_HS" in path:
+        hotspot_center = path.split("_HS")[-1].replace(".txt","").split("_")
+        hotspot = patches.Circle((float(hotspot_center[0]),float(hotspot_center[1])), 10, edgecolor="g", facecolor="g")
+        ax.add_patch(hotspot)
+    plt.axis([0, len(partition_map[0]), len(partition_map), 0])
+    plt.show()
+
+
 if __name__ == "__main__":
+    plot_map("D:/MSc/221_valueMap_noise0.6_HS100_200.txt")
     plot_partition_from_log_path(
         '../../results/2020-02-14T18-33-34/IsraelMaps02_2020-02-14T18-33-37_NoiseProportion_0.6_2_exp/logs/82_Honest_FOCS_NoPatternUV.log')
     plot_all_plots_from_log_path(
