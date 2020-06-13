@@ -150,7 +150,8 @@ class Agent(ShadowAgent):
         )
 
         if row_value >= wanted_sum:
-            return i_from_row + (wanted_sum / row_value)
+            percentage_from_row = (1-i_from_row+from_row_floor)*(wanted_sum / row_value)
+            return i_from_row + percentage_from_row
 
         wanted_sum -= row_value
         for i in range(from_row_floor + 1, self.value_map_row_count):
@@ -177,7 +178,8 @@ class Agent(ShadowAgent):
         )
 
         if col_value >= wanted_sum:
-            return i_from_col + (wanted_sum / col_value)
+            percentage_from_col = (1-i_from_col+from_col_floor)*(wanted_sum / col_value)
+            return i_from_col + percentage_from_col
 
         wanted_sum -= col_value
         for i in range(from_col_floor + 1, self.value_map_col_count):
@@ -228,6 +230,17 @@ class Agent(ShadowAgent):
         return sum_of_subset
 
     @lru_cache()
+    def evaluate_cell_query(self, row, col):
+        # self.loadValueMap()
+        if row < 0 or row > self.value_map_row_count:
+            raise ValueError("row out of range: " + str(row))
+        if col < 0 or col > self.value_map_col_count:
+            raise ValueError("col out of range: " + str(col))
+        cell_value = self.locally_loaded_value_map[row][col]
+        # self.cleanMemory()
+        return cell_value
+
+    @lru_cache()
     def mark_query_for_given_value(
         self, i_from, i_range_from, i_range_to, value, direction
     ):
@@ -245,6 +258,10 @@ class Agent(ShadowAgent):
     @lru_cache()
     def evaluation_of_cake(self):
         return self.entire_cake_value
+
+    @lru_cache()
+    def evaluation_cell_bid(self, row, col):
+        return self.evaluate_cell_query(row, col)/self.evaluation_of_cake()
 
     def piece_by_evaluation(self, pieces):
         """ pieces = {1: first_piece, ... , n: nth_piece} """

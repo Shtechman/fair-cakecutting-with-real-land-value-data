@@ -3,6 +3,7 @@ import os
 from time import time
 
 from utils.algorithms.assessor import AlgorithmSimpleAssessor
+from utils.algorithms.highest_bidder import AlgorithmHighestBidder
 from utils.algorithms.strategic import AlgorithmDishonest
 from utils.algorithms.even_paz import AlgorithmEvenPaz
 from utils.algorithms.focs import AlgorithmFOCS
@@ -197,7 +198,7 @@ class SimulationEnvironment:
                 comment,
             )
             sim_log.write_log_file()
-            plot_all_plots_from_log_object(sim_log)
+            # plot_all_plots_from_log_object(sim_log)  # todo: do not use log file, use partition directly.
 
         """ Value of piece compared to whole cake (in the eyes of the agent) """
         partition.sort(key=lambda p: p.get_agent().get_map_file_number())
@@ -291,36 +292,39 @@ class SimulationEnvironment:
             ]
 
     def run_simulation(self, alg_type, run_type, cut_pattern, log=True):
-        time_start = time()
-        algorithm = self.get_algorithm(alg_type, run_type)
-        partition = algorithm.run(self.get_agents(), cut_pattern)
-        time_end = time()
+        if alg_type == AlgType.HighestBidder:
+            result = self.run_highest_bidder()
+        else:
+            time_start = time()
+            algorithm = self.get_algorithm(alg_type, run_type)
+            partition = algorithm.run(self.get_agents(), cut_pattern)
+            time_end = time()
 
-        run_duration = time_end - time_start
+            run_duration = time_end - time_start
 
-        alg_name = algorithm.get_algorithm_type()
-        alg_name = (
-            "{}_{}".format("Honest", alg_name)
-            if run_type is RunType.Honest
-            else alg_name
-        )
+            alg_name = algorithm.get_algorithm_type()
+            alg_name = (
+                "{}_{}".format("Honest", alg_name)
+                if run_type is RunType.Honest
+                else alg_name
+            )
 
-        try:
-            method = "{}_{}".format(alg_name, cut_pattern.name)
-        except:
-            method = "{}_{}".format(alg_name, cut_pattern)
+            try:
+                method = "{}_{}".format(alg_name, cut_pattern.name)
+            except:
+                method = "{}_{}".format(alg_name, cut_pattern)
 
-        if isinstance(
-            partition, dict
-        ):  # multiple partition lists (multiple results)
-            run_duration = run_duration / len(partition)
+            if isinstance(
+                partition, dict
+            ):  # multiple partition lists (multiple results)
+                run_duration = run_duration / len(partition)
 
-        result = self.parse_results_from_partition_list(
-            alg_name, method, partition, run_duration, log=log
-        )
+            result = self.parse_results_from_partition_list(
+                alg_name, method, partition, run_duration, log=log
+            )
 
-        for p in partition:
-            del p
+            for p in partition:
+                del p
 
         return result
 
@@ -333,6 +337,46 @@ class SimulationEnvironment:
         return self.run_simulation(
             alg_type, RunType.Dishonest, cut_pattern, log=log
         )
+
+    def run_highest_bidder(self):
+        time_start = time()
+        algorithm = AlgorithmHighestBidder()
+        relative_values_by_agent = algorithm.run(self.get_agents())
+        time_end = time()
+
+        run_duration = time_end - time_start
+        alg_name = "{}_{}".format("Honest", algorithm.get_algorithm_type())
+        method = alg_name
+
+        relative_values = relative_values_by_agent.values()
+        egalitarian_gain = Measure.calculate_egalitarian_gain(
+            self.num_of_agents, relative_values
+        )
+        utilitarian_gain = Measure.calculate_utilitarian_gain(relative_values)
+
+        return {
+            AggregationType.NumberOfAgents.name: self.num_of_agents,
+            AggregationType.NoiseProportion.name: self.noise_proportion,
+            "Algorithm": alg_name,
+            "Method": method,
+            "egalitarianGain": egalitarian_gain,
+            "ttc_egalitarianGain": egalitarian_gain,
+            "utilitarianGain": utilitarian_gain,
+            "ttc_utilitarianGain": utilitarian_gain,
+            "averageFaceRatio": 0,
+            "largestFaceRatio": 0,  # todo: this field is not used, should be refactored
+            "smallestFaceRatio": 0,
+            "averageInheritanceGain": 0,  # todo: this field is not used, should be refactored
+            "largestInheritanceGain": 0,  # todo: this field is not used, should be refactored
+            "largestEnvy": 0,
+            "ttc_largestEnvy": 0,
+            "experimentDurationSec": run_duration,
+            "experiment": self.i_simulation,
+            "dishonestAgent": None,
+            "relativeValues": relative_values_by_agent,
+            "ttc_relativeValues": relative_values_by_agent,
+            "comment": "",
+        }
 
 
 if __name__ == "__main__":

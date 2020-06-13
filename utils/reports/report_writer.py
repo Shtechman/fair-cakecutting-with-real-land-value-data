@@ -4,7 +4,8 @@ import os
 from datetime import datetime
 from statistics import stdev
 import numpy as np
-from utils.reports.report_generator import preprocess_results
+from utils.reports.report_preprocessor import preprocess_results
+from utils.simulation.cc_types import AlgType
 
 
 def write_graph_method_per_measure_report_csv(
@@ -48,97 +49,104 @@ def write_graph_method_per_measure_report_csv(
                 csv_file_writer.writerow([""])
 
 
-def write_dishonest_gain_results(path, dishonest_gain, label=""):
-    agg_dis_data = {}
+def write_unfair_gain_results(path, unfair_gain, label="", field_name=""):
+    g_i = '%si' % field_name
+    avgG_i = '%sAvg' % field_name
+    avgGper_i = '%sAvg_per' % field_name
+    avgGstd_i = '%sAvgStdev' % field_name
+    maxG_i = '%sMax' % field_name
+    maxGper_i = '%sMax_per' % field_name
+    maxGstd_i = '%sMaxStdev' % field_name
+    agg_unfair_data = {}
     res_found = False
-    for numOfAgent in dishonest_gain:
-        agg_dis_data[numOfAgent] = {}
-        for exp in dishonest_gain[numOfAgent].values():
+    for numOfAgent in sorted(unfair_gain):
+        agg_unfair_data[numOfAgent] = {}
+        for exp in unfair_gain[numOfAgent].values():
             for cut_pattern in exp:
                 if not exp[cut_pattern]:
                     continue
                 else:
                     res_found = True
                 try:
-                    agg_dis_data[numOfAgent][cut_pattern]
+                    agg_unfair_data[numOfAgent][cut_pattern]
                 except:
-                    agg_dis_data[numOfAgent][cut_pattern] = []
+                    agg_unfair_data[numOfAgent][cut_pattern] = []
                 exp[cut_pattern] = {
-                    "sgi": exp[cut_pattern],
-                    "sgAvg": np.average(
+                    g_i: exp[cut_pattern],
+                    avgG_i: np.average(
                         [sgi["agent_gain"] for sgi in exp[cut_pattern]]
                     ),
-                    "sgAvg_per": np.average(
+                    avgGper_i: np.average(
                         [sgi["agent_gain_per"] for sgi in exp[cut_pattern]]
                     ),
-                    "sgMax": max(
+                    maxG_i: max(
                         [sgi["agent_gain"] for sgi in exp[cut_pattern]]
                     ),
-                    "sgMax_per": max(
+                    maxGper_i: max(
                         [sgi["agent_gain_per"] for sgi in exp[cut_pattern]]
                     ),
                 }
-                agg_dis_data[numOfAgent][cut_pattern].append(exp[cut_pattern])
+                agg_unfair_data[numOfAgent][cut_pattern].append(exp[cut_pattern])
 
-        for cut_pattern in agg_dis_data[numOfAgent]:
-            exp_list = agg_dis_data[numOfAgent][cut_pattern]
-            exp_strategy_gain_avg = np.average(
-                [exp["sgAvg"] for exp in exp_list]
+        for cut_pattern in agg_unfair_data[numOfAgent]:
+            exp_list = agg_unfair_data[numOfAgent][cut_pattern]
+            exp_unfair_gain_avg = np.average(
+                [exp[avgG_i] for exp in exp_list]
             )
-            exp_strategy_percentage_gain_avg = np.average(
-                [exp["sgAvg_per"] for exp in exp_list]
+            exp_unfair_percentage_gain_avg = np.average(
+                [exp[avgGper_i] for exp in exp_list]
             )
-            exp_strategy_gain_avg_stdev = stdev(
-                [exp["sgAvg"] for exp in exp_list]
+            exp_unfair_gain_avg_stdev = stdev(
+                [exp[avgG_i] for exp in exp_list]
             )
-            exp_strategy_gain_max = np.average(
-                [exp["sgMax"] for exp in exp_list]
+            exp_unfair_gain_max = np.average(
+                [exp[maxG_i] for exp in exp_list]
             )
-            exp_strategy_percentage_gain_max = np.average(
-                [exp["sgMax_per"] for exp in exp_list]
+            exp_unfair_percentage_gain_max = np.average(
+                [exp[maxGper_i] for exp in exp_list]
             )
-            exp_strategy_gain_max_stdev = stdev(
-                [exp["sgMax"] for exp in exp_list]
+            exp_unfair_gain_max_stdev = stdev(
+                [exp[maxG_i] for exp in exp_list]
             )
-            agg_dis_data[numOfAgent][cut_pattern] = {
-                "sgAvg": exp_strategy_gain_avg,
-                "sgAvg_per": exp_strategy_percentage_gain_avg,
-                "sgAvgStdev": exp_strategy_gain_avg_stdev,
-                "sgMax": exp_strategy_gain_max,
-                "sgMax_per": exp_strategy_percentage_gain_max,
-                "sgMaxStdev": exp_strategy_gain_max_stdev,
+            agg_unfair_data[numOfAgent][cut_pattern] = {
+                avgG_i: exp_unfair_gain_avg,
+                avgGper_i: exp_unfair_percentage_gain_avg,
+                avgGstd_i: exp_unfair_gain_avg_stdev,
+                maxG_i: exp_unfair_gain_max,
+                maxGper_i: exp_unfair_percentage_gain_max,
+                maxGstd_i: exp_unfair_gain_max_stdev,
             }
 
     if not res_found:
         return
 
     with open(
-        os.path.join(path, label + "_DishonestGain.csv"), "w", newline=""
+        os.path.join(path, label + "Gain.csv"), "w", newline=""
     ) as csv_file:
         csv_file_writer = csv.writer(csv_file)
-        for numOfAgent in agg_dis_data:
+        for numOfAgent in agg_unfair_data:
             csv_file_writer.writerow([numOfAgent, "agents"])
             csv_file_writer.writerow(
                 [
                     "Cut Pattern",
-                    "sgAvg",
-                    "sgAvg Improv(%)",
-                    "sgAvg stdev",
-                    "sgMax",
-                    "sgMax Improv(%)",
-                    "sgMax stdev",
+                    avgG_i,
+                    avgG_i+" Improv(%)",
+                    avgG_i+" stdev",
+                    maxG_i,
+                    maxG_i+" Improv(%)",
+                    maxG_i+" stdev",
                 ]
             )
-            for cp in agg_dis_data[numOfAgent]:
+            for cp in agg_unfair_data[numOfAgent]:
                 csv_file_writer.writerow(
                     [
                         cp,
-                        agg_dis_data[numOfAgent][cp]["sgAvg"],
-                        agg_dis_data[numOfAgent][cp]["sgAvg_per"],
-                        agg_dis_data[numOfAgent][cp]["sgAvgStdev"],
-                        agg_dis_data[numOfAgent][cp]["sgMax"],
-                        agg_dis_data[numOfAgent][cp]["sgMax_per"],
-                        agg_dis_data[numOfAgent][cp]["sgMaxStdev"],
+                        agg_unfair_data[numOfAgent][cp][avgG_i],
+                        agg_unfair_data[numOfAgent][cp][avgGper_i],
+                        agg_unfair_data[numOfAgent][cp][avgGstd_i],
+                        agg_unfair_data[numOfAgent][cp][maxG_i],
+                        agg_unfair_data[numOfAgent][cp][maxGper_i],
+                        agg_unfair_data[numOfAgent][cp][maxGstd_i],
                     ]
                 )
             csv_file_writer.writerow([])
@@ -148,23 +156,34 @@ def generate_reports(json_file_name):
     with open(json_file_name) as json_file:
         results = json.load(json_file)
 
-    different_algorithm = list(
-        set(
-            [
-                k.split("_")[-1]
-                for k in list(set([r["Algorithm"] for r in results]))
-            ]
-        )
-    )
-    assessor_algorithm = next(
-        a for a in different_algorithm if "NoPattern" in a
-    )
-    different_algorithm.remove(assessor_algorithm)
+    # different_algorithm = list(
+    #     set(
+    #         [
+    #             k.split("_")[-1]
+    #             for k in list(set([r["Algorithm"] for r in results]))
+    #         ]
+    #     )
+    # )
+    # assessor_algorithm = next(
+    #     a for a in different_algorithm if "NoPattern" in a
+    # )
+    def remove_NoPattern_method_name(r):
+        r['Algorithm'] = r['Algorithm'].replace('_NoPattern', '')
+        r['Method'] = r['Method'].replace('_NoPattern', '')
+        return r
+
+    results = list(map(remove_NoPattern_method_name, results))
+    alg_names = [at.name for at in AlgType]
+    exp_algorithms = list(set([r["Algorithm"] for r in results]))
+    different_algorithm = [alg
+                           for alg in alg_names if any(alg in exp_alg for exp_alg in exp_algorithms)
+                           ]
     results_by_algorithm = {
         a: [r for r in results if a in r["Algorithm"]]
         for a in different_algorithm
     }
     assessor_results = [r for r in results if "Assessor" in r["Algorithm"]]
+    highestbidder_results = results_by_algorithm.pop(AlgType.HighestBidder.name, [])
 
     for algorithm in results_by_algorithm:
         generate_algorithm_report(
@@ -172,11 +191,12 @@ def generate_reports(json_file_name):
             json_file_name,
             results_by_algorithm[algorithm],
             assessor_results,
+            highestbidder_results,
         )
 
 
 def generate_algorithm_report(
-    algorithm, json_file_name, results, assessor_results
+    algorithm, json_file_name, results, assessor_results, highestbidder_results
 ):
     (
         avg_results_per_method,
@@ -189,7 +209,8 @@ def generate_algorithm_report(
         groupsizes,
         dishonest_gain,
         bruteForce_gain,
-    ) = preprocess_results(results, assessor_results)
+        highestBidder_gain,
+    ) = preprocess_results(results, assessor_results, highestbidder_results)
 
     base_dir = os.path.dirname(json_file_name)
     json_file_name = os.path.basename(json_file_name)
@@ -229,10 +250,9 @@ def generate_algorithm_report(
     write_extended_report_csv(
         algorithm_res_path, json_file_name, avg_results_per_method, algorithm
     )
-    write_dishonest_gain_results(algorithm_res_path, dishonest_gain, algorithm)
-    write_bruteforce_gain_results(
-        algorithm_res_path, bruteForce_gain, algorithm
-    )
+    write_unfair_gain_results(algorithm_res_path, dishonest_gain, algorithm+"_Dishonest", "sg")
+    write_unfair_gain_results(algorithm_res_path, highestBidder_gain, algorithm+"_HighestBidder", "pf")
+    write_bruteforce_gain_results(algorithm_res_path, bruteForce_gain, algorithm)
 
 
 def write_bruteforce_gain_results(path, brute_force_gain, label=""):
@@ -401,9 +421,11 @@ def create_exp_folder(run_folder, exp_name_string):
     return result_folder
 
 
-def create_run_folder():
+def create_run_folder(prefix=""):
+    prefix = prefix.replace("/", "") + "-" if prefix else ""
     run_folder = (
         "./results/"
+        + prefix
         + datetime.now().isoformat(timespec="seconds").replace(":", "-")
         + "/"
     )
@@ -461,17 +483,14 @@ if __name__ == "__main__":
 
     """ generate report of experiment results from simulation output json file """
     files_to_import = [
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps02HS_results/IsraelMaps02HS_2019-05-05T15-16-06_NoiseProportion_0.2_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps04HS_results/IsraelMaps04HS_2019-05-05T14-04-45_NoiseProportion_0.4_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/israelMaps06HS_results/IsraelMaps06HS_2019-05-05T12-54-11_NoiseProportion_0.6_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps02HS_results/newZealandLowResAgents02HS_2019-05-05T11-19-43_NoiseProportion_0.2_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps04HS_results/newZealandLowResAgents04HS_2019-05-05T09-46-34_NoiseProportion_0.4_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06HS_results/newZealandLowResAgents06HS_2019-05-05T08-10-46_NoiseProportion_0.6_15_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/luna/newZealandMaps06_results_full/newZealandLowResAgents06_2019-03-29T07-50-19_NoiseProportion_0.6_50_exp.json',
         # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06hs/newZealandLowResAgents06HS_2019-12-24T17-49-04_NoiseProportion_0.6_50_exp.json',
         # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json',
-        "D:/MSc/Thesis/CakeCutting/results/2020-02-08T19-02-59/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp/newZealandLowResAgents06_2020-02-08T19-03-01_NoiseProportion_0.6_50_exp.json"
+        "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/re06hs/tlvRealEstate06_2020-05-30T19-08-55_NoiseProportion_0.6_50_exp",
+        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/re02hs/tlvRealEstate02_2020-05-30T21-49-36_NoiseProportion_0.2_50_exp",
+        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/gdn06hs/tlvGardens06_2020-05-31T00-05-07_NoiseProportion_0.6_50_exp",
+        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/gdn02hs/tlvGardens02_2020-05-31T02-21-23_NoiseProportion_0.2_50_exp"
     ]
 
     for json_file_name in files_to_import:
+        json_file_name = json_file_name + ".json" if ".json" not in json_file_name else json_file_name
         generate_reports(json_file_name)

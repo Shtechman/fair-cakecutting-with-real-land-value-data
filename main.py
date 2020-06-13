@@ -42,21 +42,40 @@ cut_patterns_to_test = [
     CutPattern.SmallestHalfCut,
     CutPattern.NoPattern,
 ]
-# cut_patterns_to_test=[CutPattern.NoPattern,CutPattern.BruteForce,CutPattern.MostValuableMargin,CutPattern.SquarePiece]
+# cut_patterns_to_test = [CutPattern.BruteForce]
 
 alg_types = [AlgType.EvenPaz, AlgType.LastDiminisher, AlgType.FOCS]
+# alg_types = [AlgType.EvenPaz, AlgType.LastDiminisher]
 
 experiment_sets = [
-    {
-        "index_file": "data/IsraelMaps02/index.txt",
-        "noise_proportion": [0.2],
-        "num_of_agents": [4, 8],
-        "run_types": [RunType.Honest],
-    },
-    # {"index_file": "data/newZealandLowResAgents06/index.txt",
+    # {"index_file": "data/tlvRealEstate06/index.txt",
     #  "noise_proportion": [0.6],
-    #  "num_of_agents": [4,8,16,32,64,128],
+    #  "num_of_agents": [4, 8],
     #  "run_types": [RunType.Honest]},
+    # {"index_file": "data/tlvRealEstate02/index.txt",
+    #  "noise_proportion": [0.2],
+    #  "num_of_agents": [4, 8],
+    #  "run_types": [RunType.Honest]},
+    # {"index_file": "data/tlvGardens06/index.txt",
+    #  "noise_proportion": [0.6],
+    #  "num_of_agents": [4, 8],
+    #  "run_types": [RunType.Honest]},
+    # {"index_file": "data/tlvGardens02/index.txt",
+    #  "noise_proportion": [0.2],
+    #  "num_of_agents": [4, 8],
+    #  "run_types": [RunType.Honest]},
+    {"index_file": "data/Israel06HS/index.txt",
+     "noise_proportion": [0.6],
+     "num_of_agents": [4, 8, 16, 32, 64, 128],
+     "run_types": [RunType.Honest]},
+    {"index_file": "data/newZealandLowRes06HS/index.txt",
+     "noise_proportion": [0.6],
+     "num_of_agents": [4, 8, 16, 32, 64, 128],
+     "run_types": [RunType.Honest]},
+    {"index_file": "data/random06HS/index.txt",
+     "noise_proportion": [0.6],
+     "num_of_agents": [4, 8, 16, 32, 64, 128],
+     "run_types": [RunType.Honest]},
 ]
 """ -------------------------------------------------------- """
 
@@ -79,8 +98,8 @@ def run_single_simulation(
         )
     )
     results = env.run_simulation(
-        alg_type, run_type, cut_pattern
-    )  # returns a list of AllocatedPiece
+        alg_type, run_type, cut_pattern, log=False
+    )
     return results
 
 
@@ -122,8 +141,11 @@ def run_experiment(exp_data):
                     results.append(result)
 
     assessor_results = run_single_simulation(env)
+    highest_bidder_results = run_single_simulation(env, AlgType.HighestBidder, RunType.Honest)
     for result in assessor_results:
         results.append(result)
+
+    results.append(highest_bidder_results)
 
     for agent in agents:
         agent.clean_memory()
@@ -293,25 +315,31 @@ def calculate_results(
 
 if __name__ == "__main__":
     """
-    main.py [<num_of_experiments> [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]
+    main.py [<result_folder_prefix> [<num_of_experiments>
+                                        [<num_of_parallel_tasks> [<log_min_num_of_agents> <log_max_num_of_agents>]]]]
     
-    e.g. > main.py 50 4 1 4  -  runs 50 repetitions using 4 threads for agent groups 2,4,8,16
+    e.g. > main.py "" 50 4 1 4  -  runs 50 repetitions using 4 threads for agent groups 2,4,8,16
     """
     print("Start experiment")
     argv = sys.argv
     if len(argv) > 1:
-        experiments_per_cell = int(argv[1])
+        folder_name_prefix = argv[1]
     else:
-        experiments_per_cell = 2
+        folder_name_prefix = ""
 
     if len(argv) > 2:
-        NTASKS = int(argv[2])
+        experiments_per_cell = int(argv[2])
+    else:
+        experiments_per_cell = 50
+
+    if len(argv) > 3:
+        NTASKS = int(argv[3])
     else:
         NTASKS = 4
 
-    if len(argv) > 4:
-        log_min_num_of_agents = int(argv[3])
-        log_max_num_of_agents = int(argv[4])
+    if len(argv) > 5:
+        log_min_num_of_agents = int(argv[4])
+        log_max_num_of_agents = int(argv[5])
         num_of_agents = [
             int(math.pow(2, y))
             for y in range(log_min_num_of_agents, log_max_num_of_agents + 1)
@@ -319,7 +347,7 @@ if __name__ == "__main__":
     else:
         num_of_agents = None
 
-    RUN_FOLDER_PATH = create_run_folder()
+    RUN_FOLDER_PATH = create_run_folder(folder_name_prefix)
 
     for experiment_set in experiment_sets:
         number_of_agents = (

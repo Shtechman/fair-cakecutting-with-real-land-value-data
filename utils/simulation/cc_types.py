@@ -12,7 +12,8 @@ class AlgType(Enum):
     EvenPaz = (1,)
     LastDiminisher = (2,)
     FOCS = (3,)
-    Simple = 4
+    Simple = (4,)
+    HighestBidder = 5
 
 
 class RunType(Enum):
