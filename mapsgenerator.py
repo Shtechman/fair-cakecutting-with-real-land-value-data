@@ -7,6 +7,8 @@ og_maps = {
     "israel": "./data/originalMaps/IsraelMap.txt",
     "newzealand": "./data/originalMaps/newzealand_forests_2D_low_res.txt",
     "random": "./data/originalMaps/RandomNoiseMap.txt",
+    "tlvRealEstate": "./data/originalMaps/tlvRealEstateMap.txt",
+    "tlvGardens": "./data/originalMaps/tlvGardenMap.txt",
 }
 
 """ Possible noise assignment functions """
@@ -32,16 +34,19 @@ if __name__ == "__main__":
     """ datasets dictionary - from each dataset entry, a set of agents will be generated """
     datasets = [
         # <datasetName> <input_file> <noise> <num_of_agents> <noise_method>"
-        {
-            "datasetName": "newZealandLowRes06HS",
-            "input_file": og_maps["newzealand"],
-            "noise": noise,
-            "num_of_agents": num_of_agents,
-            "noise_method": noise_methods["hotspot"],
-        },
         {"datasetName": "Israel06HS",
          "input_file": og_maps["israel"],
-         "noise": noise,
+         "noise": 0.6,
+         "num_of_agents": num_of_agents,
+         "noise_method": noise_methods["hotspot"],},
+        {"datasetName": "newZealandLowRes06HS",
+         "input_file": og_maps["newzealand"],
+         "noise": 0.6,
+         "num_of_agents": num_of_agents,
+         "noise_method": noise_methods["hotspot"]},
+        {"datasetName": "random06HS",
+         "input_file": og_maps["random"],
+         "noise": 0.6,
          "num_of_agents": num_of_agents,
          "noise_method": noise_methods["hotspot"]},
     ]

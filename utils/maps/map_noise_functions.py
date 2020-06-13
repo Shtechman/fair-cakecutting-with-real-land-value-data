@@ -3,27 +3,60 @@ import os
 import pickle
 import random
 import time
-from math import exp
+from math import exp, tan, radians, sqrt, atan
 
 
-def hotspot_noise_function(
-    original_map, noise_proportion, normalized_sum, max_value
-):
+def cot(r): return 1/tan(r)
+
+
+def square(f): return pow(f, 2)
+
+def point_on_cone(h, r, a, b, xj, yj):
+    """
+    Formula of a cone of height h, base radius r and center at (a,b) -> (x - a)² +(y - b)² = (z - h)² tan²(theta)
+                                                                        where theta = atan(r/h)
+    Given a point (xj,yj), its value on the cone is -> z = h - cot^2(theta)*
+                                                            sqrt((a^2 + b^2 - 2ax + x^2 - 2by + y^2) tan^2(theta))
+    """
+    theta = atan(r/h)
+    z = h + square(cot(theta)) * sqrt(
+                                        square(tan(theta)) *
+                                        (square(a) + square(b) - 2 * a * xj + square(xj) - 2 * b * yj + square(yj))
+                                        )
+    return 1/z
+
+
+def hotspot_noise_function(original_map, noise_proportion, normalized_sum, max_value):
     rows = len(original_map)
     cols = len(original_map[0])
-    hotspot_center = (random.randint(0, rows), random.randint(0, cols))
-    print(hotspot_center)
+    hotspot_center = (random.randint(0, rows-1), random.randint(0, cols-1))
+    while original_map[hotspot_center[0]][hotspot_center[1]] == 0:
+        hotspot_center = (random.randint(0, rows-1), random.randint(0, cols-1))
 
-    def hotspot_noise(xj, yj):
-        """ hotspot_noise = noise*exp(-((xj-xc)^2+(yj-yc)^2)^0.1) """
-        dx = pow((hotspot_center[1] - xj), 2)
-        dy = pow((hotspot_center[0] - yj), 2)
+    h = min(rows, cols)
+    r = h / 4
+    a = hotspot_center[1]
+    b = hotspot_center[0]
+    center_noise_degree = point_on_cone(h, r, a, b, hotspot_center[1], hotspot_center[0])
 
-        noise_addition = noise_proportion * exp(-pow(dx + dy, 0.1))
-        return noise_addition
+    def add_hotspot_noise(xj, yj, cur_value):
+        noise_degree = point_on_cone(h, r, a, b, xj, yj)
+        noise_degree = noise_degree/center_noise_degree
+        noise_degree = 0 if noise_degree < 1-noise_proportion else noise_degree
+
+        noisy_value = (1+noise_degree)*cur_value
+        return noisy_value
+
+
+        ## hotspot_noise = noise*exp(-((xj-xc)^2+(yj-yc)^2)^0.1)
+        # dx = pow((hotspot_center[1] - xj), 2)
+        # dy = pow((hotspot_center[0] - yj), 2)
+        #
+        # noise_addition = noise_proportion * exp(-pow(dx + dy, 0.1))
+        # return noise_addition
 
     new_map = [
-        [original_map[r][c] * (1 + hotspot_noise(c, r)) for c in range(cols)]
+        [add_hotspot_noise(c, r, original_map[r][c]) for c in range(cols)]
         for r in range(rows)
     ]
 
