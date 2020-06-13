@@ -1,8 +1,18 @@
 #!python3
 import csv
+import json
+import pickle
 import re
 from statistics import stdev
 
+import numpy
+from imageio import imread
+from matplotlib import pyplot as plt, patches
+from matplotlib.backends.backend_template import FigureCanvas
+from matplotlib.patches import Circle
+from shapely.geometry import Polygon
+from descartes import PolygonPatch
+from skimage.color import rgb2gray
 from utils.simulation.simulation_environment import SimulationEnvironment as SimEnv
 from utils.simulation.measurements import Measurements as Measure
 
@@ -17,15 +27,15 @@ from utils.simulation.cc_types import AggregationType
 
 def coor_to_list(coor_value_list, valueKey):
     cols = 1000
-    rows = 1150
-    westLine = 34.2
-    eastLine = 35.92
-    northLine = 33.42
-    southLine = 29.46
+    rows = 1000
+    westLine = 34.74
+    eastLine = 34.85
+    northLine = 32.15
+    southLine = 32.04
     cellWidth = (eastLine - westLine) / cols
     cellHeight = (northLine - southLine) / rows
-    israel_map = [[0 for _ in range(cols)] for _ in range(rows)]
-    index_range = [x - 10 for x in range(21)]
+    tel_aviv_map = [[0 for _ in range(cols)] for _ in range(rows)]
+    index_range = [x - 10 for x in range(21)]  # todo: calibrate "radius"
 
     for entry in coor_value_list:
         coor = entry["coordinate"]
@@ -37,9 +47,9 @@ def coor_to_list(coor_value_list, valueKey):
         j_list = [min(max(x + mid_j, 0), cols - 1) for x in index_range]
         for i in i_list:
             for j in j_list:
-                israel_map[i][j] = int(entry[valueKey])
+                tel_aviv_map[i][j] = int(entry[valueKey])
 
-    return israel_map
+    return tel_aviv_map
 
 
 def measure_largest_envy(
@@ -349,6 +359,19 @@ def get_TTC_results_from_log(agents, log):
 
 
 if __name__ == "__main__":
+    #exp 649 2020-05-28T23-05-58
+    tmp = {'1014': 0.016516411983331186, '102': 0.020145682758285422, '132': 0.016784747713970025, '181': 0.019652427537338903, '182': 0.022546120531969159, '192': 0.021046343567998699, '200': 0.02355152298168306, '207': 0.023564094470375305, '215': 0.022424975477559995, '22': 0.016117401079521487, '228': 0.016715757895470237, '237': 0.021695844072901156, '266': 0.021194200032166249, '272': 0.018965854476892648, '276': 0.016430683417267469, '300': 0.021060685435338938, '319': 0.019769519931564623, '327': 0.018961219566701375, '357': 0.022014620456511595, '386': 0.02158860421612499, '389': 0.023140972870544872, '409': 0.016178009965255327, '437': 0.019937818454706359, '44': 0.018987245022697059, '452': 0.020650329931642182, '459': 0.022139048318260468, '47': 0.021753377067502053, '479': 0.02128103709532194, '505': 0.022577676114692146, '537': 0.016748099589210828, '547': 0.022739497213902699, '566': 0.019967759982472747, '588': 0.016638033007255321, '620': 0.023110117281450619, '630': 0.023615896471636318, '641': 0.023068557498541236, '672': 0.02139687435309676, '673': 0.016252856016096585, '678': 0.016359971381994548, '685': 0.016989847784585281, '695': 0.01996125295371666, '703': 0.019382309481196108, '715': 0.017114063598575022, '721': 0.016428618003536188, '746': 0.016559127966795695, '776': 0.020650329931642022, '797': 0.016441255249064132, '806': 0.021393461833462805, '810': 0.021707756029081378, '818': 0.021360505413733716, '838': 0.022047335143089302, '840': 0.019716984430077075, '843': 0.012006028102646166, '868': 0.019096238285795927, '872': 0.02275677429386181, '902': 0.025080439598393879, '925': 0.018626713240661931, '929': 0.018338568943304975, '931': 0.019325376706654199, '94': 0.023340315692814775, '957': 0.022195135278516603, '973': 0.019715698337032121, '979': 0.023122349615638711, '997': 0.021673721630185865}
+    # with open('../data/testGdn06/index.txt', encoding="utf8") as in_file:
+    #     index = json.load(in_file)
+    #     maps_paths = index["mapsPaths"]
+    #     old_dir = maps_paths[0][:maps_paths[0].rindex('/')+1]
+    #     new_map_paths = []
+    #     for map in [old_dir+k+'_valueMap' for k in tmp]:
+    #         map_path = next((path for path in maps_paths if path.startswith(map)), None)
+    #         new_map_paths.append(map_path.replace(old_dir,'./data/testGdn06/'))
+    #     index["mapsPaths"] = new_map_paths
+    # with open('../data/testGdn06/index.txt', 'w') as in_file:
+    #     json.dump(index,in_file)
 
     # in_path = 'results/2019-08-27T19-45-25/IsraelMaps06_2019-08-29T10-08-22_NoiseProportion_0.6_30_exp/dishonest_data.json'
     # with open(in_path, encoding="utf8") as in_file:
@@ -435,25 +458,134 @@ if __name__ == "__main__":
     #
     # coor_neig_list = [neig for neig in neig_list if "coordinate" in neig]
 
+    # tlvNeibuf = imread('../data/madlanDataDump/tlvRealEstateMap.png')
+    # tlvNeibuf = rgb2gray(tlvNeibuf)
+    # tlvNeiMap = tlvNeibuf.tolist()
+    output_path = '../data/tlvRealEstate06/0_valueMap_noise0.6_HS169_131.txt'
+    # with open(output_path, 'wb') as tlv_re_file:
+    #     pickle.dump(tlvNeiMap, tlv_re_file)
+    cen = output_path.replace(".txt", "").split('_HS')[1].split("_")
+    xy = (int(cen[1]),int(cen[0]))
+    with open(output_path, 'rb') as tlv_re_file:
+        a = pickle.load(tlv_re_file)
+    ax = plt.gca()
+    plt.imshow(a, cmap='hot', interpolation='nearest')
+    ax.add_patch(Circle(xy, fc='b', ec='none'))
+    plt.show()
     # """ create map of israel from list of neighborhood data """
+    input_path = '../data/madlanDataDump/tlvGardensPolys.json'
+    with open(input_path, 'rb') as gardens_data_file:
+        raw_gardens_data = json.load(gardens_data_file)
 
-    # input_path = 'data/madlanDataDump/NeighDataWithCoordinates.json'
-    # output_path = 'data/madlanDataDump/IsrealMap.json'
+    fig = plt.figure()
+    axs = plt.gca()
+    patch_list = []
+    for feature in raw_gardens_data["features"]:
+        name = feature["attributes"]["shem_gan"]
+        area = feature["attributes"]["ms_area"]
+        if feature["geometry"]["rings"]:
+            coords = feature["geometry"]["rings"][0]
+            gan_poly = Polygon(coords)
+            xc, yc = gan_poly.centroid.xy
+            # todo: get interesting data about the garden
+            patch_list.append([gan_poly, area, xc[0], yc[0], name])
+            # axs.text(xc[0],yc[0],name)
+
+    max_ppm = max([gan[1] for gan in patch_list])
+    [
+        axs.add_patch(PolygonPatch(gan[0], fc=str(gan[1]), ec='none', alpha=1, zorder=0, label=gan[4]))
+        for gan in patch_list
+    ]
+    axs.set_facecolor('black')
+    axs.axis('scaled')
+    plt.savefig('../data/madlanDataDump/tlvRealEstateMap.png', bbox_inches='tight', pad_inches=0)
+    plt.show()
+    # fig.canvas.draw()
+    # w, h = fig.canvas.get_width_height()
+    # buf = numpy.fromstring(fig.canvas.tostring_rgb(), dtype=numpy.uint8)
+    # buf.shape = (w, h, 3)
+    # buf = rgb2gray(buf)
+
+    # input_path = '../data/madlanDataDump/tlvNeighPolys.json'
+    # with open(input_path,'rb') as cities_data_file:
+    #     raw_city_data = json.load(cities_data_file)
+    # input_path = '../data/madlanDataDump/NeighDataWithCoordinates.json'
     # with open(input_path) as cities_data_file:
-    # 	neig_list = json.load(cities_data_file)
+    #     neig_list = json.load(cities_data_file)
+    # tlv_nei = [nei for nei in neig_list if "תל אביב" in nei["areaName"]]
+    #
+    # fig = plt.figure()
+    # axs = plt.gca()
+    # patch_list = []
+    # for feature in raw_city_data["features"]:
+    #     name = feature["attributes"]["shem_shchuna"].replace("-"," ")\
+    #                                                 .replace("ככר","כיכר")\
+    #                                                 .replace("נוה","נווה")\
+    #                                                 .replace("תקוה","תקווה")\
+    #                                                 .replace("לבנה,","לבנה ו")\
+    #                                                 .replace("הצפון הישן   ","הצפון הישן ")\
+    #                                                 .replace("הצפון הישן החלק הדרומי","הצפון הישן החלק המרכזי")\
+    #                                                 .replace("הצפון החדש   ","הצפון החדש ")\
+    #                                                 .replace("רמת אביב ג'","ר-א-ג")\
+    #                                                 .replace("נאות אפקה א","נ-א-א")\
+    #                                                 .replace("נאות אפקה ב","נ-א-ב")
+    #     coords = feature["geometry"]["rings"][0]
+    #     nei_poly = Polygon(coords)
+    #     xc, yc = nei_poly.centroid.xy
+    #     # xs, ys = nei_poly.exterior.xy
+    #     # axs.fill(xs, ys, alpha=0.5, fc='r', ec='b', label=name)
+    #     nei = next((nei for nei in tlv_nei if name in nei["areaName"].replace("-"," ").replace("נוה","נווה").replace("תקוה","תקווה").replace("רמת אביב ג","ר-א-ג")
+    #                 or nei["areaName"].replace("תל אביב יפו/","").replace("-"," ").replace("תוכנית","תכנית").replace("נוה","נווה").replace("תקוה","תקווה").replace("נאות אפקה א","נ-א-א").replace("נאות אפקה ב","נ-א-ב") in name), None)
+    #     if nei:
+    #         ppm = max(0.0, float(nei["areaPPM"]))
+    #     else:
+    #         print('X - could not find ppm for', name)
+    #         ppm = -1.0
+    #     patch_list.append([nei_poly,ppm,xc[0],yc[0],name])
+    #     # axs.text(xc[0],yc[0],name)
+    #
+    # max_ppm = max([nei[1] for nei in patch_list])
+    #
+    # for nei in patch_list:
+    #     if nei[1] == -1:
+    #         nei[1] = max_ppm/2
+    # [
+    # axs.add_patch(PolygonPatch(nei[0], fc=str(nei[1]/max_ppm), ec='none', alpha=1, zorder=0, label=nei[4]))
+    #     for nei in patch_list
+    # ]
+    # axs.set_facecolor('black')
+    # axs.axis('scaled')
+    # plt.savefig('../data/madlanDataDump/tlvRealEstateMap.png', bbox_inches='tight', pad_inches=0)
+    # fig.canvas.draw()
+    # w, h = fig.canvas.get_width_height()
+    # tlvNeibuf = numpy.fromstring(fig.canvas.tostring_rgb(), dtype=numpy.uint8)
+    # tlvNeibuf.shape = (h, w, 3)
+    # tlvNeibuf = rgb2gray(tlvNeibuf)
+    # tlvNeiMap = tlvNeibuf.tolist()
+    # output_path = '../data/madlanDataDump/tlvRealEstateMap.txt'
+    # with open(output_path,'wb') as tlv_re_file:
+    #     pickle.dump(tlvNeiMap, tlv_re_file)
+    # numpy.savetxt(output_path, tlvNeiMap, delimiter=",")
 
-    # israelMap = coor_to_list(neig_list, "areaPPM")
-    # with open(output_path,"w") as neigh_data_file:
-    # 	json.dump(israelMap, neigh_data_file)
-    # print("done")
-    # input_path = 'data/originalMaps/IsraelMap.txt'
-    # with open(input_path,'rb') as mapfile:
-    # 	a = pickle.load(mapfile)
-    # plt.imshow(a, cmap='hot', interpolation='nearest')
-    # plt.show()
+
+
+    input_path = '../data/madlanDataDump/NeighDataWithCoordinates.json'
+    with open(input_path) as cities_data_file:
+    	neig_list = json.load(cities_data_file)
+
+    output_path = '../data/madlanDataDump/TLVMap.json'
+    tlvMap = coor_to_list([nei for nei in neig_list if "תל אביב" in nei["areaName"]], "areaPPM")
+    with open(output_path,"w") as neigh_data_file:
+    	json.dump(tlvMap, neigh_data_file)
+    print("done")
+    input_path = '../data/madlanDataDump/TLVMap.json'
+    with open(input_path,'rb') as mapfile:
+    	a = json.load(mapfile)
+    plt.imshow(a, cmap='hot', interpolation='nearest')
+    plt.show()
     #
     #
-    # input_path = 'data/originalMaps/newzealand_forests_2D_low_res.txt'
+    input_path = 'data/originalMaps/newzealand_forests_2D_low_res.txt'
     # with open(input_path,'rb') as mapfile:
     # 	a = pickle.load(mapfile)
     # plt.imshow(a, cmap='hot', interpolation='nearest')
