@@ -13,7 +13,7 @@ def build_batch_file_lines(json_path, prefix):
             "#SBATCH --output=out_logs/%x-%j.out",
             "#SBATCH --error=err_logs/%x-%j.err",
             "echo \"running experiments with json params.\"",
-            "python simulation_runner.py \"%s\" \"%s\"" % (json_path, prefix),
+            "python ./utils/simulation/simulation_runner.py \"%s\" \"%s\"" % (json_path, prefix),
             "exit"]
 
 
