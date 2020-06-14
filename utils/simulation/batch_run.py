@@ -13,18 +13,19 @@ def build_batch_file_lines(json_path, prefix):
             "#SBATCH --output=out_logs/%x-%j.out",
             "#SBATCH --error=err_logs/%x-%j.err",
             "echo \"running experiments with json params.\"",
-            "python ./utils/simulation/simulation_runner.py \"%s\" \"%s\"" % (json_path, prefix),
+            "python jsonexprunner.py \"%s\" \"%s\"" % (json_path, prefix),
             "exit"]
 
 
 def schedule_batch_run(prefix, params):
-    prefix = prefix.replace("/", "") + "-" if prefix else ""
+    prefix = prefix.replace("/", "")
     batch_folder = './batch_files'
     if not os.path.exists(batch_folder):
         os.makedirs(batch_folder)
     json_file_name = batch_folder\
                      + '/'\
-                     + prefix\
+                     + prefix \
+                     + "-" \
                      + datetime.now().isoformat(timespec="microseconds").replace(":", "-").replace(".", "-")\
                      + ".json"
     batch_file_name = json_file_name.replace('.json', '')
