@@ -43,7 +43,7 @@ def plot_partition_from_log_path(log_path: str, show=False):
 
 
 def plot_partition_from_log_object(sim_log: slog, show=False):
-    log_path = sim_log.output_log_file_path
+    img_path = os.path.join(ROOT_DIR, sim_log.output_log_file_path.replace("./", "").replace(".log", ".png"))
 
     index_path = os.path.join(ROOT_DIR,
         os.path.dirname(sim_log.agent_map_files_list[0]).replace("./", ""),
@@ -54,7 +54,14 @@ def plot_partition_from_log_object(sim_log: slog, show=False):
     with open(basemap_path, "rb") as mapfile:
         baseline_map = pickle.load(mapfile)
 
-    plot_partition(baseline_map, _extract_partition_plots(sim_log.printable_partition), log_path+'.png', show)
+    agent_hs = {}
+    for agent_map_path in sim_log.agent_map_files_list:
+        if "_HS" in agent_map_path:
+            hotspot_center = agent_map_path.split("_HS")[-1].replace(".txt","").split("_")
+            agent = agent_map_path.split("/")[-1].split("_")[0]
+            agent_hs[agent] = hotspot_center
+
+    plot_partition(baseline_map, _extract_partition_plots(sim_log.printable_partition), img_path, show, agent_hs)
 
 
 def plot_all_plots_from_log_path(log_path: str, show=False):
@@ -112,7 +119,7 @@ def plot_separate_partition(partition_plots, out_path='', show=False):
         plt.show()
 
 
-def plot_partition(partition_map, partition_plots, out_path='', show=False):
+def plot_partition(partition_map, partition_plots, out_path='', show=False, agent_hs={}):
     fig, ax = plt.subplots(1)
     ax.imshow(partition_map, cmap="hot")
     plt.axis([0, len(partition_map[0]), len(partition_map), 0])
@@ -130,6 +137,11 @@ def plot_partition(partition_map, partition_plots, out_path='', show=False):
         plt.text(centerx, centery, "A" + agent, color="g")
         # Add the patch to the Axes
         ax.add_patch(rect)
+        if agent in agent_hs:
+            hs_center = agent_hs[agent]
+            hotspot = patches.Circle((float(hs_center[1]), float(hs_center[0])), 2, edgecolor="b",facecolor="g")
+            plt.text(float(hs_center[1])+3, float(hs_center[0]), "A" + agent, color="b")
+            ax.add_patch(hotspot)
     if out_path:
         plt.savefig(out_path)
     if show:
@@ -160,8 +172,8 @@ def plot_map(path: str):
 
 
 if __name__ == "__main__":
-    plot_map("D:/MSc/221_valueMap_noise0.6_HS100_200.txt")
+    #plot_map("D:/MSc/221_valueMap_noise0.6_HS100_200.txt")
     plot_partition_from_log_path(
-        '../../results/2020-02-14T18-33-34/IsraelMaps02_2020-02-14T18-33-37_NoiseProportion_0.6_2_exp/logs/82_Honest_FOCS_NoPatternUV.log')
-    plot_all_plots_from_log_path(
-        '../../results/2020-02-14T18-33-34/IsraelMaps02_2020-02-14T18-33-37_NoiseProportion_0.6_2_exp/logs/82_Honest_FOCS_NoPatternUV.log')
+        '../../results/rerunHsExp-2020-06-15T00-51-28/newZealandLowRes06HS_2020-06-15T00-51-47_NoiseProportion_0.6_50_exp/logs/1282_Honest_EvenPaz_MostValuableMargin.log')
+    #plot_all_plots_from_log_path(
+    #    '../../results/2020-02-14T18-33-34/IsraelMaps02_2020-02-14T18-33-37_NoiseProportion_0.6_2_exp/logs/82_Honest_FOCS_NoPatternUV.log')
