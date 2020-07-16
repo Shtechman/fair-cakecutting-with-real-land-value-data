@@ -264,17 +264,21 @@ def preprocess_results(results, assessor_results, highestbidder_results):
         for method in method_list
     }
 
-    assessor_key, dishonest_key, honest_key, int_dishonest_key, int_honest_key, run_types_keys = extract_keys(results)
+    hbidder_key, assessor_key, dishonest_key, honest_key,\
+    int_dishonest_key, int_honest_key, run_types_keys = extract_keys(results)
 
     assessor_res_per_gs = group_results_by_groupsize(available_groupsizes,assessor_results)
+
+    hbidder_res_per_gs = group_results_by_groupsize(available_groupsizes, highestbidder_results)
 
     res_per_a_per_gs_per_m = group_results_per_method(available_groupsizes, res_per_m, run_types_keys)
 
     best_result_per_gs = extract_specific_results_by_groupsize(res_per_a_per_gs_per_m, BRUTEFORCE_KEY)
 
-    avg_results_per_method = average_results_per_method(assessor_key, dishonest_key, honest_key,
+    avg_results_per_method = average_results_per_method(hbidder_key, assessor_key, dishonest_key, honest_key,
                                                         int_dishonest_key, int_honest_key,
                                                         keys_to_average, keys_to_integrate,
+                                                        hbidder_res_per_gs,
                                                         assessor_res_per_gs,
                                                         res_per_a_per_gs_per_m)
 
@@ -382,6 +386,7 @@ def format_results_for_graph(available_groupsizes, avg_assessor_results_per_meas
 
 def extract_keys(results):
     run_types_keys = list(set([r["Algorithm"] for r in results]))
+    hbidder_key = "HighestBidder"
     assessor_key = "Assessor"
     honest_key = next(
         (key for key in run_types_keys if "Honest" in key), "HonestEmpty"
@@ -391,7 +396,7 @@ def extract_keys(results):
     )
     int_honest_key = "{}_{}".format("Integrated", honest_key)
     int_dishonest_key = "{}_{}".format("Integrated", dishonest_key)
-    return assessor_key, dishonest_key, honest_key, int_dishonest_key, int_honest_key, run_types_keys
+    return hbidder_key, assessor_key, dishonest_key, honest_key, int_dishonest_key, int_honest_key, run_types_keys
 
 
 def reorder_results_per_measure(avg_results_per_method, value_type_key, measures_keys):
@@ -428,8 +433,8 @@ def sum_groupsize_results(avg_results_per_method, value_key, int_value_key):
     return results
 
 
-def average_results_per_method(assessor_key, dishonest_key, honest_key, int_dishonest_key, int_honest_key,
-                               keys_to_average, keys_to_integrate, assessor_res_per_gs, res_per_a_per_gs_per_m):
+def average_results_per_method(hbidder_key, assessor_key, dishonest_key, honest_key, int_dishonest_key, int_honest_key,
+                               keys_to_average, keys_to_integrate, hbidder_res_per_gs, assessor_res_per_gs, res_per_a_per_gs_per_m):
     avg_results_per_method = {}
     for method in res_per_a_per_gs_per_m:
         method_avg_results = {}
@@ -447,7 +452,11 @@ def average_results_per_method(assessor_key, dishonest_key, honest_key, int_dish
                 assessor_res_per_gs[groupsize], keys_to_average, groupsize
             )
 
-            for key in [assessor_key, honest_key, dishonest_key]:
+            method_avg_results[groupsize][hbidder_key] = calculate_avg_result(
+                hbidder_res_per_gs[groupsize], keys_to_average, groupsize
+            )
+
+            for key in [assessor_key, honest_key, dishonest_key, hbidder_key]:
                 if key not in method_avg_results[groupsize]:
                     method_avg_results[groupsize][key] = {}
 
@@ -559,11 +568,16 @@ def group_results_by_groupsize(available_groupsizes, res_per_m):
     }
 
 
-def _get_gain_over_fair(fair_partition, unfair_partition, agent_of_interest):
+def _get_gain_over_fair(fair_partition, unfair_partition, agent_of_interest, loss=False):
     unfair_value = unfair_partition[agent_of_interest]
     fair_value = fair_partition[agent_of_interest]
+    return unfair_value - fair_value, _get_percentage_gain(fair_value, unfair_value, loss)
 
-    return unfair_value - fair_value, (unfair_value - fair_value) / fair_value
+
+def _get_percentage_gain(fair_value, unfair_value, loss):
+    ref_value = unfair_value if loss and unfair_value > 0 else fair_value
+    # todo: when "loss" calculation is requested and unfair_value is 0, we return gain instead to avoid dividing by 0.
+    return (unfair_value - fair_value) / ref_value
 
 
 # todo: refactor, this function is almost the same as get_dishonest_gain..
@@ -605,20 +619,26 @@ def get_highestbidder_gain(results, highestbidder_results):
             ]
 
             highestbidder_partition = hb_rlogs[exp]["relativeValues"]
+            highestbidder_uv = hb_rlogs[exp]["ttc_utilitarianGain"]
             honest = [
                 rlog
                 for rlog in relevant_logs
                 if rlog["dishonestAgent"] is None
             ][0]
             honest_partitions = honest["relativeValues"]
-            for agent in highestbidder_partition:
-                v, p = _get_gain_over_fair(
-                    honest_partitions, highestbidder_partition, agent
-                )
-
-                result[numA][exp][cp].append(
-                    {"agent": agent, "agent_gain": v, "agent_gain_per": p}
-                )
+            honest_uv = honest["ttc_utilitarianGain"]
+            # for agent in highestbidder_partition:
+            #     v, p = _get_gain_over_fair(
+            #         honest_partitions, highestbidder_partition, agent
+            #     )
+            #
+            #     result[numA][exp][cp].append(
+            #         {"agent": agent, "agent_gain": v, "agent_gain_per": p}
+            #     )
+            pof = _get_percentage_gain(honest_uv, highestbidder_uv, True)
+            result[numA][exp][cp].append(
+                {"agent": "POF", "agent_gain": highestbidder_uv-honest_uv, "agent_gain_per": pof}
+            )
 
     return result
 

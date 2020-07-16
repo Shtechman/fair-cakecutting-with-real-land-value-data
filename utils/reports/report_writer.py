@@ -282,6 +282,7 @@ def write_extended_report_csv(
 
         csv_file_writer = csv.writer(csv_file)
         keys_list = []
+        write_history = []
         csv_file_writer.writerow(keys_list)
 
         def _write_to_csv(keys, alg):
@@ -290,7 +291,9 @@ def write_extended_report_csv(
                 if not keys:
                     keys = list(r.keys())
                     csv_file_writer.writerow(keys)
-                csv_file_writer.writerow([r[key] for key in keys])
+                if r not in write_history:
+                    write_history.append(r)
+                    csv_file_writer.writerow([r[key] for key in keys])
             return keys
 
         for m in avg_results_per_method:
@@ -482,15 +485,14 @@ def write_results_to_json(result_folder, file_name_string, results):
 if __name__ == "__main__":
 
     """ generate report of experiment results from simulation output json file """
-    files_to_import = [
-        # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06hs/newZealandLowResAgents06HS_2019-12-24T17-49-04_NoiseProportion_0.6_50_exp.json',
-        # 'D:/MSc/Thesis/CakeCutting/results/paper_results/newZealand/06uni/newZealandLowResAgents06_2019-12-24T17-50-27_NoiseProportion_0.6_50_exp.json',
-        "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/re06hs/tlvRealEstate06_2020-05-30T19-08-55_NoiseProportion_0.6_50_exp",
-        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/re02hs/tlvRealEstate02_2020-05-30T21-49-36_NoiseProportion_0.2_50_exp",
-        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/gdn06hs/tlvGardens06_2020-05-31T00-05-07_NoiseProportion_0.6_50_exp",
-        # "D:/MSc/Thesis/CakeCutting/results/tlvResults/30_5/gdn02hs/tlvGardens02_2020-05-31T02-21-23_NoiseProportion_0.2_50_exp"
-    ]
+    files_to_import = ['D:/MSc/Thesis/CakeCutting/results/rerun_exp/Israel06HS/Israel06HS_2020-06-15T00-51-42_NoiseProportion_0.6_50_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/rerun_exp/Israel06/Israel06_2020-06-30T17-18-41_NoiseProportion_0.6_50_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/rerun_exp/newZealandLowRes06HS/newZealandLowRes06HS_2020-06-15T00-51-47_NoiseProportion_0.6_50_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/rerun_exp/newZealandLowRes06/newZealandLowRes06_2020-06-30T17-18-48_NoiseProportion_0.6_50_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/rerun_exp/random06HS/random06HS_2020-06-15T00-51-47_NoiseProportion_0.6_50_exp.json',
+                       'D:/MSc/Thesis/CakeCutting/results/rerun_exp/random06/random06_2020-06-30T17-18-48_NoiseProportion_0.6_50_exp.json']
 
     for json_file_name in files_to_import:
         json_file_name = json_file_name + ".json" if ".json" not in json_file_name else json_file_name
+        print('generating report for simulation output file %s' % json_file_name)
         generate_reports(json_file_name)
