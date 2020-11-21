@@ -24,6 +24,8 @@ from utils.simulation.simulation_environment import SimulationEnvironment as Sim
 from utils.simulation.agent import Agent
 import multiprocessing as mp
 
+RUN_HIGHEST_BIDDER = True
+
 plotter = Plotter()
 
 
@@ -111,11 +113,14 @@ class SimulationRunner:
                         results.append(result)
 
         assessor_results = self.run_single_simulation(env)
-        highest_bidder_results = self.run_single_simulation(env, AlgType.HighestBidder, RunType.Honest)
+        if RUN_HIGHEST_BIDDER:
+            highest_bidder_results = self.run_single_simulation(env, AlgType.HighestBidder, RunType.Honest)
+
         for result in assessor_results:
             results.append(result)
 
-        results.append(highest_bidder_results)
+        if RUN_HIGHEST_BIDDER:
+            results.append(highest_bidder_results)
 
         for agent in agents:
             agent.clean_memory()
