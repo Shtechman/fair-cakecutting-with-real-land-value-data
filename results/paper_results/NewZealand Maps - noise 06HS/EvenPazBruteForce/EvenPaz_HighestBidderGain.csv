@@ -1,0 +1,8 @@
+4,agents
+Cut Pattern,pfAvg,pfAvg Improv(%),pfAvg stdev,pfMax,pfMax Improv(%),pfMax stdev
+EvenPaz_BruteForce,0.00802009427218,0.0198810703337,0.0030475520090780853,0.144809175613,0.515125132771,0.051909931575232236
+
+8,agents
+Cut Pattern,pfAvg,pfAvg Improv(%),pfAvg stdev,pfMax,pfMax Improv(%),pfMax stdev
+EvenPaz_BruteForce,0.0068533578104,0.0112672522589,0.0015635042207488411,0.209262375779,1.30727157244,0.06485402011013595
+

@@ -1,5 +1,7 @@
 data/*
+!data/originalMaps/
 results/*
+!results/paper_results/
 venv/*
 node_modules/*
 .idea/*

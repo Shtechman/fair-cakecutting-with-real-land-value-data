@@ -1,0 +1,43 @@
+tlvRealEstate06_2020-05-30T19-08-55_NoiseProportion_0.6_50_exp.json
+4
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.7467410941657995,-0.10726913533706557,0.2509369462166468,0.7467410941657995,-0.10726913533706557,0.2509369462166468,1.2289947832360033,0.22070270507057793,0.04714432674565312,1.2289947832360033,0.22070270507057793,0.04714432674565312,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,1.1823191881179809,0.1295418323288553
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+8
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.5156304090923399,-0.33632777170811606,0.17771685365178982,0.5156304090923399,-0.33632777170811606,0.17771685365178982,1.3118280193729086,0.30385829818119015,0.035556951892350155,1.3118280193729086,0.30385829818119015,0.035556951892350155,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,2.3080486965179445,0.24079317436396622
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+16
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.40937406856821945,-0.45535708578999745,0.1499424690534286,0.40937406856821945,-0.45535708578999745,0.1499424690534286,1.3795877918570065,0.3796642562787917,0.01628496458049734,1.3795877918570065,0.3796642562787917,0.01628496458049734,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,4.496355962753296,0.4497560011432442
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+32
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.26986351614201304,-0.6357752787554096,0.11863164501351452,0.26986351614201304,-0.6357752787554096,0.11863164501351452,1.4259749347893402,0.418768126960307,0.010875999056624433,1.4259749347893402,0.418768126960307,0.010875999056624433,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,8.869040694236755,0.851459937010442
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+64
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.20662238184018614,-0.7192927020379646,0.12089056284334238,0.20662238184018614,-0.7192927020379646,0.12089056284334238,1.4654364057393587,0.4739967432791738,0.004319927028148981,1.4654364057393587,0.4739967432791738,0.004319927028148981,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,18.93174050807953,1.9084616301087178
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+128
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+HighestBidder,0.10356181970717171,-0.8588820108300456,0.10327212915198226,0.10356181970717171,-0.8588820108300456,0.10327212915198226,1.494640507449399,0.49497521376702563,0.002473397248951518,1.494640507449399,0.49497521376702563,0.002473397248951518,0,-1.0,0.0,0,-1.0,0.0,0,1.0,0.0,0,1.0,0.0,38.80902034282684,4.095422662850424
+Summary,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder,HighestBidder, ,HighestBidder, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""

@@ -1,0 +1,39 @@
+newZealandLowRes06HS_2020-09-20T14-06-28_NoiseProportion_0.6_50_exp.json
+4
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+BruteForce,1.0401892579976493,0.2099647400313818,0.029581904055313697,1.040381551724334,0.21018841916210618,0.029464432203798914,1.089116223219722,0.10531285821686198,0.041266206817154295,1.0896816860496967,0.10588673024584254,0.0408779997051552,0.40520752618825207,-0.27425336190335703,0.12499979553610407,0.10592618258748299,-0.5699323798602192,0.08820359124043818,1.040694528285382,0.2472776721603466,0.052293839060525864,1.039945438201805,0.24781948036260612,0.05117024106252218,0.0533014976978302,0.009629359171110458
+Summary,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+8
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+BruteForce,1.0424693331939672,0.3212676644644328,0.023123218458815216,1.0439278798326665,0.32311628528181674,0.023151067972706687,1.1272969672879782,0.12085729541983666,0.036900525525821334,1.1295936443706152,0.12314085275920411,0.03641164113742987,0.28211234617549746,-0.34574735468234724,0.07293508547734955,0.04698957899349905,-0.49679910358842333,0.030621413361665503,1.0961855494805088,0.30314933795383536,0.060884257155198254,1.094352746154756,0.30431446023770103,0.06084294251491736,0.012789794132113457,0.0017214380271306463
+Summary,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce,BruteForce, ,BruteForce, , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+16
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+ , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+32
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+ , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+64
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+ , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
+128
+Cut Heuristic,egalitarianGain,,,ttc_egalitarianGain,,,utilitarianGain,,,ttc_utilitarianGain,,,averageFaceRatio,,,smallestFaceRatio,,,largestEnvy,,,ttc_largestEnvy,,,runDuration(sec),
+,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageRatio,Improv(%),StDev,AverageGain,Improv(%),StDev,AverageGain,Improv(%),StDev,Average Time,StDev
+ , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , 
+""
+""
