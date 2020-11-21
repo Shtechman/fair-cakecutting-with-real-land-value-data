@@ -7,6 +7,7 @@ import numpy as np
 from utils.reports.report_preprocessor import preprocess_results
 from utils.simulation.cc_types import AlgType
 
+# todo: REFACTOR THE ENTIRE REPORT GENERATION PROCESS USING PANDAS, CURRENTLY IT IS HIGHLY INEFFICIENT
 
 def write_graph_method_per_measure_report_csv(
     path, json_file_name, graph_method_results_per_measure

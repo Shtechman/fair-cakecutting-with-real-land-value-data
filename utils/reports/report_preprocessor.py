@@ -2,6 +2,7 @@ from statistics import mean, stdev
 
 from utils.simulation.cc_types import AggregationType
 
+# todo: REFACTOR THE ENTIRE REPORT GENERATION PROCESS USING PANDAS, CURRENTLY IT IS HIGHLY INEFFICIENT
 try:
     from scipy.stats import t
 
