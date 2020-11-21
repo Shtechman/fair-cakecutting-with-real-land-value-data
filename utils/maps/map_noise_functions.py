@@ -15,7 +15,7 @@ def point_on_cone(h, r, a, b, xj, yj):
     """
     Formula of a cone of height h, base radius r and center at (a,b) -> (x - a)² +(y - b)² = (z - h)² tan²(theta)
                                                                         where theta = atan(r/h)
-    Given a point (xj,yj), its value on the cone is -> z = h - cot^2(theta)*
+    Given a point (xj,yj), its value on the cone is -> z = h + cot^2(theta)*
                                                             sqrt((a^2 + b^2 - 2ax + x^2 - 2by + y^2) tan^2(theta))
     """
     theta = atan(r/h)
@@ -206,3 +206,17 @@ def generate_value_maps_to_file(
     print("The whole creation process time was %s seconds" % (end - start_all))
 
     return index_output_path
+
+
+if __name__ in "__main__":
+    from matplotlib import pyplot as plt, patches
+    original_map = [[1]*1000 for _ in range(1000)]
+    new_map, map_name = hotspot_noise_function(original_map, 0.4, None, 1)
+    fig, ax = plt.subplots(1)
+    im = ax.imshow(new_map, cmap="hot")
+    # if "_HS" in map_name:
+    #     hotspot_center = map_name.split("_HS")[-1].replace(".txt", "").split("_")
+    #     hotspot = patches.Circle((float(hotspot_center[1]), float(hotspot_center[0])), 10, edgecolor="g", facecolor="g")
+    #     ax.add_patch(hotspot)
+    plt.axis([0, len(new_map[0]), len(new_map), 0])
+    plt.show()

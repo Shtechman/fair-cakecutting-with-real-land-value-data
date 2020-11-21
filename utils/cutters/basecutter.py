@@ -1,8 +1,18 @@
 import numpy as np
+from sys import float_info
 
 from utils.simulation.cc_types import CutPattern, CutDirection
 
 SMALLEST_NUMBER = 0.0000000000001
+
+DIRECTION_MANIPULABLE_CUT_PATTERNS = [
+    CutPattern.LargestMargin,
+    CutPattern.LargestAvgMargin,
+    CutPattern.LargestMarginArea,
+    CutPattern.MostValuableMargin,
+    CutPattern.SquarePiece,
+    CutPattern.HighestScatter
+]
 
 
 class BaseCutter:
@@ -90,22 +100,25 @@ class BaseCutter:
     def _set_all_agents_cut_marks(
         self, allocations, proportion_of_first_partition
     ):
-        dishonest_idx = -1
         for idx, agent_allocation in enumerate(allocations):
-            if (
-                dishonest_idx < 0
-                and agent_allocation.get_agent().is_dishonest()
-            ):
-                dishonest_idx = idx
-            else:
-                self._set_relevant_cut_marks(
-                    proportion_of_first_partition, agent_allocation
-                )
+            self._set_relevant_cut_marks(
+                proportion_of_first_partition, agent_allocation
+            )
 
-        self._set_dishonest_cut_marks(allocations, dishonest_idx)
+        self._set_dishonest_cut_marks(allocations)
 
-    def _set_dishonest_cut_marks(self, allocations, dishonest_idx):
+    @staticmethod
+    def _get_dishonest_agent_index(allocations):
+        for idx, agent_allocation in enumerate(allocations):
+            if agent_allocation.get_agent().is_dishonest():
+                return idx
+        return -1
+
+    def _set_dishonest_cut_marks(self, allocations):
+        dishonest_idx = self._get_dishonest_agent_index(allocations)
+
         if dishonest_idx > -1:
+
             dis_agent_allocation = allocations[dishonest_idx]
             honest_allocations = (
                 allocations[:dishonest_idx] + allocations[dishonest_idx + 1 :]
@@ -114,6 +127,18 @@ class BaseCutter:
             self._set_best_cut_marks_for_dishonest(
                 dis_agent_allocation, honest_allocations
             )
+
+            current_cut_dir = self._get_proposed_cutting_direction(
+                allocations, len(allocations)
+            )
+
+            if self.cut_pattern in DIRECTION_MANIPULABLE_CUT_PATTERNS:
+                self._manipulate_cut_direction(
+                    current_cut_dir,
+                    dishonest_idx,
+                    allocations
+                )
+
 
     def _set_relevant_cut_marks(
         self, proportion_of_first_partition, agent_allocation
@@ -138,35 +163,34 @@ class BaseCutter:
             )
 
     def _set_best_cut_marks_for_dishonest(
-        self, allocation, honest_allocations
+        self, dis_agent_allocation, honest_allocations
     ):
-        allocation.cut_marks = {}
+        dis_agent_allocation.cut_marks = {}
+
         if (self.cut_query is CutDirection.Horizontal) or (
             self.cut_query is CutDirection.Both
         ):
-            horizontal_hosnest_halfcuts = [
+            horizontal_honest_cutmarks = [
                 allocation.cut_marks[CutDirection.Horizontal]
                 for allocation in honest_allocations
             ]
-            allocation.cut_marks[
+            dis_agent_allocation.cut_marks[
                 CutDirection.Horizontal
             ] = self._calculate_best_cutmark(
-                allocation,
-                CutDirection.Horizontal,
-                horizontal_hosnest_halfcuts,
+                dis_agent_allocation, CutDirection.Horizontal, horizontal_honest_cutmarks
             )
 
         if (self.cut_query is CutDirection.Vertical) or (
             self.cut_query is CutDirection.Both
         ):
-            vertical_hosnest_halfcuts = [
+            vertical_honest_cutmarks = [
                 allocation.cut_marks[CutDirection.Vertical]
                 for allocation in honest_allocations
             ]
-            allocation.cut_marks[
+            dis_agent_allocation.cut_marks[
                 CutDirection.Vertical
             ] = self._calculate_best_cutmark(
-                allocation, CutDirection.Vertical, vertical_hosnest_halfcuts
+                dis_agent_allocation, CutDirection.Vertical, vertical_honest_cutmarks
             )
 
     def _divide_agents_to_partitions(
@@ -261,6 +285,11 @@ class BaseCutter:
     ):
         raise NotImplementedError("This method should be overridden.")
 
+    def _manipulate_cut_direction(
+        self, current_cut_dir, dishonest_idx, allocations
+    ):
+        raise NotImplementedError("This method should be overridden.")
+
     def _allocate_cuts(
         self,
         sorted_allocations,
@@ -291,8 +320,11 @@ class BaseCutter:
         return first_part_allocations, second_part_allocations
 
     def _set_next_cutting_direction(self, allocations, number_of_agents):
+        self.cut_direction = self._get_proposed_cutting_direction(allocations, number_of_agents)
+
+    def _get_proposed_cutting_direction(self, allocations, number_of_agents):
         """ Default next cut direction value is the cut query """
-        self.cut_direction = self.cut_query
+        default_cut_direction = self.cut_query
 
         def _get_horizontal_cut_marks(alloc):
             return alloc.cut_marks[CutDirection.Horizontal]
@@ -310,7 +342,7 @@ class BaseCutter:
             first_ver_cut_halfcut = _get_vertical_cut_marks(first_ver_cut)
 
             if self.cut_pattern is CutPattern.SmallestHalfCut:
-                self.cut_direction = (
+                return (
                     CutDirection.Horizontal
                     if first_hor_cut_halfcut < first_ver_cut_halfcut
                     else CutDirection.Vertical
@@ -330,12 +362,11 @@ class BaseCutter:
                     first_ver_cut_halfcut - start_index_ver
                 ) * first_hor_cut.get_dimensions()[CutDirection.Horizontal]
 
-                self.cut_direction = (
+                return (
                     CutDirection.Horizontal
                     if hor_cut_size < ver_cut_size
                     else CutDirection.Vertical
                 )
-            return
 
         if self.cut_pattern in [CutPattern.LongestDim, CutPattern.ShortestDim]:
             allocation = allocations[0]
@@ -345,18 +376,17 @@ class BaseCutter:
                 allocation_dimensions[CutDirection.Vertical]
                 < allocation_dimensions[CutDirection.Horizontal]
             ):
-                self.cut_direction = (
+                return (
                     CutDirection.Horizontal
                     if self.cut_pattern is CutPattern.LongestDim
                     else CutDirection.Vertical
                 )
             else:
-                self.cut_direction = (
+                return (
                     CutDirection.Vertical
                     if self.cut_pattern is CutPattern.LongestDim
                     else CutDirection.Horizontal
                 )
-            return
 
         try:
             sorted_horizontal_cuts = list(
@@ -373,27 +403,20 @@ class BaseCutter:
             )
         except:
             """ If not both ver and hor cut lists are set, use default value """
-            return
+            return default_cut_direction
 
         top_margin_index = self.get_number_of_agents_in_first_partition(
             number_of_agents
         )
-        horizontal_margin = (
-            sorted_horizontal_cuts[top_margin_index]
-            - sorted_horizontal_cuts[top_margin_index - 1]
-        )
-        vertical_margin = (
-            sorted_vertical_cuts[top_margin_index]
-            - sorted_vertical_cuts[top_margin_index - 1]
-        )
+        horizontal_margin = self._calculate_margin_length(sorted_horizontal_cuts, top_margin_index)
+        vertical_margin = self._calculate_margin_length(sorted_vertical_cuts, top_margin_index)
 
         if self.cut_pattern is CutPattern.LargestMargin:
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if vertical_margin < horizontal_margin
                 else CutDirection.Vertical
             )
-            return
 
         if self.cut_pattern is CutPattern.LargestMarginArea:
             allocation_dimensions = allocations[0].get_dimensions()
@@ -405,23 +428,14 @@ class BaseCutter:
                 vertical_margin
                 * allocation_dimensions[CutDirection.Horizontal]
             )
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if vertical_margin_area < horizontal_margin_area
                 else CutDirection.Vertical
             )
-            return
 
-        hor_margin_i_from = sorted_horizontal_cuts[top_margin_index - 1]
-        hor_margin_i_to = sorted_horizontal_cuts[top_margin_index]
-        hor_cut_option = self._calculate_optional_cut_location(
-            hor_margin_i_from, hor_margin_i_to
-        )
-        ver_margin_i_from = sorted_vertical_cuts[top_margin_index - 1]
-        ver_margin_i_to = sorted_vertical_cuts[top_margin_index]
-        ver_cut_option = self._calculate_optional_cut_location(
-            ver_margin_i_from, ver_margin_i_to
-        )
+        hor_cut_option = self._calculate_cut_option(sorted_horizontal_cuts, top_margin_index)
+        ver_cut_option = self._calculate_cut_option(sorted_vertical_cuts, top_margin_index)
 
         if self.cut_pattern is CutPattern.LargestAvgMargin:
             hor_avg_margin = np.average(
@@ -436,12 +450,11 @@ class BaseCutter:
                     for cutmark in sorted_vertical_cuts
                 ]
             )
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if ver_avg_margin < hor_avg_margin
                 else CutDirection.Vertical
             )
-            return
 
         if self.cut_pattern is CutPattern.MostValuableMargin:
             """
@@ -470,12 +483,11 @@ class BaseCutter:
                     )
                 )
             )
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if ver_margin_avg_value < hor_margin_avg_value
                 else CutDirection.Vertical
             )
-            return
 
         if self.cut_pattern is CutPattern.SquarePiece:
             hor_face_ratio_avg_value = np.average(
@@ -499,14 +511,14 @@ class BaseCutter:
                 )
             )
 
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if ver_face_ratio_value < hor_face_ratio_avg_value
                 else CutDirection.Vertical
             )
-            return
 
         if self.cut_pattern is CutPattern.HighestScatter:
+            # todo: this code can be implemented more efficiently because x4-x3 + x3-x2 + x2-x1 = x4-x1
             neighbor_horizontal_cuts = list(
                 zip(
                     sorted_horizontal_cuts, np.roll(sorted_horizontal_cuts, -1)
@@ -521,11 +533,26 @@ class BaseCutter:
             ver_scatter_avg_value = np.average(
                 [b - a for (a, b) in neighbor_vertical_cuts]
             )
-            self.cut_direction = (
+            return (
                 CutDirection.Horizontal
                 if ver_scatter_avg_value < hor_scatter_avg_value
                 else CutDirection.Vertical
             )
-            return
+
+        return default_cut_direction
+
+    def _calculate_cut_option(self, sorted_cuts, top_margin_index):
+        margin_i_from = sorted_cuts[top_margin_index - 1]
+        margin_i_to = sorted_cuts[top_margin_index]
+        return self._calculate_optional_cut_location(
+            margin_i_from, margin_i_to
+        )
+
+    @staticmethod
+    def _calculate_margin_length(sorted_cut_marks, top_margin_index):
+        return (
+                sorted_cut_marks[top_margin_index]
+                - sorted_cut_marks[top_margin_index - 1]
+        )
 
 

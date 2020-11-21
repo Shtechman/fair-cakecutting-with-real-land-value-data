@@ -596,6 +596,9 @@ def get_highestbidder_gain(results, highestbidder_results):
     )
 
     result = {numA: {} for numA in num_agents}
+    if not highestbidder_results:
+        return result
+
     hb_rlogs = {exp: [rlog for rlog in highestbidder_results if rlog["experiment"] == exp][0]
                 for exp in experiment_list}
 
@@ -643,6 +646,32 @@ def get_highestbidder_gain(results, highestbidder_results):
     return result
 
 
+def calc_dishonest_worth(func):
+    def wrap(*args, **kwargs):
+        result = func(*args, **kwargs)
+
+        for numA in result:
+            results_per_exp = result[numA]
+            num_experiments = len(results_per_exp)*1.0
+            loss_count = {}
+            for exp in results_per_exp:
+                for cp in results_per_exp[exp]:
+                    for dishonest_agent in results_per_exp[exp][cp]:
+                        if cp not in loss_count:
+                            loss_count[cp] = 0
+                        if dishonest_agent['agent_gain'] < 0:
+                            loss_count[cp] += 1
+            print("For %s agents - average number of loses while playing dishonest:" % numA)
+            for cp in loss_count:
+                print(
+                    "%s, %s" % (cp.split("_")[-1], loss_count[cp]/num_experiments))
+
+        return result
+
+    return wrap
+
+
+@calc_dishonest_worth
 def get_dishonest_gain(results):
     experiment_list = list(set([rlog["experiment"] for rlog in results]))
     cut_pattern_list = list(

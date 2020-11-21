@@ -115,3 +115,10 @@ class LDCutter(BaseCutter):
         # todo: implement a strategic play - note that if query_cutmark results in a piece better then 1/n of the
         #  cake than the player can claim (query_cutmark - SMALLEST_NUMBER) and if not, (query_cutmark +
         #  SMALLEST_NUMBER).
+
+    def _manipulate_cut_direction(
+            self, current_cut_dir, dishonest_idx, allocations
+    ):
+        raise NotImplementedError(
+            "Strategic play for LastDiminisher is not yet implemented."
+        )
