@@ -7,6 +7,8 @@
 import math
 import sys
 
+from shutil import which
+
 from utils.reports.report_writer import (
     create_run_folder,
 )
@@ -15,7 +17,7 @@ from utils.simulation.cc_types import AggregationType, AlgType, CutPattern, RunT
 from utils.simulation.simulation_runner import SimulationRunner
 
 """ Static definitions of cut patterns, algorithms and experiment settings to test """
-support_batch = True
+SUPPORT_BATCH = which('sbatch')
 
 cut_patterns_to_test = [
     CutPattern.Hor,
@@ -107,7 +109,7 @@ if __name__ == "__main__":
         number_of_agents = (
             num_of_agents if num_of_agents else experiment_set["num_of_agents"]
         )
-        if support_batch:
+        if SUPPORT_BATCH:
             schedule_batch_run(folder_name_prefix, (
                 experiment_set["index_file"],
                 [rt.value for rt in experiment_set["run_types"]],
@@ -129,6 +131,7 @@ if __name__ == "__main__":
                 number_of_agents,
                 experiment_set["noise_proportion"],
                 experiments_per_cell,
-                NTASKS)
+                NTASKS,
+                True)
 
             sim_runner.calculate_results(AggregationType.NoiseProportion)
